@@ -1,112 +1,64 @@
-=== Plugin Name ===
+=== HoneyBadger.IT ===
 Contributors: @honeybadgerit
-Donate link: http://honeybadger.it
 Tags: woocommerce management, wc order statuses, wc emails, wc variable product images, wc suppliers, wc split orders, wc combine orders, wc invoices, wc custom pdfs, wc custom emails
-Requires at least: 5.0.0
+Donate link: https://honeybadger.it
+Requires at least: 5.0
 Tested up to: 6.2
-Stable tag: 5.0
+Requires PHP: 5.4
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 Connect your Woocommerce shop with the HoneyBadger.IT platform and enjoy many features to better manage your company. Included features are custom order statuses, custom PDF atachments, email templates, product variant images, manage your suppliers, create supplier orders, create WC orders, split and combine them, create PDF invoices and many other features.
 
 == Description ==
+HoneyBadger.IT is an online management system for your Woocommerce shop. This plugin is used for the communication between your site and the HoneyBadger IT platform. The communication between the parts use Oauth2 protocol for authorization and the Wordpress REST API v2 for data transfer. All communications are done over HTTPS, you would need a valid SSL certificate installed or you could use self signed certificate.
 
-HoneyBadger.IT is an online management system for your Woocommerce shop. This plugin is used for the communication between your site and the HoneyBadger IT platform. The communication between the parts use Oauth2 protocol for authorization and the Wordpress REST API v2 for data transfer. All communications are done over HTTPS, you would need a valid SSL certificate installed or you could use self signed certificate and set curl_ssl_verify to no in settings.
+With this plugin you can:
 
-A few notes about the sections above:
+1. Create Custom Order Statuses, edit the current and newly created custom order statuses emails
+2. Create Custom Emails to send to your customers
+3. Create Custom PDF attachments to send to your customers, including PDF Invoices
+4. Add image gallery to your product variations without using any third party image gallery software
+5. Create sub products
+6. Manage your orders
+7. Create new orders
+8. Split orders
+9. Combine / Merge orders
+10. Create Suppliers for your products and sub products
+11. Associate / link products and sub products with your suppliers
+12. Create Supplier orders
+13. Have multiple accounts for your staff with different permissions for the system
+14. Many other features
 
-*   "Contributors" is a comma separated list of wp.org/wp-plugins.org usernames
-*   "Tags" is a comma separated list of tags that apply to the plugin
-*   "Requires at least" is the lowest version that the plugin will work on
-*   "Tested up to" is the highest version that you've *successfully used to test the plugin*. Note that it might work on
-higher versions... this is just the highest one you've verified.
-*   Stable tag should indicate the Subversion "tag" of the latest stable version, or "trunk," if you use `/trunk/` for
-stable.
+To connect your Woocommerce shop with the HoneyBadger.IT platform you need to install the plugin and set your account from the Status page, you will just need a valid email address.
 
-    Note that the `readme.txt` of the stable tag is the one that is considered the defining one for the plugin, so
-if the `/trunk/readme.txt` file says that the stable tag is `4.3`, then it is `/tags/4.3/readme.txt` that'll be used
-for displaying information about the plugin.  In this situation, the only thing considered from the trunk `readme.txt`
-is the stable tag pointer.  Thus, if you develop in trunk, you can update the trunk `readme.txt` to reflect changes in
-your in-development version, without having that information incorrectly disclosed about the current stable version
-that lacks those changes -- as long as the trunk's `readme.txt` points to the correct stable tag.
-
-    If no stable tag is provided, it is assumed that trunk is stable, but you should specify "trunk" if that's where
-you put the stable version, in order to eliminate any doubt.
+HoneyBadger.IT aims to create the best environment for your online shop and company. We want to make your workflow easier and provide tools for your website and your business to be more productive. Using the HoneyBadger.IT platform will save you server resources, meaning the workload of the management part of your business is split between the platform and your server.
 
 == Installation ==
-
-This section describes how to install the plugin and get it working.
-
-e.g.
-
-1. Upload `honeybadger-IT` folder to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
+1. Upload the HoneyBadger.IT plugin folder to the /wp-content/plugins/ directory
+2. Activate the plugin through the Plugins menu in WordPress
 3. Configure the plugin
 4. Log in to the platform
+5. Enjoy
 
 == Frequently Asked Questions ==
-
-= A question that someone might have =
-
-An answer to that question.
-
-= What about foo bar? =
-
-Answer to foo bar dilemma.
+= I d not have a valid SSL Certificate can I still use the plugin and platform? =
+Yes, you would need to have at least a self signed SSL certificate and set curl_ssl_verify to no in settings.
+= The WP REST API seams to do not work, what to do? =
+Make sure that the API is public and not restricted by any other plugin which requires users to be logged in to be used.
+= Does it work under Windows? =
+We did not test it, it should work, let us know.
+= I have uninstalled the plugin by accident and now I get an error message when I try to set it up, what to do? =
+Login to the platform and go to the Account page as the main user, there you will find Oauth2 credentials that you need to add in the plugin tools page and continue with the setup process.
+= What data is stored and where? =
+Well, some data is saved to your server and some data is saved on the platform, be careful if you uninstall the plugin because everything stored on your server will be lost. Have a look at the features page on the honeybadger.it website to see each functionality and where data is stored
 
 == Screenshots ==
-
-1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Note that the screenshot is taken from
-the /assets directory or the directory that contains the stable readme.txt (tags or trunk). Screenshots in the /assets
-directory take precedence. For example, `/assets/screenshot-1.png` would win over `/tags/4.3/screenshot-1.png`
-(or jpg, jpeg, gif).
-2. This is the second screen shot
+1. Status page
+2. Account creation
+3. Platform dashboard
 
 == Changelog ==
-
-= 1.0 =
-* A change since the previous version.
-* Another change.
-
-= 0.5 =
-* List versions from most recent at top to oldest at bottom.
-
-== Upgrade Notice ==
-
-= 1.0 =
-Upgrade notices describe the reason a user should upgrade.  No more than 300 characters.
-
-= 0.5 =
-This version fixes a security related bug.  Upgrade immediately.
-
-== Arbitrary section ==
-
-You may provide arbitrary sections, in the same format as the ones above.  This may be of use for extremely complicated
-plugins where more information needs to be conveyed that doesn't fit into the categories of "description" or
-"installation."  Arbitrary sections will be shown below the built-in sections outlined above.
-
-== A brief Markdown Example ==
-
-Ordered list:
-
-1. Some feature
-1. Another feature
-1. Something else about the plugin
-
-Unordered list:
-
-* something
-* something else
-* third thing
-
-Here's a link to [WordPress](http://wordpress.org/ "Your favorite software") and one to [Markdown's Syntax Documentation][markdown syntax].
-Titles are optional, naturally.
-
-[markdown syntax]: http://daringfireball.net/projects/markdown/syntax
-            "Markdown is what the parser uses to process much of the readme file"
-
-Markdown uses email style notation for blockquotes and I've been told:
-> Asterisks for *emphasis*. Double it up  for **strong**.
-
-`<?php code(); // goes in backticks ?>`
+= 1.0.0 =
+First release, hopefully it is useful for the WP and WC community and many more releases will come.
