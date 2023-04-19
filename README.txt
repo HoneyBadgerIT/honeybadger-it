@@ -45,6 +45,8 @@ HoneyBadger.IT aims to create the best environment for your online shop and comp
 == Frequently Asked Questions ==
 = I d not have a valid SSL Certificate can I still use the plugin and platform? =
 Yes, you would need to have at least a self signed SSL certificate and set curl_ssl_verify to no in settings.
+= Does it work with Wordpress Multisite? =
+Yes it does work with WP Multisite
 = The WP REST API seams to do not work, what to do? =
 Make sure that the API is public and not restricted by any other plugin which requires users to be logged in to be used.
 = Does it work under Windows? =
@@ -58,6 +60,11 @@ Well, some data is saved to your server and some data is saved on the platform, 
 1. Status page
 2. Account creation
 3. Platform dashboard
+
+== Dependencies ==
+1. Woocommerce
+2. cURL, used to communicate with the platform
+3. OpenSSL, if you are using a self signed SSL Certificate
 
 == Changelog ==
 = 1.0.0 =
