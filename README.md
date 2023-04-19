@@ -5,6 +5,8 @@ Description
 
 HoneyBadger.IT is an online management system for your Woocommerce shop. This plugin is used for the communication between your site and the HoneyBadger IT platform. The communication between the parts use Oauth2 protocol for authorization and the Wordpress REST API v2 for data transfer. All communications are done over HTTPS, you would need a valid SSL certificate installed or you could use self signed certificate.
 
+Demo Account: https://my.honeybadger.it User: demo@honeybadger.it Password: Demo123
+
 With this plugin you can:
 
 1. Create Custom Order Statuses, edit the current and newly created custom order statuses emails
