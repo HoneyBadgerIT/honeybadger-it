@@ -36,26 +36,20 @@ Installation
 
 Frequently Asked Questions
 
-I d not have a valid SSL Certificate can I still use the plugin and platform?
-
-Yes, you would need to have at least a self signed SSL certificate and set curl_ssl_verify to no in settings.
-
-Does it work with Wordpress Multisite?
-
-Yes it does work with WP Multisite
-
-The WP REST API seams to do not work, what to do?
-
-Make sure that the API is public and not restricted by any other plugin which requires users to be logged in to be used.
-
-Does it work under Windows?
-
-We did not test it, it should work, let us know.
-
-I have uninstalled the plugin by accident and now I get an error message when I try to set it up, what to do?
-
-Login to the platform and go to the Account page as the main user, there you will find Oauth2 credentials that you need to add in the plugin tools page and continue with the setup process.
-
-What data is stored and where?
-
-Well, some data is saved to your server and some data is saved on the platform, be careful if you uninstall the plugin because everything stored on your server will be lost. Have a look at the features page on the honeybadger.it website to see each functionality and where data is stored
+* I d not have a valid SSL Certificate can I still use the plugin and platform?
+* Yes, you would need to have at least a self signed SSL certificate and set curl_ssl_verify to no in settings.
+*
+* Does it work with Wordpress Multisite?
+* Yes it does work with WP Multisite
+*
+* The WP REST API seams to do not work, what to do?
+* Make sure that the API is public and not restricted by any other plugin which requires users to be logged in to be used.
+*
+* Does it work under Windows?
+* We did not test it, it should work, let us know.
+*
+* I have uninstalled the plugin by accident and now I get an error message when I try to set it up, what to do?
+* Login to the platform and go to the Account page as the main user, there you will find Oauth2 credentials that you need to add in the plugin tools page and continue with the setup process.
+*
+* What data is stored and where?
+* Well, some data is saved to your server and some data is saved on the platform, be careful if you uninstall the plugin because everything stored on your server will be lost. Have a look at the features page on the honeybadger.it website to see each functionality and where data is stored
