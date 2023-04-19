@@ -1,0 +1,115 @@
+#toplevel_page_honeybadger-it img{
+    width: 20px;
+}
+#honeybadger_top_row img{
+    width: 90px;
+    border-radius: 12px;
+    border: 2px solid #f2ac32;
+    background: black;
+}
+h1#honeybadger_top_row{
+    color: #f2ac32;
+    text-align: center;
+    font-weight: bold;
+}
+#honeybadger_top_row a{
+    color: #f2ac32;
+    text-decoration: none;
+}
+#honeybadger_top_row a:focus{
+    box-shadow: none;
+}
+.hb-red-color td{
+    color: #dc3545!important;
+}
+.hb-green-color td{
+    color: #28a745;
+}
+.hb-orange-color td{
+    color: #ffc107;
+}
+.honeybadger-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding-top: 56.25%;
+}
+
+.honeybadger-responsive-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+}
+#honeybadger_status{
+    width: 20px;
+}
+.nav-tab-wrapper a{
+    float: none;
+}
+.nav-tab-wrapper{
+    text-align: center;
+}
+.honeybadger-wrap h2{
+    text-align: left;
+}
+.hb-hidden{
+    display: none;
+}
+.hb-tech-imgs{
+    height: 40px;
+    padding: 20px;
+    float: left;
+}
+.hb-clear-both{
+    clear: both;
+}
+.hb-float-left{
+    float: left;
+    height: 132px;
+    padding-right: 20px;
+}
+.hb-float-right{
+    float: right;
+    height: 132px;
+    padding-left: 20px;
+}
+.hb-center{
+    text-align: center;
+}
+.hb-notice-updated{
+    
+    margin: 5px 0 15px!important;
+    border-left-color: #00a32a!important;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-left-width: 4px;
+    box-shadow: 0 1px 1px rgb(0 0 0 / 4%);
+    padding: 1px 12px;
+}
+.hb-notice-error{
+    position: relative;
+    margin: 5px 0 15px!important;
+    border-left-color: #d63638!important;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-left-width: 4px;
+    box-shadow: 0 1px 1px rgb(0 0 0 / 4%);
+    padding: 1px 12px;
+}
+.hb-red-notice{
+    font-weight: bold;
+    color: red;
+}
+.hb-form-container input{
+    margin-bottom: 10px;
+}
+.hb-form-container{
+    max-width: 338px;
+}
+.hb-no-box {
+    box-shadow: none!important;
+}
