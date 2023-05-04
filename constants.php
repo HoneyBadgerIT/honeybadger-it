@@ -5,4 +5,5 @@
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
 define("HONEYBADGER_IT_TARGET_SUBDOMAIN", "my");
+
 ?>
