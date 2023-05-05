@@ -9,7 +9,7 @@ Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Connect your Woocommerce shop with the HoneyBadger.IT platform and enjoy many features to better manage your company. Included features are custom order statuses, custom PDF atachments, email templates, product variant images, manage your suppliers, create supplier orders, create WC orders, split and combine them, create PDF invoices and many other features.
+Connect your Woocommerce shop with the HoneyBadger.IT platform and enjoy many features to better manage your company. Included features are custom order statuses, custom PDF attachments, email templates, product variant images, manage your suppliers, create supplier orders, create WC orders, split and combine them, create PDF invoices and many other features.
 
 == Description ==
 HoneyBadger.IT is an online management system for your Woocommerce shop. This plugin is used for the communication between your site and the HoneyBadger IT platform. The communication between the parts use Oauth2 protocol for authorization and the Wordpress REST API v2 for data transfer. All communications are done over HTTPS, you would need a valid SSL certificate installed or you could use self signed certificate.

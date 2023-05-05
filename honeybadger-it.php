@@ -15,7 +15,7 @@
  * @wordpress-plugin
  * Plugin Name:       HoneyBadger.IT
  * Plugin URI:        http://honeybadger.it
- * Description:       Connect your Woocommerce shop with the HoneyBadger.IT platform and enjoy many features to better manage your company. Included features are custom order statuses, custom PDF atachments, email templates, product variant images, manage your suppliers, create supplier orders, create WC orders and many other features.
+ * Description:       Connect your Woocommerce shop with the HoneyBadger.IT platform and enjoy many features to better manage your company. Included features are custom order statuses, custom PDF attachments, email templates, product variant images, manage your suppliers, create supplier orders, create WC orders and many other features.
  * Version:           1.0.0
  * Requires at least: 5.4
  * Requires PHP:      5.4
