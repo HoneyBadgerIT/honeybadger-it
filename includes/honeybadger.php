@@ -522,7 +522,7 @@ class honeybadger{
 					     return array("status"=>"updated","msg"=>__("REST API working as expected. Ping: ".$response['time']."s","honeyb"));
 					}
 					else
-						return array("status"=>"error","msg"=>__("REST API NOT working as expected","honeyb"));
+						return array("status"=>"error","msg"=>__("REST API NOT working as expected, or you did not login on the platform for a while","honeyb"));
 				}
 			}
 		}
