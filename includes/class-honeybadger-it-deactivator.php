@@ -4,6 +4,7 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
+namespace HoneyBadgerIT;
 class Honeybadger_IT_Deactivator {
 
 	/**
@@ -13,7 +14,7 @@ class Honeybadger_IT_Deactivator {
 	 *
 	 * @since    1.0.0
 	 */
-	public static function deactivate() {
+	public function deactivate() {
 
 	}
 

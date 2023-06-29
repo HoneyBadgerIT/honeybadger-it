@@ -4,7 +4,7 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
-
+namespace HoneyBadgerIT;
 class Honeybadger_IT_Admin {
 
 	/**
@@ -44,7 +44,7 @@ class Honeybadger_IT_Admin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_styles() {
+	public function enqueue_styles($hook) {
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -58,9 +58,12 @@ class Honeybadger_IT_Admin {
 		 * class.
 		 */
 
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/honeybadger-it-admin.css', array(), $this->version, 'all' );
-		wp_enqueue_style( $this->plugin_name."-bootstrap", plugin_dir_url( __FILE__ ) . 'css/grid.css', array(), $this->version, 'all' );
-
+		if($hook && in_array($hook,array('toplevel_page_honeybadger-it','honeybadger-it_page_honeybadger-settings','honeybadger-it_page_honeybadger-rest-api','honeybadger-it_page_honeybadger-tools')))
+		{
+				wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/honeybadger-it-admin.css', array(), $this->version, 'all' );
+				wp_enqueue_style( $this->plugin_name."-bootstrap", plugin_dir_url( __FILE__ ) . 'css/grid.css', array(), $this->version, 'all' );
+				wp_enqueue_style( $this->plugin_name."-fontawesome", '//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css', array(), $this->version, 'all' );
+		}
 	}
 
 	/**
@@ -68,7 +71,7 @@ class Honeybadger_IT_Admin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_scripts() {
+	public function enqueue_scripts($hook) {
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -81,8 +84,10 @@ class Honeybadger_IT_Admin {
 		 * between the defined hooks and the functions defined in this
 		 * class.
 		 */
-
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/honeybadger-it-admin.js', array( 'jquery' ), $this->version, false );
+		if($hook && in_array($hook,array('toplevel_page_honeybadger-it','honeybadger-it_page_honeybadger-settings','honeybadger-it_page_honeybadger-rest-api','honeybadger-it_page_honeybadger-tools')))
+		{
+			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/honeybadger-it-admin.js', array( 'jquery' ), $this->version, false );
+		}
 
 	}
 

@@ -34,7 +34,18 @@ h1#honeybadger_top_row{
   width: 100%;
   padding-top: 56.25%;
 }
+.password-container{
+  width: 400px;
+  position: relative;
+}
 
+.fa-eye{
+  position: absolute;
+  top: 20%;
+  right: 4%;
+  cursor: pointer;
+  color: lightgray;
+}
 .honeybadger-responsive-iframe {
   position: absolute;
   top: 0;
@@ -80,9 +91,18 @@ h1#honeybadger_top_row{
 .hb-center{
     text-align: center;
 }
+.hb-setup-no-use{
+    margin-left: 10px!important;
+}
+.leftmarginme{
+    margin-left: 10px!important;
+}
+.margintopme{
+    margin-top: 6px!important;
+}
 .hb-notice-updated{
     
-    margin: 5px 0 15px!important;
+    margin: 5px 10px 15px!important;
     border-left-color: #00a32a!important;
     background: #fff;
     border: 1px solid #c3c4c7;
@@ -92,7 +112,7 @@ h1#honeybadger_top_row{
 }
 .hb-notice-error{
     position: relative;
-    margin: 5px 0 15px!important;
+    margin: 5px 10px 15px!important;
     border-left-color: #d63638!important;
     background: #fff;
     border: 1px solid #c3c4c7;
@@ -112,4 +132,38 @@ h1#honeybadger_top_row{
 }
 .hb-no-box {
     box-shadow: none!important;
+}
+.hb_disabled{
+    margin-left:10px!important;
+    margin-bottom:10px!important;
+}
+@media (max-width: 782px) {
+    .fa-eye{
+      top: 26%;
+    }
+    .hb_disabled{
+        margin-left: 10px!important;
+        margin-right: 10px!important;
+    }
+}
+#php_info pre {margin: 0; font-family: monospace;}
+#php_info table {border-collapse: collapse; border: 0; width: 934px; box-shadow: 1px 2px 3px #ccc;}
+#php_info .center {text-align: center;}
+#php_info .center table {margin: 1em auto; text-align: left;}
+#php_info .center th {text-align: center !important;}
+#php_info td, th {border: 1px solid #666; font-size: 75%; vertical-align: baseline; padding: 4px 5px;}
+#php_info th {position: sticky; top: 0; background: inherit;}
+#php_info h1 {font-size: 150%;}
+#php_info h2 {font-size: 125%;}
+#php_info .p {text-align: left;}
+#php_info .e {background-color: #ccf; width: 300px; font-weight: bold;}
+#php_info .h {background-color: #99c; font-weight: bold;}
+#php_info .v {background-color: #ddd; max-width: 300px; overflow-x: auto; word-wrap: break-word;}
+#php_info .v i {color: #999;}
+#php_info img {float: right; border: 0;}
+#php_info hr {width: 934px; background-color: #ccc; border: 0; height: 1px;}
+.php_info {
+  margin: auto;
+  width: 74%;
+  overflow:scroll;
 }

@@ -4,6 +4,9 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
+namespace HoneyBadgerIT\API;
+use \stdClass;
+
 class honeybadgerAPI2{
 	public $config;
 	public $config_front;
@@ -28,7 +31,7 @@ class honeybadgerAPI2{
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-	        if(isset($parameters['method2']) && method_exists($this,$parameters['method2']))
+	        if(isset($parameters['method2']) && method_exists($this,sanitize_text_field($parameters['method2'])))
 	        {
 	        	$method=$parameters['method2'];
 	        	return $this->$method($request);       
@@ -53,6 +56,9 @@ class honeybadgerAPI2{
 	function get_order_statuses($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$statuses=array();
@@ -97,11 +103,14 @@ class honeybadgerAPI2{
 	function get_dashboard_last_sales_data($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$last_sales=isset($parameters['last_sales'])?$parameters['last_sales']:"last_week";
-			$last_sales_status=isset($parameters['last_sales_status'])?$parameters['last_sales_status']:"wc-completed";
+			$last_sales=isset($parameters['last_sales'])?sanitize_text_field($parameters['last_sales']):"last_week";
+			$last_sales_status=isset($parameters['last_sales_status'])?sanitize_text_field($parameters['last_sales_status']):"wc-completed";
 			$start_date=date("Y-m-d",strtotime(date("Y-m-d 00:00:00")." -1 week"));
 			$end_date=date("Y-m-d",strtotime(date("Y-m-d 23:59:59")));
 			if($last_sales=="last_month")
@@ -239,11 +248,14 @@ class honeybadgerAPI2{
 	function get_dashboard_latest_orders_data($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$latest_orders_status=isset($parameters['latest_orders_status'])?$parameters['latest_orders_status']:"wc-completed";
-			$latest_orders_dir=isset($parameters['latest_orders_dir'])?$parameters['latest_orders_dir']:"desc";
+			$latest_orders_status=isset($parameters['latest_orders_status'])?sanitize_text_field($parameters['latest_orders_status']):"wc-completed";
+			$latest_orders_dir=isset($parameters['latest_orders_dir'])?sanitize_text_field($parameters['latest_orders_dir']):"desc";
 			$latest_orders_limit=isset($parameters['latest_orders_limit'])?(int)$parameters['latest_orders_limit']:10;
 			$filter_status="wc-completed";
 			if($latest_orders_dir!='asc' && $latest_orders_dir!='desc')
@@ -292,6 +304,9 @@ class honeybadgerAPI2{
 	function get_dashboard_stock_low($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$products=array();
@@ -350,6 +365,9 @@ class honeybadgerAPI2{
 	function get_dashboard_enabled_wc_emails_cnt($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$sql="select count(*) as total from ".$wpdb->prefix."honeybadger_wc_emails where enabled=1";
@@ -362,6 +380,9 @@ class honeybadgerAPI2{
 	function get_dashboard_enabled_emails_cnt($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$sql="select count(*) as total from ".$wpdb->prefix."honeybadger_emails where enabled=1";
@@ -374,6 +395,9 @@ class honeybadgerAPI2{
 	function get_dashboard_enabled_attachments_cnt($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$sql="select count(*) as total from ".$wpdb->prefix."honeybadger_attachments where enabled=1";
@@ -386,6 +410,9 @@ class honeybadgerAPI2{
 	function get_dashboard_enabled_static_attachments_cnt($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$sql="select count(*) as total from ".$wpdb->prefix."honeybadger_static_attachments where enabled=1";
@@ -398,10 +425,13 @@ class honeybadgerAPI2{
 	function get_dashboard_data($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$type=isset($parameters['type'])?$parameters['type']:"";
+			$type=isset($parameters['type'])?sanitize_text_field($parameters['type']):"";
 			$return=array();
 			if($type=="")
 			{
@@ -464,7 +494,7 @@ class honeybadgerAPI2{
 	    $bytestotal = 0;
 	    $path = realpath($path);
 	    if($path!==false && $path!='' && file_exists($path)){
-	        foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS)) as $object)
+	        foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object)
 	        {
 	        	try
 	        	{
@@ -477,16 +507,19 @@ class honeybadgerAPI2{
 	}
 	function get_saved_attachments($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$return=array('files'=>array(),'recordsTotal'=>0,'recordsFiltered'=>0);
 			$parameters = $request->get_params();
-			$folder=isset($parameters['folder'])?$parameters['folder']:"";
+			$folder=isset($parameters['folder'])?sanitize_text_field($parameters['folder']):"";
 			$start=isset($parameters['start'])?(int)$parameters['start']:0;
 			$limit=isset($parameters['limit'])?(int)$parameters['limit']:10;
-			$search=isset($parameters['search'])?$parameters['search']:"";
+			$search=isset($parameters['search'])?sanitize_text_field($parameters['search']):"";
 
-			$path=ABSPATH."wp-content/plugins/honeybadger-it/attachments";
+			$path=HONEYBADGER_UPLOADS_PATH."attachments";
 			
 			if($start>0)
 				$limit=$limit+$start;
@@ -558,6 +591,9 @@ class honeybadgerAPI2{
 					$top_level->name='';
 					$return['files']=array_merge(array($top_level),$return['files']);
 				}
+				$rest_url=get_rest_url();
+				$rest_url=str_ireplace(get_site_url(), "", $rest_url);
+				$return['rest_url']=$rest_url;
 				return $this->returnOk($return);
 			}
 		}
@@ -576,12 +612,15 @@ class honeybadgerAPI2{
 	}
 	function delete_remote_item($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$file=isset($parameters['file'])?$parameters['file']:"";
-			$type=isset($parameters['type'])?$parameters['type']:"";
-			$attachments_path=ABSPATH."wp-content/plugins/honeybadger-it/attachments";
+			$file=isset($parameters['file'])?sanitize_text_field($parameters['file']):"";
+			$type=isset($parameters['type'])?sanitize_text_field($parameters['type']):"";
+			$attachments_path=HONEYBADGER_UPLOADS_PATH."attachments";
 			if($type=="file")
 			{
 				$file_name=basename($file);

@@ -4,6 +4,8 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
+namespace HoneyBadgerIT;
+
 class HoneyBadger_REST_Controller {
  
     public function __construct() {
@@ -32,20 +34,20 @@ class HoneyBadger_REST_Controller {
         $parameters = $request->get_params();
         if(isset($parameters['method']))
         {
-            require_once WP_PLUGIN_DIR  . '/honeybadger-it/includes/honeybadger-api.php';
-            $honeybadger=new honeybadgerAPI;
+            require_once HONEYBADGER_PLUGIN_PATH . '/includes/honeybadger-api.php';
+            $honeybadger=new API\honeybadgerAPI;
             $results = $honeybadger->doMethod($request);
         }
         if(isset($parameters['method2']))
         {
-            require_once WP_PLUGIN_DIR  . '/honeybadger-it/includes/honeybadger-api2.php';
-            $honeybadger=new honeybadgerAPI2;
+            require_once HONEYBADGER_PLUGIN_PATH . '/includes/honeybadger-api2.php';
+            $honeybadger=new API\honeybadgerAPI2;
             $results = $honeybadger->doMethod($request);
         }
         if(isset($parameters['products_method']))
         {
-            require_once WP_PLUGIN_DIR  . '/honeybadger-it/includes/honeybadger-products-api.php';
-            $honeybadger=new honeybadgerProductsAPI;
+            require_once HONEYBADGER_PLUGIN_PATH . '/includes/honeybadger-products-api.php';
+            $honeybadger=new API\honeybadgerProductsAPI;
             $results = $honeybadger->doMethod($request);
         }
         $data=array();
@@ -58,18 +60,15 @@ class HoneyBadger_REST_Controller {
             $data[] = $this->prepare_response_for_collection( $response );
         }
  
-        return rest_ensure_response( $data );
+        return $data;
     }
     public function prepare_item_for_response( $response, $request ) {
         $response_data = array();
  
         $schema = $this->get_methods_schema( $request );
 
-        if ( isset( $schema['properties']['id'] ) ) {
-            $response_data['id'] = (int) $response->id;
-        }
         if ( isset( $schema['properties']['content'] ) ) {
-            $response_data['data'] = $response;
+            $response_data = $response;
         }
         return rest_ensure_response( $response_data );
     }
@@ -133,10 +132,4 @@ class HoneyBadger_REST_Controller {
     }
 }
 
-function honeybadger_register_rest_routes() {
-    $controller = new HoneyBadger_REST_Controller();
-    $controller->register_routes();
-}
- 
-add_action( 'rest_api_init', 'honeybadger_register_rest_routes' );
 ?>

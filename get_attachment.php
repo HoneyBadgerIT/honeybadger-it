@@ -4,18 +4,15 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
-if ( ! defined( 'ABSPATH' ) ) {
-    require_once("../../../wp-load.php");
-}
 
-$path=isset($_GET['path'])?$_GET['path']:"";
-$key=isset($_GET['key'])?$_GET['key']:"";
+$path=isset($_GET['path'])?sanitize_text_field($_GET['path']):"";
+$key=isset($_GET['key'])?sanitize_text_field($_GET['key']):"";
 if($key!="" && $path!="")
 {
 	$url = get_site_url();
 	$domain=str_ireplace("https://","",$url);
 	$domain=str_ireplace("http://","",$domain);
-	$attachments_path=ABSPATH."wp-content/plugins/honeybadger-it/attachments";
+	$attachments_path=HONEYBADGER_UPLOADS_PATH."attachments";
 	$file_name=basename($path);
 	$file_folder=str_ireplace("/".basename($path),"",$path);
 	$possible_files=glob($attachments_path."/".$file_folder."/*_".$file_name);
@@ -23,7 +20,7 @@ if($key!="" && $path!="")
 	if(is_array($possible_files))
 	{
 		foreach($possible_files as $possible_file)
-			$file_hash=getMd5FromFilename(basename($possible_file));
+			$file_hash=honeybadger_it_plugin_get_md5_from_filename(basename($possible_file));
 	}
 	if($file_hash!="")
 	{
@@ -36,7 +33,7 @@ if($key!="" && $path!="")
 				$mime=mime_content_type($filepath);
 				header('Content-Description: File Transfer');
 				header('Content-Type: '.$mime);
-				header('Content-Disposition: inline; filename="' . removeMd5FromFilename(basename($filepath)) . '"');
+				header('Content-Disposition: inline; filename="' . honeybadger_it_plugin_remove_md5_from_filename(basename($filepath)) . '"');
 				header('Expires: 0');
 				header('Cache-Control: must-revalidate');
 				header('Pragma: public');
@@ -53,17 +50,17 @@ if($key!="" && $path!="")
 		}
 	}
 }
-function isValidmd5($md5="")
+function honeybadger_it_plugin_is_valid_md5($md5="")
 {
     return preg_match('/^[a-f0-9]{32}$/', $md5);
 }
-function removeMd5FromFilename($file="")
+function honeybadger_it_plugin_remove_md5_from_filename($file="")
 {
 	if($file!="")
 	{
 		$tmp=explode("_",$file);
 		$new_tmp=array();
-		if(is_array($tmp) && count($tmp)>1 && isValidmd5($tmp[0]))
+		if(is_array($tmp) && count($tmp)>1 && honeybadger_it_plugin_is_valid_md5($tmp[0]))
 		{
 			for($i=1;$i<count($tmp);$i++)
 				$new_tmp[]=$tmp[$i];
@@ -73,13 +70,13 @@ function removeMd5FromFilename($file="")
 	}
 	return $file;
 }
-function getMd5FromFilename($file="")
+function honeybadger_it_plugin_get_md5_from_filename($file="")
 {
 	if($file!="")
 	{
 		$tmp=explode("_",$file);
 		$new_tmp=array();
-		if(is_array($tmp) && count($tmp)>1 && isValidmd5($tmp[0]))
+		if(is_array($tmp) && count($tmp)>1 && honeybadger_it_plugin_is_valid_md5($tmp[0]))
 			return $tmp[0];
 	}
 	return $file;

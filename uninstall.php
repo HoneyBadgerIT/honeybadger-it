@@ -13,7 +13,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 global $wpdb;
 
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it-activator.php';
-$activator=new Honeybadger_IT_Activator;
+$activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
 $activator->deleteTables();
 
 require_once(ABSPATH.'wp-admin/includes/user.php');

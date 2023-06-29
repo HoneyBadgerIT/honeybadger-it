@@ -4,6 +4,8 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
+namespace HoneyBadgerIT\API;
+use \stdClass;
 class honeybadgerProductsAPI{
 	public $config;
 	public $config_front;
@@ -28,7 +30,7 @@ class honeybadgerProductsAPI{
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-	        if(isset($parameters['products_method']) && method_exists($this,$parameters['products_method']))
+	        if(isset($parameters['products_method']) && method_exists($this,sanitize_text_field($parameters['products_method'])))
 	        {
 	        	$method=$parameters['products_method'];
 	        	return $this->$method($request);       
@@ -53,17 +55,20 @@ class honeybadgerProductsAPI{
 	function search_customer($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$term=isset($parameters['customer'])?$parameters['customer']:"";
+			$term=isset($parameters['customer'])?sanitize_text_field($parameters['customer']):"";
 			if($term!="")
 			{
 				$limit = 0;
 				$ids = array();
 				if ( is_numeric( $term ) )
 				{
-					$customer = new WC_Customer( intval( $term ) );
+					$customer = new \WC_Customer( intval( $term ) );
 					if ( 0 !== $customer->get_id() )
 					{
 						$ids = array( $customer->get_id() );
@@ -81,7 +86,7 @@ class honeybadgerProductsAPI{
 				$found_customers = array();
 				foreach ( $ids as $id ) 
 				{
-					$customer = new WC_Customer( $id );
+					$customer = new \WC_Customer( $id );
 					$found_customers[ $id ] = sprintf(
 						esc_html__( '%1$s (#%2$s &ndash; %3$s)', 'woocommerce' ),
 						$customer->get_first_name() . ' ' . $customer->get_last_name(),
@@ -97,11 +102,14 @@ class honeybadgerProductsAPI{
 	function get_products_by_ids($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$ids=isset($parameters['ids'])?$parameters['ids']:"";
-			$other_action=isset($parameters['other_action'])?$parameters['other_action']:"";
+			$ids=isset($parameters['ids'])?$parameters['ids']:array();
+			$other_action=isset($parameters['other_action'])?sanitize_text_field($parameters['other_action']):"";
 			if(is_array($ids))
 			{
 				$products=array();
@@ -140,10 +148,13 @@ class honeybadgerProductsAPI{
 	function search_product($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$product_name=isset($parameters['product_name'])?$parameters['product_name']:"";
+			$product_name=isset($parameters['product_name'])?sanitize_text_field($parameters['product_name']):"";
 			if($product_name!="")
 			{
 				$sql="select ID from ".$wpdb->prefix."posts where post_title like '%".esc_sql($product_name)."%' and (post_type='product' or post_type='product_variation') order by post_title";
@@ -151,7 +162,7 @@ class honeybadgerProductsAPI{
 				if(is_array($results) && count($results)>0)
 				{
 					$rate_value=0;
-					$WC_Tax=new WC_Tax;
+					$WC_Tax=new \WC_Tax;
 					$rates=$WC_Tax->get_rates();
 					$woocommerce_prices_include_tax=get_option('woocommerce_prices_include_tax');
 					if(is_array($rates))
@@ -206,13 +217,16 @@ class honeybadgerProductsAPI{
 	function set_customer_to_new_order($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$customer_id=isset($parameters['customer_id'])?(int)$parameters['customer_id']:0;
 			if($customer_id>0)
 			{
-				$customer = new WC_Customer($customer_id);
+				$customer = new \WC_Customer($customer_id);
 				if($customer)
 				{
 					$return=new stdClass;
@@ -227,28 +241,31 @@ class honeybadgerProductsAPI{
 	function get_available_payment_shippment_methods($request)
 	{
 		global $wpdb,$woocommerce;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$billing_country=isset($parameters['billing_country'])?$parameters['billing_country']:"";
-		    $billing_state=isset($parameters['billing_state'])?$parameters['billing_state']:"";
-		    $billing_postcode=isset($parameters['billing_postcode'])?$parameters['billing_postcode']:"";
-		    $billing_city=isset($parameters['billing_city'])?$parameters['billing_city']:"";
-		    $shipping_country=isset($parameters['shipping_country'])?$parameters['shipping_country']:"";
-		    $shipping_state=isset($parameters['shipping_state'])?$parameters['shipping_state']:"";
-		    $shipping_postcode=isset($parameters['shipping_postcode'])?$parameters['shipping_postcode']:"";
-		    $shipping_city=isset($parameters['shipping_city'])?$parameters['shipping_city']:"";
+			$billing_country=isset($parameters['billing_country'])?sanitize_text_field($parameters['billing_country']):"";
+		    $billing_state=isset($parameters['billing_state'])?sanitize_text_field($parameters['billing_state']):"";
+		    $billing_postcode=isset($parameters['billing_postcode'])?sanitize_text_field($parameters['billing_postcode']):"";
+		    $billing_city=isset($parameters['billing_city'])?sanitize_text_field($parameters['billing_city']):"";
+		    $shipping_country=isset($parameters['shipping_country'])?sanitize_text_field($parameters['shipping_country']):"";
+		    $shipping_state=isset($parameters['shipping_state'])?sanitize_text_field($parameters['shipping_state']):"";
+		    $shipping_postcode=isset($parameters['shipping_postcode'])?sanitize_text_field($parameters['shipping_postcode']):"";
+		    $shipping_city=isset($parameters['shipping_city'])?sanitize_text_field($parameters['shipping_city']):"";
 		    $products=isset($parameters['products'])?$parameters['products']:array();
 		    $product_parents=isset($parameters['product_parents'])?$parameters['product_parents']:array();
 		    $qtys=isset($parameters['qtys'])?$parameters['qtys']:array();
-		    $billing_address_1=isset($parameters['billing_address_1'])?$parameters['billing_address_1']:"";
-		    $billing_address_2=isset($parameters['billing_address_2'])?$parameters['billing_address_2']:"";
-		    $shipping_address_1=isset($parameters['shipping_address_1'])?$parameters['shipping_address_1']:"";
-		    $shipping_address_2=isset($parameters['shipping_address_2'])?$parameters['shipping_address_2']:"";
-		    $same_as_billing=isset($parameters['same_as_billing'])?$parameters['same_as_billing']:false;
+		    $billing_address_1=isset($parameters['billing_address_1'])?sanitize_text_field($parameters['billing_address_1']):"";
+		    $billing_address_2=isset($parameters['billing_address_2'])?sanitize_text_field($parameters['billing_address_2']):"";
+		    $shipping_address_1=isset($parameters['shipping_address_1'])?sanitize_text_field($parameters['shipping_address_1']):"";
+		    $shipping_address_2=isset($parameters['shipping_address_2'])?sanitize_text_field($parameters['shipping_address_2']):"";
+		    $same_as_billing=isset($parameters['same_as_billing'])?(bool)$parameters['same_as_billing']:false;
 		    if($billing_country!="" && $billing_postcode!="" && $billing_city!="" && is_array($products) && is_array($product_parents) && count($products)>0 && count($products)==count($product_parents) && is_array($qtys) && count($qtys)==count($products))
 	    	{
-	    		if($same_as_billing=="true")
+	    		if($same_as_billing==true)
 	    		{
 	    			$shipping_country=$billing_country;
 	    			$shipping_state=$billing_state;
@@ -263,29 +280,29 @@ class honeybadgerProductsAPI{
 	    			$product=new stdClass;
 	    			$product->id=0;
 	    			$product->variation_id=0;
-	    			$product->qty=$qtys[$i];
-	    			if($product_parents[$i]>0)
+	    			$product->qty=(int)$qtys[$i];
+	    			if((int)$product_parents[$i]>0)
 	    			{
-	    				$product->id=$product_parents[$i];
-	    				$product->variation_id=$products[$i];
+	    				$product->id=(int)$product_parents[$i];
+	    				$product->variation_id=(int)$products[$i];
 	    			}
 	    			else
-	    				$product->id=$products[$i];
+	    				$product->id=(int)$products[$i];
 	    			$the_products[]=$product;
 	    		}
 	    		$woocommerce->init();
 		        $woocommerce->frontend_includes();
 		        $session_class = apply_filters( 'woocommerce_session_handler', 'WC_Session_Handler' );
 		        require_once WC()->plugin_path() .'/includes/abstracts/abstract-wc-session.php';
-		        $woocommerce->session  = new WC_Session_Handler();
-		        $woocommerce->cart     = new WC_Cart();
-		        $woocommerce->customer = new WC_Customer();
-		        $woocommerce->countries = new WC_Countries();
-		        $woocommerce->checkout = new WC_Checkout();
-		        $woocommerce->order_factory   = new WC_Order_Factory();
-		        $woocommerce->integrations    = new WC_Integrations();
+		        $woocommerce->session  = new \WC_Session_Handler();
+		        $woocommerce->cart     = new \WC_Cart();
+		        $woocommerce->customer = new \WC_Customer();
+		        $woocommerce->countries = new \WC_Countries();
+		        $woocommerce->checkout = new \WC_Checkout();
+		        $woocommerce->order_factory   = new \WC_Order_Factory();
+		        $woocommerce->integrations    = new \WC_Integrations();
 		        $rate_value=0;
-				$woocommerce->tax=new WC_Tax();
+				$woocommerce->tax=new \WC_Tax();
 		        if (! defined('WOOCOMMERCE_CHECKOUT')) define('WOOCOMMERCE_CHECKOUT', true);
 		        $woocommerce->cart->empty_cart();
 		        foreach($the_products as $the_product)
@@ -406,10 +423,13 @@ class honeybadgerProductsAPI{
 	}
 	function check_if_email_exists_for_new_order($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$email=isset($parameters['email'])?$parameters['email']:"";
+			$email=isset($parameters['email'])?sanitize_email($parameters['email']):"";
 			$return=new stdClass;
 			$return->email_ok=0;
 			$return->email_exists=0;
@@ -425,6 +445,9 @@ class honeybadgerProductsAPI{
 	function create_new_order($request)
 	{
 		global $wpdb,$woocommerce;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -509,15 +532,15 @@ class honeybadgerProductsAPI{
 	        $woocommerce->frontend_includes();
 	        $session_class = apply_filters( 'woocommerce_session_handler', 'WC_Session_Handler' );
 	        require_once WC()->plugin_path() .'/includes/abstracts/abstract-wc-session.php';
-	        $woocommerce->session  = new WC_Session_Handler();
-	        $woocommerce->cart     = new WC_Cart();
-	        $woocommerce->customer = new WC_Customer();
-	        $woocommerce->countries = new WC_Countries();
-	        $woocommerce->checkout = new WC_Checkout();
-	        $woocommerce->order_factory   = new WC_Order_Factory();
-	        $woocommerce->integrations    = new WC_Integrations();
+	        $woocommerce->session  = new \WC_Session_Handler();
+	        $woocommerce->cart     = new \WC_Cart();
+	        $woocommerce->customer = new \WC_Customer();
+	        $woocommerce->countries = new \WC_Countries();
+	        $woocommerce->checkout = new \WC_Checkout();
+	        $woocommerce->order_factory   = new \WC_Order_Factory();
+	        $woocommerce->integrations    = new \WC_Integrations();
 	        $rate_value=0;
-			$woocommerce->tax=new WC_Tax();
+			$woocommerce->tax=new \WC_Tax();
 	        if (! defined('WOOCOMMERCE_CHECKOUT')) define('WOOCOMMERCE_CHECKOUT', true);
 	        $woocommerce->cart->empty_cart();
 	        foreach($the_products as $the_product)
@@ -558,7 +581,7 @@ class honeybadgerProductsAPI{
 	        $woocommerce->customer->set_calculated_shipping(false);
 	        $woocommerce->cart->calculate_shipping();
         	$woocommerce->cart->calculate_totals();
-			$checkout = new WC_Checkout();
+			$checkout = new \WC_Checkout();
 			$order_id=$checkout->create_order($new_data);
 			if(is_int($order_id))
 			{
@@ -587,7 +610,7 @@ class honeybadgerProductsAPI{
 						update_post_meta($order_id,'_customer_user',$customer_id);
 						$userId=$customer_id;
 					}
-					$customer=new WC_Customer($userId);
+					$customer=new \WC_Customer($userId);
 					$customer->set_billing_first_name($data['billing_first_name']);
 					$customer->set_billing_last_name($data['billing_last_name']);
 					$customer->set_billing_email($data['billing_email']);
@@ -621,6 +644,9 @@ class honeybadgerProductsAPI{
 	}
 	function delete_order($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -636,12 +662,15 @@ class honeybadgerProductsAPI{
 	function get_products($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$limit=isset($parameters['limit'])?(int)$parameters['limit']:10;
 			$start=isset($parameters['start'])?(int)$parameters['start']:0;
-			$search=isset($parameters['search'])?$parameters['search']:"";
+			$search=isset($parameters['search'])?sanitize_text_field($parameters['search']):"";
 			$order_arr=isset($parameters['order'])?$parameters['order']:array();
 			$sql="select count(ID) as total from ".$wpdb->prefix."posts where (post_type='product' or post_type='product_variation') and post_status='publish'";
 			$result=$wpdb->get_row($sql);
@@ -654,7 +683,7 @@ class honeybadgerProductsAPI{
 			{
 				$sortables=array();
 				foreach($order_arr as $order)
-					$sortables[$order['column']]=$order['dir'];
+					$sortables[sanitize_text_field($order['column'])]=sanitize_text_field($order['dir']);
 				foreach($sortables as $col => $order)
 				{
 					if($col==0 && $order!="")
@@ -693,7 +722,7 @@ class honeybadgerProductsAPI{
 			if(is_array($results))
 			{
 				$rate_value=0;
-				$WC_Tax=new WC_Tax;
+				$WC_Tax=new \WC_Tax;
 				$rates=$WC_Tax->get_rates();
 				$woocommerce_prices_include_tax=get_option('woocommerce_prices_include_tax');
 				if(is_array($rates))
@@ -770,19 +799,22 @@ class honeybadgerProductsAPI{
 	}
 	function save_product_details($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$product_id=isset($parameters['product_id'])?(int)$parameters['product_id']:0;
 			$parent_id=isset($parameters['parent_id'])?(int)$parameters['parent_id']:0;
-			$regular_price=isset($parameters['regular_price']) && $parameters['regular_price']!=""?$parameters['regular_price']:"";
-		    $sale_price=isset($parameters['sale_price']) && $parameters['sale_price']!=""?$parameters['sale_price']:"";
-		    $sku=isset($parameters['sku'])?$parameters['sku']:"";
-		    $manage_stock=isset($parameters['manage_stock'])?$parameters['manage_stock']:"";
-		    $stock_1=isset($parameters['stock_1'])?$parameters['stock_1']:"";
-		    $stock_2=isset($parameters['stock_2'])?$parameters['stock_2']:"";
-		    $stock_low=isset($parameters['stock_low']) && $parameters['stock_low']!=""?$parameters['stock_low']:"";
-		    $short_description=isset($parameters['short_description'])?$parameters['short_description']:"";
+			$regular_price=isset($parameters['regular_price']) && $parameters['regular_price']!=""?sanitize_text_field($parameters['regular_price']):"";
+		    $sale_price=isset($parameters['sale_price']) && $parameters['sale_price']!=""?sanitize_text_field($parameters['sale_price']):"";
+		    $sku=isset($parameters['sku'])?sanitize_text_field($parameters['sku']):"";
+		    $manage_stock=isset($parameters['manage_stock'])?sanitize_text_field($parameters['manage_stock']):"";
+		    $stock_1=isset($parameters['stock_1'])?sanitize_text_field($parameters['stock_1']):"";
+		    $stock_2=isset($parameters['stock_2'])?sanitize_text_field($parameters['stock_2']):"";
+		    $stock_low=isset($parameters['stock_low']) && $parameters['stock_low']!=""?sanitize_text_field($parameters['stock_low']):"";
+		    $short_description=isset($parameters['short_description'])?wp_kses_post($parameters['short_description']):"";
 		    if($parent_id>0)
 		    	wp_update_post(array('ID' => $parent_id, 'post_excerpt' => $short_description ));
 		    else
@@ -832,7 +864,7 @@ class honeybadgerProductsAPI{
 					return $this->returnError($e->getMessage());
 				}
 			    $rate_value=0;
-				$WC_Tax=new WC_Tax;
+				$WC_Tax=new \WC_Tax;
 				$rates=$WC_Tax->get_rates();
 				$woocommerce_prices_include_tax=get_option('woocommerce_prices_include_tax');
 				if(is_array($rates))
@@ -860,6 +892,9 @@ class honeybadgerProductsAPI{
 	function get_product_details($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -868,7 +903,7 @@ class honeybadgerProductsAPI{
 			if($product_id>0)
 			{
 				$rate_value=0;
-				$WC_Tax=new WC_Tax;
+				$WC_Tax=new \WC_Tax;
 				$rates=$WC_Tax->get_rates();
 				$woocommerce_prices_include_tax=get_option('woocommerce_prices_include_tax');
 				if(is_array($rates))
@@ -985,6 +1020,9 @@ class honeybadgerProductsAPI{
 	function get_product_title($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -1004,11 +1042,14 @@ class honeybadgerProductsAPI{
 	function get_media_gallery($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$paged=isset($parameters['paged'])?$parameters['paged']+0:1;
-			$search=isset($parameters['search'])?$parameters['search']:"";
+			$search=isset($parameters['search'])?sanitize_text_field($parameters['search']):"";
 			if($paged>0)
 			{
 				$start=0;
@@ -1078,6 +1119,9 @@ class honeybadgerProductsAPI{
 	}
 	function remove_product_image($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -1092,6 +1136,9 @@ class honeybadgerProductsAPI{
 	}
 	function save_main_product_image($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -1107,6 +1154,9 @@ class honeybadgerProductsAPI{
 	}
 	function save_product_image_gallery($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -1124,11 +1174,14 @@ class honeybadgerProductsAPI{
 	}
 	function update_product_stock($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$product_id=isset($parameters['product_id'])?(int)$parameters['product_id']:0;
-			$operation=isset($parameters['operation'])?$parameters['operation']:"";
+			$operation=isset($parameters['operation'])?sanitize_text_field($parameters['operation']):"";
 			$qty=isset($parameters['qty'])?(int)$parameters['qty']:0;
 			if($product_id>0 && $qty>0 && ($operation=="+") || $operation=="-")
 			{
@@ -1172,11 +1225,14 @@ class honeybadgerProductsAPI{
 	}
 	function get_so_actions($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		global $wpdb;
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$order_state=isset($parameters['order_state'])?$parameters['order_state']:"";
+			$order_state=isset($parameters['order_state'])?sanitize_text_field($parameters['order_state']):"";
 			$order_status="";
 			if($order_state!="")
 				$order_status=" and so_states like'%".esc_sql($order_state)."%'";
@@ -1192,11 +1248,14 @@ class honeybadgerProductsAPI{
 	}
 	function get_so_email_attachments($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		global $wpdb;
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$status=isset($parameters['order_state'])?$parameters['order_state']:"";
+			$status=isset($parameters['order_state'])?sanitize_text_field($parameters['order_state']):"";
 			if($status!="")
 			{
 				$filter_attachments=array();
@@ -1228,7 +1287,7 @@ class honeybadgerProductsAPI{
 					if(count($filter_attachments))
 					{
 						$filter_attachments=array_unique($filter_attachments);
-						$sql="select id, title, attach_to_emails, generable from ".$wpdb->prefix."honeybadger_attachments where id in (".implode(",",$filter_attachments).") and enabled=1";
+						$sql="select id, title, attach_to_emails, generable from ".$wpdb->prefix."honeybadger_attachments where id in (".implode(",",array_map('esc_sql',$filter_attachments)).") and enabled=1";
 						return $wpdb->get_results($sql);
 					}
 				}
@@ -1239,11 +1298,14 @@ class honeybadgerProductsAPI{
 	function get_so_email_static_attachments($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$filter_sql="";
 			$parameters = $request->get_params();
-			$status=isset($parameters['order_state'])?$parameters['order_state']:"";
+			$status=isset($parameters['order_state'])?sanitize_text_field($parameters['order_state']):"";
 			if($status!="")
 			{
 				$filter_attachments=array();
@@ -1275,7 +1337,7 @@ class honeybadgerProductsAPI{
 					if(count($filter_attachments))
 					{
 						$filter_attachments=array_unique($filter_attachments);
-						$filter_sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where id in (".implode(",",$filter_attachments).") and enabled=1";
+						$filter_sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where id in (".implode(",",array_map('esc_sql',$filter_attachments)).") and enabled=1";
 					}
 				}
 			}
@@ -1299,6 +1361,9 @@ class honeybadgerProductsAPI{
 	function get_products_stock_log($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -1307,7 +1372,7 @@ class honeybadgerProductsAPI{
 			{
 				for($i=0;$i<count($product_ids);$i++)
 					$product_ids[$i]=esc_sql($product_ids[$i]);
-				$sql="delete from ".$wpdb->prefix."honeybadger_product_stock_log where product_id not in ('".implode("','",$product_ids)."')";
+				$sql="delete from ".$wpdb->prefix."honeybadger_product_stock_log where product_id not in ('".implode("','",array_map('esc_sql',$product_ids))."')";
 				$wpdb->query($sql);
 				$sql="select * from ".$wpdb->prefix."honeybadger_product_stock_log where done=0 order by mdate";
 				$results=$wpdb->get_results($sql);
@@ -1324,6 +1389,9 @@ class honeybadgerProductsAPI{
 	function save_products_stock_log($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -1335,6 +1403,8 @@ class honeybadgerProductsAPI{
 			{
 				for($i=0;$i<count($restored);$i++)
 				{
+					$restored[$i]=(int)$restored[$i];
+					$restored_oids[$i]=(int)$restored_oids[$i];
 					$sql="delete from ".$wpdb->prefix."honeybadger_product_stock_log where product_id='".esc_sql($restored[$i])."' and order_id='".esc_sql($restored_oids[$i])."' and restored_stock>0 and reduced_stock>0";
 					$wpdb->query($sql);
 				}
@@ -1343,6 +1413,8 @@ class honeybadgerProductsAPI{
 			{
 				for($i=0;$i<count($reduced);$i++)
 				{
+					$reduced[$i]=(int)$reduced[$i];
+					$reduced_oids[$i]=(int)$reduced_oids[$i];
 					$sql="update ".$wpdb->prefix."honeybadger_product_stock_log set
 					done=1
 					where

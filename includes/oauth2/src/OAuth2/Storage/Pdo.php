@@ -46,7 +46,7 @@ class Pdo implements
      *
      * @throws InvalidArgumentException
      */
-    public function __construct($connection, $config = array(),$tbl_prefix="")
+    public function __construct($connection, $config = array())
     {
         if (!$connection instanceof \PDO) {
             if (is_string($connection)) {
@@ -72,15 +72,15 @@ class Pdo implements
         $connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
         $this->config = array_merge(array(
-            'client_table' => $tbl_prefix.'oauth_clients',
-            'access_token_table' => $tbl_prefix.'oauth_access_tokens',
-            'refresh_token_table' => $tbl_prefix.'oauth_refresh_tokens',
-            'code_table' => $tbl_prefix.'oauth_authorization_codes',
-            'user_table' => $tbl_prefix.'oauth_users',
-            'jwt_table'  => $tbl_prefix.'oauth_jwt',
-            'jti_table'  => $tbl_prefix.'oauth_jti',
-            'scope_table'  => $tbl_prefix.'oauth_scopes',
-            'public_key_table'  => $tbl_prefix.'oauth_public_keys',
+            'client_table' => 'oauth_clients',
+            'access_token_table' => 'oauth_access_tokens',
+            'refresh_token_table' => 'oauth_refresh_tokens',
+            'code_table' => 'oauth_authorization_codes',
+            'user_table' => 'oauth_users',
+            'jwt_table'  => 'oauth_jwt',
+            'jti_table'  => 'oauth_jti',
+            'scope_table'  => 'oauth_scopes',
+            'public_key_table'  => 'oauth_public_keys',
         ), $config);
     }
 

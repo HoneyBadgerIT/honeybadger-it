@@ -4,6 +4,8 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
+namespace HoneyBadgerIT\API;
+use \stdClass;
 class honeybadgerAPI{
 
 	public $config;
@@ -31,7 +33,7 @@ class honeybadgerAPI{
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-	        if(isset($parameters['method']) && method_exists($this,$parameters['method']))
+	        if(isset($parameters['method']) && method_exists($this,sanitize_text_field($parameters['method'])))
 	        {
 	        	$method=$parameters['method'];
 	        	return $this->$method($request);       
@@ -42,10 +44,13 @@ class honeybadgerAPI{
 	function get_orders($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$wc_status=isset($parameters['wc_status'])?$parameters['wc_status']:"";
+			$wc_status=isset($parameters['wc_status'])?sanitize_text_field($parameters['wc_status']):"";
 			$statuses_arr=array();
 			$statuses=wc_get_order_statuses();
 			if($wc_status!="")
@@ -55,16 +60,16 @@ class honeybadgerAPI{
 				foreach($statuses as $status => $title)
 					$statuses_arr[]=$status;
 			}
-			$sql="select count(ID) as total from ".$wpdb->prefix."posts where post_type='shop_order' and post_status in ('".implode("','",$statuses_arr)."')";
+			$sql="select count(ID) as total from ".$wpdb->prefix."posts where post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."')";
 			$result=$wpdb->get_row($sql);
 			if(isset($result->total))
 				$total_orders=$result->total;
 			$limit=isset($parameters['limit'])?(int)$parameters['limit']:10;
 			$start=isset($parameters['start'])?(int)$parameters['start']:0;
-			$search=isset($parameters['search'])?$parameters['search']:"";
+			$search=isset($parameters['search'])?sanitize_text_field($parameters['search']):"";
 			$order_arr=isset($parameters['order'])?$parameters['order']:array();
-			$start_date=isset($parameters['start_date'])?$parameters['start_date']:"";
-			$end_date=isset($parameters['end_date'])?$parameters['end_date']:"";
+			$start_date=isset($parameters['start_date'])?sanitize_text_field($parameters['start_date']):"";
+			$end_date=isset($parameters['end_date'])?sanitize_text_field($parameters['end_date']):"";
 			if($start_date!="")
 				$start_date=" and p.post_date_gmt>='".date("Y-m-d 00:00:00",strtotime($start_date))."'";
 			if($end_date!="")
@@ -75,7 +80,7 @@ class honeybadgerAPI{
 			{
 				$sortables=array();
 				foreach($order_arr as $order)
-					$sortables[$order['column']]=$order['dir'];
+					$sortables[sanitize_text_field($order['column'])]=sanitize_text_field($order['dir']);
 				foreach($sortables as $col => $order)
 				{
 					if($col==0 && $order!="")
@@ -107,7 +112,7 @@ class honeybadgerAPI{
 				".$wpdb->prefix."posts p
 				LEFT JOIN ".$wpdb->prefix."postmeta m on m.post_id=p.ID
 				where 
-				p.post_type='shop_order' and post_status in ('".implode("','",$statuses_arr)."')
+				p.post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."')
 				".$start_date."
 				".$end_date."
 				and
@@ -128,7 +133,7 @@ class honeybadgerAPI{
 				LEFT JOIN ".$wpdb->prefix."postmeta m on m.post_id=p.ID
 				".$join_order_total."
 				where 
-				p.post_type='shop_order' and post_status in ('".implode("','",$statuses_arr)."')
+				p.post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."')
 				".$start_date."
 				".$end_date."
 				and
@@ -165,7 +170,7 @@ class honeybadgerAPI{
 					FROM
 					".$wpdb->prefix."posts p
 					where 
-					p.post_type='shop_order' and post_status in ('".implode("','",$statuses_arr)."')
+					p.post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."')
 					".$start_date."
 					".$end_date;
 					$result=$wpdb->get_row($sql);
@@ -181,7 +186,7 @@ class honeybadgerAPI{
 				".$wpdb->prefix."posts p
 				".$join_order_total."
 				where 
-				p.post_type='shop_order' and p.post_status in ('".implode("','",$statuses_arr)."')
+				p.post_type='shop_order' and p.post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."')
 				".$start_date."
 				".$end_date."
 				order by ".implode(",",$order_by)."
@@ -259,6 +264,9 @@ class honeybadgerAPI{
 	function get_order_statuses($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$statuses=array();
@@ -351,6 +359,11 @@ class honeybadgerAPI{
 				if($status->txt_color=="")
 					$status->txt_color="#777777";
 
+				$status->status=sanitize_text_field($status->status);
+				$status->title=sanitize_text_field($status->title);
+				$status->bg_color=sanitize_hex_color($status->bg_color);
+				$status->txt_color=sanitize_hex_color($status->txt_color);
+
 				$sql="insert into ".$wpdb->prefix."honeybadger_custom_order_statuses set
 				custom_order_status='".esc_sql($status->status)."',
 				custom_order_status_title='".esc_sql($status->title)."',
@@ -364,6 +377,9 @@ class honeybadgerAPI{
 	function save_order_statuses($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -371,25 +387,25 @@ class honeybadgerAPI{
 			$title=isset($parameters['title'])?$parameters['title']:array();
 			$bg_color=isset($parameters['bg_color'])?$parameters['bg_color']:array();
 			$txt_color=isset($parameters['txt_color'])?$parameters['txt_color']:array();
-			$use_status_colors_on_wc=isset($parameters['use_status_colors_on_wc'])?$parameters['use_status_colors_on_wc']:"";
+			$use_status_colors_on_wc=isset($parameters['use_status_colors_on_wc'])?sanitize_text_field($parameters['use_status_colors_on_wc']):"";
 
 			if(is_array($status) && count($status)>0 && is_array($title) && is_array($bg_color) && is_array($txt_color) && count($status)==count($title) && count($status)==count($bg_color) && count($status)==count($txt_color))
 			{
 				for($i=0;$i<count($status);$i++)
 				{
 					$sql="update ".$wpdb->prefix."honeybadger_custom_order_statuses set
-					custom_order_status_title='".esc_sql($title[$i])."',
-					bg_color='".esc_sql($bg_color[$i])."',
-					txt_color='".esc_sql($txt_color[$i])."',
+					custom_order_status_title='".esc_sql(sanitize_text_field($title[$i]))."',
+					bg_color='".esc_sql(sanitize_hex_color($bg_color[$i]))."',
+					txt_color='".esc_sql(sanitize_hex_color($txt_color[$i]))."',
 					mdate='".time()."'
 					where custom_order_status='".esc_sql($status[$i])."'";
 					if($wpdb->query($sql)<1)
 					{
 						$sql="insert into ".$wpdb->prefix."honeybadger_custom_order_statuses set
-						custom_order_status='".esc_sql($status[$i])."',
-						custom_order_status_title='".esc_sql($title[$i])."',
-						bg_color='".esc_sql($bg_color[$i])."',
-						txt_color='".esc_sql($txt_color[$i])."',
+						custom_order_status='".esc_sql(sanitize_text_field($status[$i]))."',
+						custom_order_status_title='".esc_sql(sanitize_text_field($title[$i]))."',
+						bg_color='".esc_sql(sanitize_hex_color($bg_color[$i]))."',
+						txt_color='".esc_sql(sanitize_hex_color($txt_color[$i]))."',
 						mdate='".time()."'";
 					}
 					
@@ -397,7 +413,7 @@ class honeybadgerAPI{
 					{
 						$result=new stdClass;
 						$result->id=0;
-						$result->content=array('status'=>'error','msg'=>__("Something went wrong, please try again [1].","honeyb"));
+						$result->content=array('status'=>'error','msg'=>esc_html__("Something went wrong, please try again [1].","honeyb"));
 						return array($result);
 					}
 				}
@@ -409,28 +425,31 @@ class honeybadgerAPI{
 				{
 					$result=new stdClass;
 					$result->id=0;
-					$result->content=array('status'=>'error','msg'=>__("Something went wrong, please try again [2].","honeyb"));
+					$result->content=array('status'=>'error','msg'=>esc_html__("Something went wrong, please try again [2].","honeyb"));
 					return array($result);
 				}
 				$result=new stdClass;
 				$result->id=0;
-				$result->content=array('status'=>'ok','msg'=>__("Order statuses updated with success","honeyb"));
+				$result->content=array('status'=>'ok','msg'=>esc_html__("Order statuses updated with success","honeyb"));
 				return array($result);
 			}
 			
 		}
 		$result=new stdClass;
 		$result->id=0;
-		$result->content=array('status'=>'error','msg'=>__("Something went wrong, please try again [3].","honeyb"));
+		$result->content=array('status'=>'error','msg'=>esc_html__("Something went wrong, please try again [3].","honeyb"));
 		return array($result);
 	}
 	function delete_custom_order_status($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$status=isset($parameters['status'])?$parameters['status']:"";
+			$status=isset($parameters['status'])?sanitize_text_field($parameters['status']):"";
 			if($status!="")
 			{
 				$sql="select count(ID) as total from ".$wpdb->prefix."posts where post_type='shop_order' and post_status='".esc_sql($status)."'";
@@ -452,6 +471,9 @@ class honeybadgerAPI{
 	function get_order_details($request, $remaining_products=array(),$last_order_id=0)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -484,7 +506,7 @@ class honeybadgerAPI{
 				{
 					foreach ( $refunds as $refund ) 
 					{
-						$who_refunded = new WP_User( $refund->get_refunded_by() );
+						$who_refunded = new \WP_User( $refund->get_refunded_by() );
 						$tmp=new stdClass;
 						$tmp->id=$refund->get_id();
 						$tmp->who_refunded='N/A';
@@ -511,7 +533,7 @@ class honeybadgerAPI{
 					foreach($line_items_fee as $fee_id => $fee)
 					{
 						$tmp=new stdClass;
-						$tmp->fee=$fee->get_name() ? $fee->get_name() : __( 'Fee', 'honeyb' );
+						$tmp->fee=$fee->get_name() ? $fee->get_name() : esc_html__( 'Fee', 'honeyb' );
 						$tmp->value=$fee->get_total();
 						$tmp->refunded=$order_data->get_total_refunded_for_item( $fee_id, 'fee' );
 						$tmp->tax=0;
@@ -603,6 +625,10 @@ class honeybadgerAPI{
 	function getOrderSiblings($order_id=0)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
+		$order_id=(int)$order_id;
 		if($order_id>0)
 		{
 			$sql="select meta_value from ".$wpdb->prefix."postmeta where post_id='".esc_sql($order_id)."' and (meta_key='_honeybadger_split_from' or meta_key='_honeybadger_split_in')";
@@ -620,7 +646,7 @@ class honeybadgerAPI{
 				sort($ids);
 				while(true)
 				{
-					$sql="select meta_value from ".$wpdb->prefix."postmeta where post_id in ('".implode("','",$ids)."') and (meta_key='_honeybadger_split_from' or meta_key='_honeybadger_split_in')";
+					$sql="select meta_value from ".$wpdb->prefix."postmeta where post_id in ('".implode("','",array_map('esc_sql',$ids))."') and (meta_key='_honeybadger_split_from' or meta_key='_honeybadger_split_in')";
 					$results=$wpdb->get_results($sql);
 					if(is_array($results))
 					{
@@ -657,12 +683,19 @@ class honeybadgerAPI{
 	function get_generable_attachments()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		$sql="select id, title from ".$wpdb->prefix."honeybadger_attachments where generable=1 and enabled=1 order by id";
 		return $wpdb->get_results($sql);
 	}
 	function get_email_attachments($status="")
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
+		$status=sanitize_text_field($status);
 		$filter_attachments=array();
 		if($status!="")
 		{
@@ -690,7 +723,7 @@ class honeybadgerAPI{
 				if(count($all_attached_to_emails)>0)
 				{
 					$good_email_ids=array();
-					$sql="select e.id from ".$wpdb->prefix."honeybadger_emails e where e.id in (".implode(",",$all_attached_to_emails).") and e.statuses like '%".esc_sql($status)."%' and e.enabled=1";
+					$sql="select e.id from ".$wpdb->prefix."honeybadger_emails e where e.id in (".implode(",",array_map('esc_sql',$all_attached_to_emails)).") and e.statuses like '%".esc_sql($status)."%' and e.enabled=1";
 					$results=$wpdb->get_results($sql);
 					if(is_array($results))
 					{
@@ -720,7 +753,7 @@ class honeybadgerAPI{
 			if(count($filter_attachments)>0)
 			{
 				$filter_attachments=array_unique($filter_attachments);
-				$sql="select id, title, attach_to_wc_emails, attach_to_emails, generable from ".$wpdb->prefix."honeybadger_attachments where id in (".implode(",",$filter_attachments).") and enabled=1";
+				$sql="select id, title, attach_to_wc_emails, attach_to_emails, generable from ".$wpdb->prefix."honeybadger_attachments where id in (".implode(",",array_map('esc_sql',$filter_attachments)).") and enabled=1";
 				return $wpdb->get_results($sql);
 			}
 		}
@@ -730,6 +763,10 @@ class honeybadgerAPI{
 	function get_email_static_attachments($status="")
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
+		$status=sanitize_text_field($status);
 		$filter_attachments=array();
 		$filter_sql="";
 		if($status!="")
@@ -758,7 +795,7 @@ class honeybadgerAPI{
 				if(count($all_attached_to_emails)>0)
 				{
 					$good_email_ids=array();
-					$sql="select e.id from ".$wpdb->prefix."honeybadger_emails e where e.id in (".implode(",",$all_attached_to_emails).") and e.statuses like '%".esc_sql($status)."%' and e.enabled=1";
+					$sql="select e.id from ".$wpdb->prefix."honeybadger_emails e where e.id in (".implode(",",array_map('esc_sql',$all_attached_to_emails)).") and e.statuses like '%".esc_sql($status)."%' and e.enabled=1";
 					$results=$wpdb->get_results($sql);
 					if(is_array($results))
 					{
@@ -788,7 +825,7 @@ class honeybadgerAPI{
 			if(count($filter_attachments)>0)
 			{
 				$filter_attachments=array_unique($filter_attachments);
-				$filter_sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where id in (".implode(",",$filter_attachments).") and enabled=1";
+				$filter_sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where id in (".implode(",",array_map('esc_sql',$filter_attachments)).") and enabled=1";
 			}
 		}
 		if($filter_sql=="")
@@ -809,6 +846,10 @@ class honeybadgerAPI{
 	function get_email_actions($status="")
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
+		$status=sanitize_text_field($status);
 		$order_status="";
 		if($status!="")
 			$order_status=" and statuses like'%wc-".esc_sql($status)."%'";
@@ -818,6 +859,9 @@ class honeybadgerAPI{
 	function check_for_new_orders()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		$last_order_id=isset($_POST['last_order_id'])?(int)$_POST['last_order_id']:0;
 		if($last_order_id>0)
 		{
@@ -825,7 +869,7 @@ class honeybadgerAPI{
 			$statuses_arr=array();
 			foreach($statuses as $status => $title)
 				$statuses_arr[]=$status;
-			$sql="select ID from ".$wpdb->prefix."posts where ID>'".esc_sql($last_order_id)."' and post_type='shop_order' and post_status in ('".implode("','",$statuses_arr)."') order by ID desc";
+			$sql="select ID from ".$wpdb->prefix."posts where ID>'".esc_sql($last_order_id)."' and post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."') order by ID desc";
 			$results=$wpdb->get_results($sql);
 			if(is_array($results) && count($results)>0)
 			{
@@ -839,11 +883,14 @@ class honeybadgerAPI{
 	}
 	function save_order_addresses($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$order_id=isset($parameters['order_id'])?(int)$parameters['order_id']:0;
-			$customer_note=isset($parameters['customer_note'])?$parameters['customer_note']:"";
+			$customer_note=isset($parameters['customer_note'])?sanitize_text_field($parameters['customer_note']):"";
 			if($order_id>0)
 			{
 				if($customer_note!="")
@@ -854,7 +901,7 @@ class honeybadgerAPI{
 				}
 				$save_vars=array('billing_first_name','billing_last_name','billing_company','billing_address_1','billing_address_2','billing_city','billing_postcode','billing_country','billing_state','billing_email','billing_phone','shipping_first_name','shipping_last_name','shipping_company','shipping_address_1','shipping_address_2','shipping_city','shipping_postcode','shipping_country','shipping_state','shipping_phone','transaction_id');
 				foreach($save_vars as $var)
-					update_post_meta( $order_id, '_'.$var, ((isset($parameters[$var]))?sanitize_text_field($parameters[$var]):"") );
+					update_post_meta( $order_id, '_'.sanitize_text_field($var), ((isset($parameters[$var]))?sanitize_text_field($parameters[$var]):"") );
 				$order=wc_get_order($order_id);
 				update_post_meta( $order_id, '_billing_address_index', implode( ' ', $order->get_address( 'billing' ) ) );
 				update_post_meta( $order_id, '_shipping_address_index', implode( ' ', $order->get_address( 'shipping' ) ) );
@@ -865,14 +912,17 @@ class honeybadgerAPI{
 	function get_static_attachments()
 	{
 		global $wpdb;
-		$static_attachments_str=isset($_POST['static_attachments'])?$_POST['static_attachments']:"";
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
+		$static_attachments_str=isset($_POST['static_attachments'])?sanitize_text_field($_POST['static_attachments']):"";
 		$static_attachments=array();
 		if($static_attachments_str!="")
 			$static_attachments=explode(",",$static_attachments_str);
 		$attachments=array();
-		if(count($static_attachments)>0)
+		if(is_array($static_attachments) && count($static_attachments)>0)
 		{
-			$sql="select * from ".$wpdb->prefix."honeybadger_static_attachments where id in ('".implode("','",$static_attachments)."') and enabled=1 order by title";
+			$sql="select * from ".$wpdb->prefix."honeybadger_static_attachments where id in ('".implode("','",array_map('esc_sql',$static_attachments))."') and enabled=1 order by title";
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
@@ -882,7 +932,7 @@ class honeybadgerAPI{
 					{
 						$attachment=ABSPATH.$result->path;
 						$file_name=$this->removeMd5FromFilename(basename($attachment));
-						$new_path=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$file_name;
+						$new_path=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$file_name;
 						if($file_name!=$new_path && copy($attachment,$new_path))
 							$attachments[]=$new_path;
 						else
@@ -903,50 +953,29 @@ class honeybadgerAPI{
 	}
 	function save_order_status($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$order_id=isset($parameters['order_id'])?(int)$parameters['order_id']:0;
-			$order_status=isset($parameters['order_status'])?$parameters['order_status']:"";
-			//$notify_customer=isset($parameters['notify_customer'])?(int)$parameters['notify_customer']:0;
+			$order_status=isset($parameters['order_status'])?sanitize_text_field($parameters['order_status']):"";
 			if($order_id>0 && $order_status!="")
 			{
-				$order = new WC_Order($order_id);
+				$order = new \WC_Order($order_id);
 				if (!empty($order))
 					$order->update_status($order_status);
 				return $this->get_order_details($request);
-				/*
-				$order=wc_get_order($order_id);
-				$statuses=wc_get_order_statuses();
-				$order_details=$order->get_data();
-				$current_status=((isset($statuses['wc-'.$order_details['status']]))?$statuses['wc-'.$order_details['status']]:$order_details['status']);
-				$note=__("Updated from HoneyBadger.it server.","honeyb");
-				$new_order_status=((isset($statuses[$order_status]))?$statuses[$order_status]:$order_status);
-				$note.=" ".__("Order status changed from","honeyb")." ".$current_status." ".__("to","honeyb")." ".$new_order_status.'.';
-				wp_update_post(['ID' => $order_id, 'post_status' => sanitize_text_field($order_status)]);
-				if($order_status=='wc-processing' && is_null($order->get_date_paid()))
-				{
-					update_post_meta($order_id, '_date_paid', time());
-					update_post_meta($order_id, '_paid_date', date('Y-m-d H:i:s'));
-				}
-				if($order_status=='wc-completed' && is_null($order->get_date_completed()))
-				{
-					update_post_meta($order_id, '_date_completed', time());
-					update_post_meta($order_id, '_completed_date', date('Y-m-d H:i:s'));
-				}
-				$order->add_order_note($note);
-				if($notify_customer==1)
-				{
-					do_action('woocommerce_order_status_changed',$order_id, $order_details['status'], str_ireplace("wc-","",$order_status), $order);
-				}
-				return $this->get_order_details($request);
-				*/
 			}
 		}
 	}
 	function get_wc_emails($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status !='wc-pending' order by id";
@@ -975,22 +1004,22 @@ class honeybadgerAPI{
 				'wc-email-order-items'=>'email-order-items.php'
 			);
 			$titles=array(
-				'wc-cancelled'=>__("Cancelled order","honeyb"),
-				'wc-failed'=>__("Failed order","honeyb"),
-				'wc-admin-new-order'=>__("New order","honeyb"),
-				'wc-customer-invoice'=>__("Customer invoice / Order details","honeyb"),
-				'wc-customer-new-account'=>__("New account","honeyb"),
-				'wc-customer-note'=>__("Customer note","honeyb"),
-				'wc-customer-reset-password'=>__("Reset password","honeyb"),
+				'wc-cancelled'=>esc_html__("Cancelled order","honeyb"),
+				'wc-failed'=>esc_html__("Failed order","honeyb"),
+				'wc-admin-new-order'=>esc_html__("New order","honeyb"),
+				'wc-customer-invoice'=>esc_html__("Customer invoice / Order details","honeyb"),
+				'wc-customer-new-account'=>esc_html__("New account","honeyb"),
+				'wc-customer-note'=>esc_html__("Customer note","honeyb"),
+				'wc-customer-reset-password'=>esc_html__("Reset password","honeyb"),
 				'wc-email-default'=>'',
-				'wc-email-header'=>__('Email Header ADVANCED'),
-				'wc-email-footer'=>__('Email Footer ADVANCED'),
-				'wc-email-styles'=>__('Email Styles ADVANCED'),
-				'wc-email-addresses'=>__('Email Addresses ADVANCED'),
-				'wc-email-customer-details'=>__('Email Customer Details ADVANCED'),
-				'wc-email-downloads'=>__('Email Downloads ADVANCED'),
-				'wc-email-order-details'=>__('Email Order Details ADVANCED'),
-				'wc-email-order-items'=>__('Email Order Items ADVANCED')
+				'wc-email-header'=>esc_html__('Email Header ADVANCED'),
+				'wc-email-footer'=>esc_html__('Email Footer ADVANCED'),
+				'wc-email-styles'=>esc_html__('Email Styles ADVANCED'),
+				'wc-email-addresses'=>esc_html__('Email Addresses ADVANCED'),
+				'wc-email-customer-details'=>esc_html__('Email Customer Details ADVANCED'),
+				'wc-email-downloads'=>esc_html__('Email Downloads ADVANCED'),
+				'wc-email-order-details'=>esc_html__('Email Order Details ADVANCED'),
+				'wc-email-order-items'=>esc_html__('Email Order Items ADVANCED')
 			);
 			$job_done=array();
 			if(count($results))
@@ -1029,7 +1058,7 @@ class honeybadgerAPI{
 				}
 			}
 			
-			$sql="delete from ".$wpdb->prefix."honeybadger_wc_emails where wc_status not in ('".implode("','",$all_states)."')";
+			$sql="delete from ".$wpdb->prefix."honeybadger_wc_emails where wc_status not in ('".implode("','",array_map('esc_sql',$all_states))."')";
 			$wpdb->query($sql);
 			$sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status!='wc-email-default' order by id";
 			$results=$wpdb->get_results($sql);
@@ -1039,49 +1068,49 @@ class honeybadgerAPI{
 				{
 					if($result->wc_status=='wc-email-header')
 					{
-						$result->content=file_get_contents(__DIR__."/emails/email-header.php");
+						$result->content=file_get_contents(HONEYBADGER_UPLOADS_PATH."/emails/email-header.php");
 						if(is_file(get_template_directory().'/woocommerce/emails/email-header.php'))
 							$result->subject='has_override';
 					}
 					if($result->wc_status=='wc-email-footer')
 					{
-						$result->content=file_get_contents(__DIR__."/emails/email-footer.php");
+						$result->content=file_get_contents(HONEYBADGER_UPLOADS_PATH."/emails/email-footer.php");
 						if(is_file(get_template_directory().'/woocommerce/emails/email-footer.php'))
 							$result->subject='has_override';
 					}
 					if($result->wc_status=='wc-email-styles')
 					{
-						$result->content=file_get_contents(__DIR__."/emails/email-styles.php");
+						$result->content=file_get_contents(HONEYBADGER_UPLOADS_PATH."/emails/email-styles.php");
 						if(is_file(get_template_directory().'/woocommerce/emails/email-styles.php'))
 							$result->subject='has_override';
 					}
 					if($result->wc_status=='wc-email-addresses')
 					{
-						$result->content=file_get_contents(__DIR__."/emails/email-addresses.php");
+						$result->content=file_get_contents(HONEYBADGER_UPLOADS_PATH."/emails/email-addresses.php");
 						if(is_file(get_template_directory().'/woocommerce/emails/email-addresses.php'))
 							$result->subject='has_override';
 					}
 					if($result->wc_status=='wc-email-customer-details')
 					{
-						$result->content=file_get_contents(__DIR__."/emails/email-customer-details.php");
+						$result->content=file_get_contents(HONEYBADGER_UPLOADS_PATH."/emails/email-customer-details.php");
 						if(is_file(get_template_directory().'/woocommerce/emails/email-customer-details.php'))
 							$result->subject='has_override';
 					}
 					if($result->wc_status=='wc-email-downloads')
 					{
-						$result->content=file_get_contents(__DIR__."/emails/email-downloads.php");
+						$result->content=file_get_contents(HONEYBADGER_UPLOADS_PATH."/emails/email-downloads.php");
 						if(is_file(get_template_directory().'/woocommerce/emails/email-downloads.php'))
 							$result->subject='has_override';
 					}
 					if($result->wc_status=='wc-email-order-details')
 					{
-						$result->content=file_get_contents(__DIR__."/emails/email-order-details.php");
+						$result->content=file_get_contents(HONEYBADGER_UPLOADS_PATH."/emails/email-order-details.php");
 						if(is_file(get_template_directory().'/woocommerce/emails/email-order-details.php'))
 							$result->subject='has_override';
 					}
 					if($result->wc_status=='wc-email-order-items')
 					{
-						$result->content=file_get_contents(__DIR__."/emails/email-order-items.php");
+						$result->content=file_get_contents(HONEYBADGER_UPLOADS_PATH."/emails/email-order-items.php");
 						if(is_file(get_template_directory().'/woocommerce/emails/email-order-items.php'))
 							$result->subject='has_override';
 					}
@@ -1141,6 +1170,9 @@ class honeybadgerAPI{
 	function get_wc_advanced_tpl($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$results=array();
@@ -1157,7 +1189,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-header')
 					{
 						if($type==0)
-							$result->content=file_get_contents(ABSPATH."wp-content/plugins/woocommerce/templates/emails/email-header.php");
+							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-header.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-header.php'))
@@ -1167,7 +1199,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-footer')
 					{
 						if($type==0)
-							$result->content=file_get_contents(ABSPATH."wp-content/plugins/woocommerce/templates/emails/email-footer.php");
+							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-footer.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-footer.php'))
@@ -1177,7 +1209,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-styles')
 					{
 						if($type==0)
-							$result->content=file_get_contents(ABSPATH."wp-content/plugins/woocommerce/templates/emails/email-styles.php");
+							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-styles.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-styles.php'))
@@ -1187,7 +1219,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-addresses')
 					{
 						if($type==0)
-							$result->content=file_get_contents(ABSPATH."wp-content/plugins/woocommerce/templates/emails/email-addresses.php");
+							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-addresses.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-addresses.php'))
@@ -1197,7 +1229,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-customer-details')
 					{
 						if($type==0)
-							$result->content=file_get_contents(ABSPATH."wp-content/plugins/woocommerce/templates/emails/email-customer-details.php");
+							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-customer-details.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-customer-details.php'))
@@ -1207,7 +1239,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-downloads')
 					{
 						if($type==0)
-							$result->content=file_get_contents(ABSPATH."wp-content/plugins/woocommerce/templates/emails/email-downloads.php");
+							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-downloads.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-downloads.php'))
@@ -1217,7 +1249,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-order-details')
 					{
 						if($type==0)
-							$result->content=file_get_contents(ABSPATH."wp-content/plugins/woocommerce/templates/emails/email-order-details.php");
+							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-order-details.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-order-details.php'))
@@ -1227,7 +1259,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-order-items')
 					{
 						if($type==0)
-							$result->content=file_get_contents(ABSPATH."wp-content/plugins/woocommerce/templates/emails/email-order-items.php");
+							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-order-items.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-order-items.php'))
@@ -1246,20 +1278,24 @@ class honeybadgerAPI{
 	function save_wc_email($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']:0;
-			$subject=isset($parameters['subject'])?$parameters['subject']:"";
-			$heading=isset($parameters['heading'])?$parameters['heading']:"";
-			$subheading=isset($parameters['subheading'])?$parameters['subheading']:"";
-			$content=isset($parameters['content'])?$parameters['content']:"";
-			$other_subject=isset($parameters['other_subject'])?$parameters['other_subject']:"";
-			$other_heading=isset($parameters['other_heading'])?$parameters['other_heading']:"";
-			$other_subheading_1=isset($parameters['other_subheading_1'])?$parameters['other_subheading_1']:"";
-			$other_subheading_2=isset($parameters['other_subheading_2'])?$parameters['other_subheading_2']:"";
-			$email_bcc=isset($parameters['email_bcc'])?$parameters['email_bcc']:"";
-			$enabled=isset($parameters['enabled'])?$parameters['enabled']:"";
+			$subject=isset($parameters['subject'])?sanitize_text_field($parameters['subject']):"";
+			$heading=isset($parameters['heading'])?wp_kses_post($parameters['heading']):"";
+			$subheading=isset($parameters['subheading'])?wp_kses_post($parameters['subheading']):"";
+			$content=isset($parameters['content'])?wp_kses_post($parameters['content']):"";
+			$content_orig=isset($parameters['content'])?$parameters['content']:"";
+			$other_subject=isset($parameters['other_subject'])?wp_kses_post($parameters['other_subject']):"";
+			$other_heading=isset($parameters['other_heading'])?wp_kses_post($parameters['other_heading']):"";
+			$other_subheading_1=isset($parameters['other_subheading_1'])?wp_kses_post($parameters['other_subheading_1']):"";
+			$other_subheading_2=isset($parameters['other_subheading_2'])?wp_kses_post($parameters['other_subheading_2']):"";
+			$email_bcc=isset($parameters['email_bcc'])?sanitize_email($parameters['email_bcc']):"";
+			$enabled=isset($parameters['enabled'])?sanitize_text_field($parameters['enabled']):"";
 			if($enabled=="on")
 				$enabled=1;
 			$sql="update ".$wpdb->prefix."honeybadger_wc_emails set
@@ -1281,44 +1317,57 @@ class honeybadgerAPI{
 			$result=$wpdb->get_row($sql);
 			if(isset($result->id))
 			{
+				//these are the advanced WC email templates, we cannot sanitize them, but we'll notify admin every time is changed
 				if($result->wc_status=='wc-email-header')
-					file_put_contents(__DIR__."/emails/email-header.php",$content);
+					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-header.php",$content_orig);
 				if($result->wc_status=='wc-email-footer')
-					file_put_contents(__DIR__."/emails/email-footer.php",$content);
+					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-footer.php",$content_orig);
 				if($result->wc_status=='wc-email-styles')
-					file_put_contents(__DIR__."/emails/email-styles.php",$content);
+					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-styles.php",$content_orig);
 				if($result->wc_status=='wc-email-addresses')
-					file_put_contents(__DIR__."/emails/email-addresses.php",$content);
-
+					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-addresses.php",$content_orig);
 				if($result->wc_status=='wc-email-customer-details')
-					file_put_contents(__DIR__."/emails/email-customer-details.php",$content);
+					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-customer-details.php",$content_orig);
 				if($result->wc_status=='wc-email-downloads')
-					file_put_contents(__DIR__."/emails/email-downloads.php",$content);
+					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-downloads.php",$content_orig);
 				if($result->wc_status=='wc-email-order-details')
-					file_put_contents(__DIR__."/emails/email-order-details.php",$content);
+					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-order-details.php",$content);
 				if($result->wc_status=='wc-email-order-items')
-					file_put_contents(__DIR__."/emails/email-order-items.php",$content);
+					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-order-items.php",$content_orig);
+				$this->sendAdminAdvWcEmailModifiedNotification($result->wc_status);
 			}
 		}
 		return $this->returnOk();
 	}
+	function sendAdminAdvWcEmailModifiedNotification($email_tpl="")
+	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
+		$admin_email=get_bloginfo('admin_email');
+		wp_mail($admin_email, "WC Advanced Email Template Saved","Email template: ".$email_tpl);
+	}
 	function save_other_email_settings($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$woocommerce_email_from_name=isset($parameters['woocommerce_email_from_name'])?$parameters['woocommerce_email_from_name']:"";
-			$woocommerce_email_from_address=isset($parameters['woocommerce_email_from_address'])?$parameters['woocommerce_email_from_address']:"";
-			$woocommerce_email_header_image=isset($parameters['woocommerce_email_header_image'])?$parameters['woocommerce_email_header_image']:"";
-			$woocommerce_email_footer_text=isset($parameters['woocommerce_email_footer_text'])?$parameters['woocommerce_email_footer_text']:"";
-			$woocommerce_email_base_color=isset($parameters['woocommerce_email_base_color'])?$parameters['woocommerce_email_base_color']:"";
-			$woocommerce_email_background_color=isset($parameters['woocommerce_email_background_color'])?$parameters['woocommerce_email_background_color']:"";
-			$woocommerce_email_body_background_color=isset($parameters['woocommerce_email_body_background_color'])?$parameters['woocommerce_email_body_background_color']:"";
-			$woocommerce_email_text_color=isset($parameters['woocommerce_email_text_color'])?$parameters['woocommerce_email_text_color']:"";
-			$show_images_in_emails=isset($parameters['show_images_in_emails'])?$parameters['show_images_in_emails']:"no";
-			$email_image_sizes=isset($parameters['email_image_sizes'])?$parameters['email_image_sizes']:"100x50";
-			$show_sku_in_emails=isset($parameters['show_sku_in_emails'])?$parameters['show_sku_in_emails']:"no";
+			$woocommerce_email_from_name=isset($parameters['woocommerce_email_from_name'])?sanitize_text_field($parameters['woocommerce_email_from_name']):"";
+			$woocommerce_email_from_address=isset($parameters['woocommerce_email_from_address'])?sanitize_email($parameters['woocommerce_email_from_address']):"";
+			$woocommerce_email_header_image=isset($parameters['woocommerce_email_header_image'])?sanitize_url($parameters['woocommerce_email_header_image']):"";
+			$woocommerce_email_footer_text=isset($parameters['woocommerce_email_footer_text'])?wp_kses_post($parameters['woocommerce_email_footer_text']):"";
+			$woocommerce_email_base_color=isset($parameters['woocommerce_email_base_color'])?sanitize_hex_color($parameters['woocommerce_email_base_color']):"";
+			$woocommerce_email_background_color=isset($parameters['woocommerce_email_background_color'])?sanitize_hex_color($parameters['woocommerce_email_background_color']):"";
+			$woocommerce_email_body_background_color=isset($parameters['woocommerce_email_body_background_color'])?sanitize_hex_color($parameters['woocommerce_email_body_background_color']):"";
+			$woocommerce_email_text_color=isset($parameters['woocommerce_email_text_color'])?sanitize_hex_color($parameters['woocommerce_email_text_color']):"";
+			$show_images_in_emails=isset($parameters['show_images_in_emails'])?sanitize_text_field($parameters['show_images_in_emails']):"no";
+			$email_image_sizes=isset($parameters['email_image_sizes'])?sanitize_text_field($parameters['email_image_sizes']):"100x50";
+			$show_sku_in_emails=isset($parameters['show_sku_in_emails'])?sanitize_text_field($parameters['show_sku_in_emails']):"no";
+
 			$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($show_images_in_emails)."' where config_name='show_images_in_emails'";
 			$wpdb->query($sql);
 			$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($email_image_sizes)."' where config_name='email_image_sizes'";
@@ -1336,11 +1385,14 @@ class honeybadgerAPI{
 	function do_order_wc_action($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$order_id=isset($parameters['order_id'])?(int)$parameters['order_id']:0;
-			$action=isset($parameters['action'])?$parameters['action']:"";
+			$action=isset($parameters['action'])?sanitize_text_field($parameters['action']):"";
 			if($order_id>0 && $action!="")
 			{
 				if($action=='new')
@@ -1368,6 +1420,9 @@ class honeybadgerAPI{
 	function enable_all_wc_email_templates($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$sql="update ".$wpdb->prefix."honeybadger_wc_emails set enabled=1 where 1";
@@ -1381,6 +1436,9 @@ class honeybadgerAPI{
 	function disable_all_wc_email_templates($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$sql="update ".$wpdb->prefix."honeybadger_wc_emails set enabled=0 where 1";
@@ -1394,18 +1452,21 @@ class honeybadgerAPI{
 	function load_defaults_for_wc_email_template($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$wc_status=isset($parameters['wc_status'])?$parameters['wc_status']:"";
-			$placeholder_subject=isset($parameters['placeholder_subject'])?$parameters['placeholder_subject']:"";
-			$placeholder_heading=isset($parameters['placeholder_heading'])?$parameters['placeholder_heading']:"";
-			$placeholder_subheading=isset($parameters['placeholder_subheading'])?$parameters['placeholder_subheading']:"";
-			$placeholder_other_subject=isset($parameters['placeholder_other_subject'])?$parameters['placeholder_other_subject']:"";
-			$placeholder_other_heading=isset($parameters['placeholder_other_heading'])?$parameters['placeholder_other_heading']:"";
-			$placeholder_other_subheading_1=isset($parameters['placeholder_other_subheading_1'])?$parameters['placeholder_other_subheading_1']:"";
-			$placeholder_other_subheading_2=isset($parameters['placeholder_other_subheading_2'])?$parameters['placeholder_other_subheading_2']:"";
-			$placeholder_content=isset($parameters['placeholder_content'])?$parameters['placeholder_content']:"";
+			$wc_status=isset($parameters['wc_status'])?sanitize_text_field($parameters['wc_status']):"";
+			$placeholder_subject=isset($parameters['placeholder_subject'])?sanitize_text_field($parameters['placeholder_subject']):"";
+			$placeholder_heading=isset($parameters['placeholder_heading'])?wp_kses_post($parameters['placeholder_heading']):"";
+			$placeholder_subheading=isset($parameters['placeholder_subheading'])?wp_kses_post($parameters['placeholder_subheading']):"";
+			$placeholder_other_subject=isset($parameters['placeholder_other_subject'])?wp_kses_post($parameters['placeholder_other_subject']):"";
+			$placeholder_other_heading=isset($parameters['placeholder_other_heading'])?wp_kses_post($parameters['placeholder_other_heading']):"";
+			$placeholder_other_subheading_1=isset($parameters['placeholder_other_subheading_1'])?wp_kses_post($parameters['placeholder_other_subheading_1']):"";
+			$placeholder_other_subheading_2=isset($parameters['placeholder_other_subheading_2'])?wp_kses_post($parameters['placeholder_other_subheading_2']):"";
+			$placeholder_content=isset($parameters['placeholder_content'])?wp_kses_post($parameters['placeholder_content']):"";
 			if($wc_status!="")
 			{
 				$sql="update ".$wpdb->prefix."honeybadger_wc_emails set 
@@ -1428,6 +1489,9 @@ class honeybadgerAPI{
 	}
 	function honeybadger_preview_woocommerce_mail()
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(isset($_POST['honeybadger_preview_woocommerce_mail']) && $_POST['honeybadger_preview_woocommerce_mail']=='true')
 		{
 		    if ( isset( $_POST['honeybadger_preview_woocommerce_mail'] ) )
@@ -1436,11 +1500,11 @@ class honeybadgerAPI{
 				die( 'Security check' );
 				}
 				$mailer = WC()->mailer();
-				$email_heading = __( 'HTML email template', 'woocommerce' );
+				$email_heading = esc_html__( 'HTML email template', 'woocommerce' );
 				ob_start();
-				include ABSPATH . 'wp-content/plugins/woocommerce/includes/admin/views/html-email-template-preview.php';
+				include WP_PLUGIN_DIR . '/woocommerce/includes/admin/views/html-email-template-preview.php';
 				$message = ob_get_clean();
-				$email = new WC_Email();
+				$email = new \WC_Email();
 				$message = apply_filters( 'woocommerce_mail_content', $email->style_inline( $mailer->wrap_message( $email_heading, $message ) ) );
 
 				$result=new stdClass;
@@ -1454,10 +1518,13 @@ class honeybadgerAPI{
 	}
 	function get_custom_email_html( $order, $heading, $mailer, $tpl_id, $request, $other_details=array() )
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		$parameters = $request->get_params();
-		$template=__DIR__."/emails/custom_email.php";
-		$template_name="/emails/custom_email.php";
-		$date_format=isset($parameters['date_format'])?$parameters['date_format']:"Y-m-d H:i:s";
+		$template=HONEYBADGER_PLUGIN_PATH."includes/emails/custom_email.php";
+		$template_name="includes/emails/custom_email.php";
+		$date_format=isset($parameters['date_format'])?sanitize_text_field($parameters['date_format']):"Y-m-d H:i:s";
 		return wc_get_template_html( $template_name, array(
 			'order'         => $order,
 			'email_heading' => $heading,
@@ -1470,15 +1537,18 @@ class honeybadgerAPI{
 			'other_details' => $other_details
 		),
 		$template,
-		__DIR__
+		HONEYBADGER_PLUGIN_PATH
 		);
 	}
 	function get_send_email_html( $order, $heading, $mailer, $content, $request )
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		$parameters = $request->get_params();
-		$template=__DIR__."/emails/send_email.php";
-		$template_name="/emails/send_email.php";
-		$date_format=isset($parameters['date_format'])?$parameters['date_format']:"Y-m-d H:i:s";
+		$template=HONEYBADGER_PLUGIN_PATH."includes/emails/send_email.php";
+		$template_name="includes/emails/send_email.php";
+		$date_format=isset($parameters['date_format'])?sanitize_text_field($parameters['date_format']):"Y-m-d H:i:s";
 		return wc_get_template_html( $template_name, array(
 			'order'         => $order,
 			'email_heading' => $heading,
@@ -1490,23 +1560,26 @@ class honeybadgerAPI{
 			'honeybadger'   => $this
 		),
 		$template,
-		__DIR__
+		HONEYBADGER_PLUGIN_PATH
 		);
 	}
 	function send_email_template_test($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']:0;
 			$oid=isset($parameters['oid'])?(int)$parameters['oid']:0;
 			$supplier_order_id=isset($parameters['supplier_order_id'])?(int)$parameters['supplier_order_id']:0;
-			$send_to=isset($parameters['send_to'])?$parameters['send_to']:"";
-			$supplier_order_str=isset($parameters['supplier_order'])?$parameters['supplier_order']:"";
-			$attachment_ids_str=isset($parameters['attachment_ids'])?$parameters['attachment_ids']:"";
+			$send_to=isset($parameters['send_to'])?sanitize_email($parameters['send_to']):"";
+			$supplier_order_str=isset($parameters['supplier_order'])?sanitize_text_field($parameters['supplier_order']):"";
+			$attachment_ids_str=isset($parameters['attachment_ids'])?sanitize_text_field($parameters['attachment_ids']):"";
 			$attachments=isset($_FILES['file'])?$_FILES['file']:array();
-			$static_attachments_str=isset($_POST['static_attachments'])?$_POST['static_attachments']:"";
+			$static_attachments_str=isset($_POST['static_attachments'])?sanitize_text_field($_POST['static_attachments']):"";
 			$static_attachments=array();
 			if($static_attachments_str!="")
 				$static_attachments=explode(",",$static_attachments_str);
@@ -1531,7 +1604,7 @@ class honeybadgerAPI{
 						if(isset($result->ID))
 							$oid=$result->ID;
 					}
-					$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",$attachment_ids)."')";
+					$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')";
 					$attachment_folders=$wpdb->get_results($sql);
 					if(isset($attachments['name']) && is_array($attachments['name']))
 					{
@@ -1567,7 +1640,7 @@ class honeybadgerAPI{
 								}
 								else
 									$the_folder=$attachments['name'][$index];
-								$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$the_folder;
+								$target_file=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$the_folder;
 								$remove_files[]=$target_file;
 							}
 							else
@@ -1577,13 +1650,29 @@ class honeybadgerAPI{
 								else
 									$md5=md5("-938uqtuiagksrbs".$the_folder."_".$oid.".".$file_ext.microtime().rand(1,9999));
 								if($supplier_order_id>0)
-									$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$the_folder."/".$md5."_".$the_folder."_".$supplier_order_id.".".$file_ext;
+									$target_file=HONEYBADGER_UPLOADS_PATH."attachments/".$the_folder."/".$md5."_".$the_folder."_".$supplier_order_id.".".$file_ext;
 								else
-									$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$the_folder."/".$md5."_".$the_folder."_".$oid.".".$file_ext;
+									$target_file=HONEYBADGER_UPLOADS_PATH."attachments/".$the_folder."/".$md5."_".$the_folder."_".$oid.".".$file_ext;
 							}
 							$this->unlinkAttachmentFileDuplicate($target_file);
-							if (move_uploaded_file($attachments['tmp_name'][$index], $target_file))
+
+							if (!function_exists('wp_handle_upload'))
+					        	require_once(ABSPATH . 'wp-admin/includes/file.php');
+					        $uploadedfile = array(
+					            'name'     => $attachments['name'][0],
+					            'type'     => $attachments['type'][0],
+					            'tmp_name' => $attachments['tmp_name'][0],
+					            'error'    => $attachments['error'][0],
+					            'size'     => $attachments['size'][0]
+					        );
+					        $upload_overrides = array( 'test_form' => false );
+							$movefile=wp_handle_upload($uploadedfile, $upload_overrides);
+							if ( $movefile && !isset( $movefile['error'] ) && isset($movefile['file']) && file_exists($movefile['file']))
+							{
+								copy($movefile['file'],$target_file);
+								unlink($movefile['file']);
 								$all_attachments[]=$target_file;
+							}
 						}
 					}
 
@@ -1592,7 +1681,7 @@ class honeybadgerAPI{
 					
 					$mailer = WC()->mailer();
 					$order = wc_get_order( $oid );
-					$subject=__($email->subject,"honeyb");
+					$subject=$email->subject;
 					$subject=str_ireplace("{site_title}", get_bloginfo( 'name', 'display' ) ,$subject);
 					$subject=str_ireplace("{site_url}", get_bloginfo( 'url', 'display' ) ,$subject);
 					if($order)
@@ -1705,7 +1794,7 @@ class honeybadgerAPI{
 						foreach($all_attachments as $attachment)
 						{
 							$file_name=$this->removeMd5FromFilename(basename($attachment));
-							$new_path=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$file_name;
+							$new_path=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$file_name;
 							if($file_name!=$new_path && copy($attachment,$new_path))
 								$tmp_attachments[]=$new_path;
 							else
@@ -1748,14 +1837,17 @@ class honeybadgerAPI{
 	function save_static_attachment($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$title=isset($parameters['title'])?$parameters['title']:"";
+			$title=isset($parameters['title'])?sanitize_text_field($parameters['title']):"";
 			$attach_to_wc_emails_str=isset($parameters['attach_to_wc_emails'])?$parameters['attach_to_wc_emails']:array();
 			$attach_to_emails_str=isset($parameters['attach_to_emails'])?$parameters['attach_to_emails']:array();
 			$file_names_str=isset($parameters['file_names'])?$parameters['file_names']:"";
-			$enabled=isset($parameters['enabled'])?$parameters['enabled']:"";
+			$enabled=isset($parameters['enabled'])?sanitize_text_field($parameters['enabled']):"";
 			$attachments=isset($_FILES['file'])?$_FILES['file']:array();
 			$static_att_id=isset($parameters['static_att_id'])?(int)$parameters['static_att_id']:0;
 			if($static_att_id>0)
@@ -1785,13 +1877,17 @@ class honeybadgerAPI{
 					$attach_to_wc_emails_str=implode(",",$attach_to_wc_emails);
 				if(is_array($attach_to_emails) && count($attach_to_emails)>0)
 					$attach_to_emails_str=implode(",",$attach_to_emails);
+
+				$attach_to_wc_emails_str=sanitize_text_field($attach_to_wc_emails_str);
+				$attach_to_emails_str=sanitize_text_field($attach_to_emails_str);
+
 				$new_file_names=array();
 				if(is_array($file_names) && !is_array($file_names_str))
 				{
 					foreach($file_names as $index => $val)
 					{
 						$index=str_ireplace("_",".",$index);
-						$new_file_names[$index]=$val;
+						$new_file_names[sanitize_text_field($index)]=sanitize_text_field($val);
 					}
 					$file_names=$new_file_names;
 				}
@@ -1804,15 +1900,29 @@ class honeybadgerAPI{
 						if($result->path!="" && is_file(ABSPATH.$result->path))
 							unlink(ABSPATH.$result->path);
 					}
+					if (!function_exists('wp_handle_upload'))
+				        require_once(ABSPATH . 'wp-admin/includes/file.php');
 					foreach($attachments['name'] as $index => $file_name)
 					{
 						$the_folder="static";
 						$file_name=$file_names[$attachments['name'][$index]];
 						$md5=md5("-938uqtuiagksrbs".$the_folder."_".$file_name.microtime().rand(1,9999));
-						$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$the_folder."/".$md5."_".$file_name;
+						$target_file=HONEYBADGER_UPLOADS_PATH."attachments/".$the_folder."/".$md5."_".$file_name;
 						$this->unlinkAttachmentFileDuplicate($target_file);
-						if (move_uploaded_file($attachments['tmp_name'][$index], $target_file))
+
+				        $uploadedfile = array(
+				            'name'     => $attachments['name'][$index],
+				            'type'     => $attachments['type'][$index],
+				            'tmp_name' => $attachments['tmp_name'][$index],
+				            'error'    => $attachments['error'][$index],
+				            'size'     => $attachments['size'][$index]
+				        );
+				        $upload_overrides = array( 'test_form' => false );
+						$movefile=wp_handle_upload($uploadedfile, $upload_overrides);
+						if ( $movefile && !isset( $movefile['error'] ) && isset($movefile['file']) && file_exists($movefile['file']))
 						{
+							copy($movefile['file'],$target_file);
+							unlink($movefile['file']);
 							$target_path=str_ireplace(ABSPATH,"",$target_file);
 							$sql="update ".$wpdb->prefix."honeybadger_static_attachments set
 							title='".esc_sql($title)."',
@@ -1825,6 +1935,8 @@ class honeybadgerAPI{
 							if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 								return $this->returnError();
 						}
+						else
+							return $this->returnError();
 					}
 					return $this->returnOk();
 				}
@@ -1847,14 +1959,17 @@ class honeybadgerAPI{
 	function save_new_static_attachment($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$title=isset($parameters['title'])?$parameters['title']:"";
-			$attach_to_wc_emails_str=isset($parameters['attach_to_wc_emails'])?$parameters['attach_to_wc_emails']:array();
-			$attach_to_emails_str=isset($parameters['attach_to_emails'])?$parameters['attach_to_emails']:array();
-			$file_names_str=isset($parameters['file_names'])?$parameters['file_names']:"";
-			$enabled=isset($parameters['enabled'])?$parameters['enabled']:"";
+			$title=isset($parameters['title'])?sanitize_text_field($parameters['title']):"";
+			$attach_to_wc_emails_str=isset($parameters['attach_to_wc_emails'])?sanitize_text_field($parameters['attach_to_wc_emails']):"";
+			$attach_to_emails_str=isset($parameters['attach_to_emails'])?sanitize_text_field($parameters['attach_to_emails']):"";
+			$file_names_str=isset($parameters['file_names'])?sanitize_text_field($parameters['file_names']):"";
+			$enabled=isset($parameters['enabled'])?sanitize_text_field($parameters['enabled']):"";
 			$attachments=isset($_FILES['file'])?$_FILES['file']:array();
 			if($enabled=="on")
 				$enabled=1;
@@ -1871,27 +1986,44 @@ class honeybadgerAPI{
 				parse_str($attach_to_emails_str,$attach_to_emails);
 			$attach_to_wc_emails_str=implode(",",$attach_to_wc_emails);
 			$attach_to_emails_str=implode(",",$attach_to_emails);
+
+			$attach_to_wc_emails_str=sanitize_text_field($attach_to_wc_emails_str);
+			$attach_to_emails_str=sanitize_text_field($attach_to_emails_str);
+
 			$new_file_names=array();
 			if(is_array($file_names))
 			{
 				foreach($file_names as $index => $val)
 				{
 					$index=str_ireplace("_",".",$index);
-					$new_file_names[$index]=$val;
+					$new_file_names[sanitize_text_field($index)]=sanitize_text_field($val);
 				}
 				$file_names=$new_file_names;
 			}
 			if(isset($attachments['name']) && is_array($attachments['name']))
 			{
+				if (!function_exists('wp_handle_upload'))
+			        require_once(ABSPATH . 'wp-admin/includes/file.php');
 				foreach($attachments['name'] as $index => $file_name)
 				{
 					$the_folder="static";
 					$file_name=$file_names[$attachments['name'][$index]];
 					$md5=md5("-938uqtuiagksrbs".$the_folder."_".$file_name.microtime().rand(1,9999));
-					$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$the_folder."/".$md5."_".$file_name;
+					$target_file=HONEYBADGER_UPLOADS_PATH."attachments/".$the_folder."/".$md5."_".$file_name;
 					$this->unlinkAttachmentFileDuplicate($target_file);
-					if (move_uploaded_file($attachments['tmp_name'][$index], $target_file))
+			        $uploadedfile = array(
+			            'name'     => $attachments['name'][$index],
+			            'type'     => $attachments['type'][$index],
+			            'tmp_name' => $attachments['tmp_name'][$index],
+			            'error'    => $attachments['error'][$index],
+			            'size'     => $attachments['size'][$index]
+			        );
+			        $upload_overrides = array( 'test_form' => false );
+					$movefile=wp_handle_upload($uploadedfile, $upload_overrides);
+					if ( $movefile && !isset( $movefile['error'] ) && isset($movefile['file']) && file_exists($movefile['file']))
 					{
+						copy($movefile['file'],$target_file);
+						unlink($movefile['file']);
 						$target_path=str_ireplace(ABSPATH,"",$target_file);
 						$sql="insert into ".$wpdb->prefix."honeybadger_static_attachments set
 						title='".esc_sql($title)."',
@@ -1903,6 +2035,8 @@ class honeybadgerAPI{
 						if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 							return $this->returnError();
 					}
+					else
+						return $this->returnError();
 				}
 				return $this->returnOk();
 			}
@@ -1912,8 +2046,11 @@ class honeybadgerAPI{
 	function save_attachments()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		$oid=isset($_POST['order_id'])?(int)$_POST['order_id']:0;
-		$attachment_ids_str=isset($_POST['attachment_ids'])?$_POST['attachment_ids']:"";
+		$attachment_ids_str=isset($_POST['attachment_ids'])?sanitize_text_field($_POST['attachment_ids']):"";
 		$attachments=isset($_FILES['file'])?$_FILES['file']:array();
 		$attachment_ids=array();
 		if($attachment_ids_str!="")
@@ -1921,10 +2058,12 @@ class honeybadgerAPI{
 		$all_attachments=array();
 		if(is_array($attachments))
 		{
-			$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",$attachment_ids)."')";
+			$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')";
 			$attachment_folders=$wpdb->get_results($sql);
 			if(isset($attachments['name']) && is_array($attachments['name']))
 			{
+				if (!function_exists('wp_handle_upload'))
+			        require_once(ABSPATH . 'wp-admin/includes/file.php');
 				foreach($attachments['name'] as $index => $file_name)
 				{
 					$the_folder="tmp";
@@ -1954,17 +2093,30 @@ class honeybadgerAPI{
 						}
 						else
 							$the_folder=$attachments['name'][$index];
-						$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$the_folder;
+						$target_file=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$the_folder;
 						$remove_files[]=$target_file;
 					}
 					else
 					{
 						$md5=md5("-938uqtuiagksrbs".$the_folder."_".$oid.".".$file_ext.microtime().rand(1,9999));
-						$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$the_folder."/".$md5."_".$the_folder."_".$oid.".".$file_ext;
+						$target_file=HONEYBADGER_UPLOADS_PATH."attachments/".$the_folder."/".$md5."_".$the_folder."_".$oid.".".$file_ext;
 					}
 					$this->unlinkAttachmentFileDuplicate($target_file);
-					if (move_uploaded_file($attachments['tmp_name'][$index], $target_file))
+					$uploadedfile = array(
+			            'name'     => $attachments['name'][$index],
+			            'type'     => $attachments['type'][$index],
+			            'tmp_name' => $attachments['tmp_name'][$index],
+			            'error'    => $attachments['error'][$index],
+			            'size'     => $attachments['size'][$index]
+			        );
+			        $upload_overrides = array( 'test_form' => false );
+					$movefile=wp_handle_upload($uploadedfile, $upload_overrides);
+					if ( $movefile && !isset( $movefile['error'] ) && isset($movefile['file']) && file_exists($movefile['file']))
+					{
+						copy($movefile['file'],$target_file);
+						unlink($movefile['file']);
 						$all_attachments[]=$target_file;
+					}
 				}
 			}
 		}
@@ -1974,7 +2126,7 @@ class honeybadgerAPI{
 			foreach($all_attachments as $attachment)
 			{
 				$file_name=$this->removeMd5FromFilename(basename($attachment));
-				$new_path=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$file_name;
+				$new_path=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$file_name;
 				if($file_name!=$new_path && copy($attachment,$new_path))
 					$tmp_attachments[]=$new_path;
 				else
@@ -1993,21 +2145,24 @@ class honeybadgerAPI{
 	function send_custom_email($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$order_id=isset($parameters['order_id'])?(int)$parameters['order_id']:0;
-			$subject=isset($parameters['subject'])?$parameters['subject']:"";
-			$content=isset($parameters['content'])?$parameters['content']:"";
-			$heading=isset($parameters['heading'])?$parameters['heading']:"";
-			$email_bcc=isset($parameters['email_bcc'])?$parameters['email_bcc']:"";
+			$subject=isset($parameters['subject'])?sanitize_text_field($parameters['subject']):"";
+			$content=isset($parameters['content'])?wp_kses_post($parameters['content']):"";
+			$heading=isset($parameters['heading'])?wp_kses_post($parameters['heading']):"";
+			$email_bcc=isset($parameters['email_bcc'])?sanitize_email($parameters['email_bcc']):"";
 			$other_attachment_names_str=isset($parameters['other_attachment_names'])?$parameters['other_attachment_names']:array();
-			$from_name=isset($parameters['from_name'])?$parameters['from_name']:"";
-			$reply_to=isset($parameters['reply_to'])?$parameters['reply_to']:"";
-			$send_to=isset($parameters['send_to'])?$parameters['send_to']:"";
-			$attachment_ids_str=isset($parameters['attachment_ids'])?$parameters['attachment_ids']:"";
+			$from_name=isset($parameters['from_name'])?sanitize_text_field($parameters['from_name']):"";
+			$reply_to=isset($parameters['reply_to'])?sanitize_email($parameters['reply_to']):"";
+			$send_to=isset($parameters['send_to'])?sanitize_email($parameters['send_to']):"";
+			$attachment_ids_str=isset($parameters['attachment_ids'])?sanitize_text_field($parameters['attachment_ids']):"";
 			$attachments=isset($_FILES['file'])?$_FILES['file']:array();
-			$static_attachments_str=isset($_POST['static_attachments'])?$_POST['static_attachments']:"";
+			$static_attachments_str=isset($_POST['static_attachments'])?sanitize_text_field($_POST['static_attachments']):"";
 			$static_attachments=array();
 			if($static_attachments_str!="")
 				$static_attachments=explode(",",$static_attachments_str);
@@ -2028,10 +2183,12 @@ class honeybadgerAPI{
 				$remove_files=array();
 				if(is_array($attachments))
 				{
-					$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",$attachment_ids)."')";
+					$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')";
 					$attachment_folders=$wpdb->get_results($sql);
 					if(isset($attachments['name']) && is_array($attachments['name']))
 					{
+						if (!function_exists('wp_handle_upload'))
+				        	require_once(ABSPATH . 'wp-admin/includes/file.php');
 						foreach($attachments['name'] as $index => $file_name)
 						{
 							$the_folder="tmp";
@@ -2064,17 +2221,30 @@ class honeybadgerAPI{
 									if(isset($other_attachments_names[$attachments['name'][$index]]))
 										$the_folder=$other_attachments_names[$attachments['name'][$index]];
 								}
-								$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$the_folder;
+								$target_file=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$the_folder;
 								$remove_files[]=$target_file;
 							}
 							else
 							{
 								$md5=md5("-938uqtuiagksrbs".$the_folder."_".$order_id.".".$file_ext.microtime().rand(1,9999));
-								$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$the_folder."/".$md5."_".$the_folder."_".$order_id.".".$file_ext;
+								$target_file=HONEYBADGER_UPLOADS_PATH."attachments/".$the_folder."/".$md5."_".$the_folder."_".$order_id.".".$file_ext;
 							}
 							$this->unlinkAttachmentFileDuplicate($target_file);
-							if (move_uploaded_file($attachments['tmp_name'][$index], $target_file))
+							$uploadedfile = array(
+					            'name'     => $attachments['name'][$index],
+					            'type'     => $attachments['type'][$index],
+					            'tmp_name' => $attachments['tmp_name'][$index],
+					            'error'    => $attachments['error'][$index],
+					            'size'     => $attachments['size'][$index]
+					        );
+					        $upload_overrides = array( 'test_form' => false );
+							$movefile=wp_handle_upload($uploadedfile, $upload_overrides);
+							if ( $movefile && !isset( $movefile['error'] ) && isset($movefile['file']) && file_exists($movefile['file']))
+							{
+								copy($movefile['file'],$target_file);
+								unlink($movefile['file']);
 								$all_attachments[]=$target_file;
+							}
 						}
 					}
 				}
@@ -2096,7 +2266,7 @@ class honeybadgerAPI{
 					foreach($all_attachments as $attachment)
 					{
 						$file_name=$this->removeMd5FromFilename(basename($attachment));
-						$new_path=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$file_name;
+						$new_path=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$file_name;
 						if($file_name!=$new_path && copy($attachment,$new_path))
 							$tmp_attachments[]=$new_path;
 						else
@@ -2142,6 +2312,9 @@ class honeybadgerAPI{
 	function send_email_template_action($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -2149,10 +2322,10 @@ class honeybadgerAPI{
 			$oid=isset($parameters['oid'])?(int)$parameters['oid']:0;
 			$is_supplier_order=isset($parameters['is_supplier_order'])?(int)$parameters['is_supplier_order']:0;
 			$supplier_order_id=isset($parameters['supplier_order_id'])?(int)$parameters['supplier_order_id']:0;
-			$supplier_order_str=isset($parameters['supplier_order'])?$parameters['supplier_order']:"";
-			$attachment_ids_str=isset($parameters['attachment_ids'])?$parameters['attachment_ids']:"";
+			$supplier_order_str=isset($parameters['supplier_order'])?sanitize_text_field($parameters['supplier_order']):"";
+			$attachment_ids_str=isset($parameters['attachment_ids'])?sanitize_text_field($parameters['attachment_ids']):"";
 			$attachments=isset($_FILES['file'])?$_FILES['file']:array();
-			$static_attachments_str=isset($_POST['static_attachments'])?$_POST['static_attachments']:"";
+			$static_attachments_str=isset($_POST['static_attachments'])?sanitize_text_field($_POST['static_attachments']):"";
 			$static_attachments=array();
 			if($static_attachments_str!="")
 				$static_attachments=explode(",",$static_attachments_str);
@@ -2180,10 +2353,12 @@ class honeybadgerAPI{
 				{
 					if(is_array($attachments))
 					{
-						$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",$attachment_ids)."')";
+						$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')";
 						$attachment_folders=$wpdb->get_results($sql);
 						if(isset($attachments['name']) && is_array($attachments['name']))
 						{
+							if (!function_exists('wp_handle_upload'))
+				        		require_once(ABSPATH . 'wp-admin/includes/file.php');
 							foreach($attachments['name'] as $index => $file_name)
 							{
 								$the_folder="tmp";
@@ -2216,7 +2391,7 @@ class honeybadgerAPI{
 									}
 									else
 										$the_folder=$attachments['name'][$index];
-									$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$the_folder;
+									$target_file=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$the_folder;
 									$remove_files[]=$target_file;
 								}
 								else
@@ -2226,13 +2401,26 @@ class honeybadgerAPI{
 									else	
 										$md5=md5("-938uqtuiagksrbs".$the_folder."_".$oid.".".$file_ext.microtime().rand(1,9999));
 									if($supplier_order_id>0)
-										$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$the_folder."/".$md5."_".$the_folder."_".$supplier_order_id.".".$file_ext;
+										$target_file=HONEYBADGER_UPLOADS_PATH."attachments/".$the_folder."/".$md5."_".$the_folder."_".$supplier_order_id.".".$file_ext;
 									else
-										$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$the_folder."/".$md5."_".$the_folder."_".$oid.".".$file_ext;
+										$target_file=HONEYBADGER_UPLOADS_PATH."attachments/".$the_folder."/".$md5."_".$the_folder."_".$oid.".".$file_ext;
 								}
 								$this->unlinkAttachmentFileDuplicate($target_file);
-								if (move_uploaded_file($attachments['tmp_name'][$index], $target_file))
+								$uploadedfile = array(
+						            'name'     => $attachments['name'][$index],
+						            'type'     => $attachments['type'][$index],
+						            'tmp_name' => $attachments['tmp_name'][$index],
+						            'error'    => $attachments['error'][$index],
+						            'size'     => $attachments['size'][$index]
+						        );
+						        $upload_overrides = array( 'test_form' => false );
+								$movefile=wp_handle_upload($uploadedfile, $upload_overrides);
+								if ( $movefile && !isset( $movefile['error'] ) && isset($movefile['file']) && file_exists($movefile['file']))
+								{
+									copy($movefile['file'],$target_file);
+									unlink($movefile['file']);
 									$all_attachments[]=$target_file;
+								}
 							}
 						}
 					}
@@ -2240,7 +2428,7 @@ class honeybadgerAPI{
 						$all_attachments=array_merge($all_attachments,$this->get_static_attachments());
 					$mailer = WC()->mailer();
 					$order = wc_get_order( $oid );
-					$subject=__($email->subject,"honeyb");
+					$subject=$email->subject;
 					if($order)
 					{
 						$subject=str_ireplace("{site_title}", get_bloginfo( 'name', 'display' ) ,$subject);
@@ -2344,7 +2532,7 @@ class honeybadgerAPI{
 						foreach($all_attachments as $attachment)
 						{
 							$file_name=$this->removeMd5FromFilename(basename($attachment));
-							$new_path=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$file_name;
+							$new_path=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$file_name;
 							if($file_name!=$new_path && copy($attachment,$new_path))
 								$tmp_attachments[]=$new_path;
 							else
@@ -2412,9 +2600,12 @@ class honeybadgerAPI{
 	}
 	function get_emails($request)
 	{
+		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
-			global $wpdb;
 			$sql="select * from ".$wpdb->prefix."honeybadger_emails where 1 order by id limit 20";
 			$results=$wpdb->get_results($sql);
 			$email_ids=array();
@@ -2425,7 +2616,7 @@ class honeybadgerAPI{
 			}
 			$sql="select * from ".$wpdb->prefix."honeybadger_so_emails_tpl where 1 order by id";
 			$results1=$wpdb->get_results($sql);
-			$sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where emails in ('".implode("','",$email_ids)."') and enabled=1 order by title";
+			$sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where emails in ('".implode("','",array_map('esc_sql',$email_ids))."') and enabled=1 order by title";
 			$results2=$wpdb->get_results($sql);
 			if(is_array($results2))
 			{
@@ -2448,15 +2639,18 @@ class honeybadgerAPI{
 	function save_new_email_template($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$title=isset($parameters['title'])?$parameters['title']:"";
-			$subject=isset($parameters['subject'])?$parameters['subject']:"";
-			$heading=isset($parameters['heading'])?$parameters['heading']:"";
-			$content=isset($parameters['content'])?$parameters['content']:"";
-			$email_bcc=isset($parameters['email_bcc'])?$parameters['email_bcc']:"";
-			$enabled=isset($parameters['enabled'])?$parameters['enabled']:"";
+			$title=isset($parameters['title'])?sanitize_text_field($parameters['title']):"";
+			$subject=isset($parameters['subject'])?sanitize_text_field($parameters['subject']):"";
+			$heading=isset($parameters['heading'])?wp_kses_post($parameters['heading']):"";
+			$content=isset($parameters['content'])?wp_kses_post($parameters['content']):"";
+			$email_bcc=isset($parameters['email_bcc'])?sanitize_email($parameters['email_bcc']):"";
+			$enabled=isset($parameters['enabled'])?sanitize_text_field($parameters['enabled']):"";
 			$associate=isset($parameters['associate'])?$parameters['associate']:array();
 			$so_associate=isset($parameters['so_associate'])?$parameters['so_associate']:array();
 			if($enabled=="on")
@@ -2489,16 +2683,19 @@ class honeybadgerAPI{
 	function save_email_template($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']:0;
-			$title=isset($parameters['title'])?$parameters['title']:"";
-			$subject=isset($parameters['subject'])?$parameters['subject']:"";
-			$heading=isset($parameters['heading'])?$parameters['heading']:"";
-			$content=isset($parameters['content'])?$parameters['content']:"";
-			$email_bcc=isset($parameters['email_bcc'])?$parameters['email_bcc']:"";
-			$enabled=isset($parameters['enabled'])?$parameters['enabled']:"";
+			$title=isset($parameters['title'])?sanitize_text_field($parameters['title']):"";
+			$subject=isset($parameters['subject'])?sanitize_text_field($parameters['subject']):"";
+			$heading=isset($parameters['heading'])?wp_kses_post($parameters['heading']):"";
+			$content=isset($parameters['content'])?wp_kses_post($parameters['content']):"";
+			$email_bcc=isset($parameters['email_bcc'])?sanitize_email($parameters['email_bcc']):"";
+			$enabled=isset($parameters['enabled'])?sanitize_text_field($parameters['enabled']):"";
 			$associate=isset($parameters['associate'])?$parameters['associate']:array();
 			$so_associate=isset($parameters['so_associate'])?$parameters['so_associate']:array();
 			if($enabled=="on")
@@ -2533,6 +2730,9 @@ class honeybadgerAPI{
 	function delete_email_template($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -2549,6 +2749,9 @@ class honeybadgerAPI{
 	function load_default_subtemplate($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -2556,7 +2759,7 @@ class honeybadgerAPI{
 			if($id>0)
 			{
 				require_once __DIR__ . '/class-honeybadger-it-activator.php';
-				$activator=new Honeybadger_IT_Activator;
+				$activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
 				if(is_array($activator->sql2) && isset($activator->sql2[$id-1]))
 				{
 					$sql=$activator->sql2[$id-1];
@@ -2570,15 +2773,18 @@ class honeybadgerAPI{
 	function load_default_so_subtemplate($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']+3:0;
-			$type=isset($parameters['type'])?$parameters['type']:"";
+			$type=isset($parameters['type'])?sanitize_text_field($parameters['type']):"";
 			if($id>0)
 			{
 				require_once __DIR__ . '/class-honeybadger-it-activator.php';
-				$activator=new Honeybadger_IT_Activator;
+				$activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
 				if($type=="extended")
 					$id=$id+3;
 				if(is_array($activator->sql2) && isset($activator->sql2[$id-1]))
@@ -2594,15 +2800,18 @@ class honeybadgerAPI{
 	function load_default_att_so_subtemplate($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']+9:0;
-			$type=isset($parameters['type'])?$parameters['type']:"";
+			$type=isset($parameters['type'])?sanitize_text_field($parameters['type']):"";
 			if($id>0)
 			{
 				require_once __DIR__ . '/class-honeybadger-it-activator.php';
-				$activator=new Honeybadger_IT_Activator;
+				$activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
 				if(is_array($activator->sql2) && isset($activator->sql2[$id-1]))
 				{
 					$sql=$activator->sql2[$id-1];
@@ -2615,9 +2824,12 @@ class honeybadgerAPI{
 	}
 	function get_emails_simple($request)
 	{
+		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
-			global $wpdb;
 			$sql="select id, title from ".$wpdb->prefix."honeybadger_emails where 1 order by id limit 20";
 			return $wpdb->get_results($sql);
 		}
@@ -2627,7 +2839,7 @@ class honeybadgerAPI{
 	    $bytestotal = 0;
 	    $path = realpath($path);
 	    if($path!==false && $path!='' && file_exists($path)){
-	        foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS)) as $object)
+	        foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object)
 	        {
 	        	try
 	        	{
@@ -2640,9 +2852,12 @@ class honeybadgerAPI{
 	}
 	function get_attachments($request)
 	{
+		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
-			global $wpdb;
 			$sizes=array();
 			$sql="select * from ".$wpdb->prefix."honeybadger_attachments where 1 order by id limit 20";
 			$results=$wpdb->get_results($sql);
@@ -2650,7 +2865,7 @@ class honeybadgerAPI{
 			{
 				foreach($results as $result)
 				{
-					$attachment_path=ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$this->getFolderName($result->title);
+					$attachment_path=HONEYBADGER_UPLOADS_PATH."attachments/".$this->getFolderName($result->title);
 					$size=new stdClass;
 					$size->id=$result->id;
 					$size->size=$this->GetDirectorySize($attachment_path);
@@ -2687,14 +2902,17 @@ class honeybadgerAPI{
 	function get_attachment($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']:0;
 			$oid=isset($parameters['oid'])?(int)$parameters['oid']:0;
 			$is_supplier_order=isset($parameters['is_supplier_order'])?(int)$parameters['is_supplier_order']:0;
-			$date_format=isset($parameters['date_format'])?$parameters['date_format']:"Y-m-d H:i:s";
-			$supplier_order_str=isset($parameters['supplier_order'])?$parameters['supplier_order']:"";
+			$date_format=isset($parameters['date_format'])?sanitize_text_field($parameters['date_format']):"Y-m-d H:i:s";
+			$supplier_order_str=isset($parameters['supplier_order'])?sanitize_text_field($parameters['supplier_order']):"";
 			$supplier_order=array();
 			if($supplier_order_str!="")
 				parse_str($supplier_order_str,$supplier_order);
@@ -2945,21 +3163,24 @@ class honeybadgerAPI{
 	function save_new_attachment_template($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$title=isset($parameters['title'])?$parameters['title']:"";
-			$content=isset($parameters['content'])?$parameters['content']:"";
-			$pdf_size=isset($parameters['pdf_size'])?$parameters['pdf_size']:"";
-			$pdf_font=isset($parameters['pdf_font'])?$parameters['pdf_font']:"";
-			$pdf_orientation=isset($parameters['pdf_orientation'])?$parameters['pdf_orientation']:"";
-			$pdf_margins=isset($parameters['pdf_margins'])?$parameters['pdf_margins']:"";
+			$title=isset($parameters['title'])?sanitize_text_field($parameters['title']):"";
+			$content=isset($parameters['content'])?wp_kses_post($parameters['content']):"";
+			$pdf_size=isset($parameters['pdf_size'])?sanitize_text_field($parameters['pdf_size']):"";
+			$pdf_font=isset($parameters['pdf_font'])?sanitize_text_field($parameters['pdf_font']):"";
+			$pdf_orientation=isset($parameters['pdf_orientation'])?sanitize_text_field($parameters['pdf_orientation']):"";
+			$pdf_margins=isset($parameters['pdf_margins'])?sanitize_text_field($parameters['pdf_margins']):"";
 			$attach_to_wc_emails=isset($parameters['attach_to_wc_emails'])?$parameters['attach_to_wc_emails']:array();
 			$attach_to_emails=isset($parameters['attach_to_emails'])?$parameters['attach_to_emails']:array();
-			$keep_files=isset($parameters['keep_files'])?$parameters['keep_files']:"";
-			$generable=isset($parameters['generable'])?$parameters['generable']:"";
-			$so_generable=isset($parameters['so_generable'])?$parameters['so_generable']:"";
-			$enabled=isset($parameters['enabled'])?$parameters['enabled']:"";
+			$keep_files=isset($parameters['keep_files'])?sanitize_text_field($parameters['keep_files']):"";
+			$generable=isset($parameters['generable'])?sanitize_text_field($parameters['generable']):"";
+			$so_generable=isset($parameters['so_generable'])?sanitize_text_field($parameters['so_generable']):"";
+			$enabled=isset($parameters['enabled'])?sanitize_text_field($parameters['enabled']):"";
 			if($keep_files=="on")
 				$keep_files=1;
 			else
@@ -2979,7 +3200,7 @@ class honeybadgerAPI{
 			if($title=='' || $content=='')
 				return $this->returnError();
 			$folder_name = $this->getFolderName($title);
-			$folder_path = ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$folder_name;
+			$folder_path = HONEYBADGER_UPLOADS_PATH."attachments/".$folder_name;
 			if(!is_dir($folder_path))
 			{
 				if(mkdir($folder_path))
@@ -3019,22 +3240,25 @@ class honeybadgerAPI{
 	function save_attachment_template($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']:0;
-			$title=isset($parameters['title'])?$parameters['title']:"";
-			$content=isset($parameters['content'])?$parameters['content']:"";
-			$pdf_size=isset($parameters['pdf_size'])?$parameters['pdf_size']:"";
-			$pdf_font=isset($parameters['pdf_font'])?$parameters['pdf_font']:"";
-			$pdf_orientation=isset($parameters['pdf_orientation'])?$parameters['pdf_orientation']:"";
-			$pdf_margins=isset($parameters['pdf_margins'])?$parameters['pdf_margins']:"";
+			$title=isset($parameters['title'])?sanitize_text_field($parameters['title']):"";
+			$content=isset($parameters['content'])?wp_kses_post($parameters['content']):"";
+			$pdf_size=isset($parameters['pdf_size'])?sanitize_text_field($parameters['pdf_size']):"";
+			$pdf_font=isset($parameters['pdf_font'])?sanitize_text_field($parameters['pdf_font']):"";
+			$pdf_orientation=isset($parameters['pdf_orientation'])?sanitize_text_field($parameters['pdf_orientation']):"";
+			$pdf_margins=isset($parameters['pdf_margins'])?sanitize_text_field($parameters['pdf_margins']):"";
 			$attach_to_wc_emails=isset($parameters['attach_to_wc_emails'])?$parameters['attach_to_wc_emails']:array();
 			$attach_to_emails=isset($parameters['attach_to_emails'])?$parameters['attach_to_emails']:array();
-			$keep_files=isset($parameters['keep_files'])?$parameters['keep_files']:"";
-			$generable=isset($parameters['generable'])?$parameters['generable']:"";
-			$so_generable=isset($parameters['so_generable'])?$parameters['so_generable']:"";
-			$enabled=isset($parameters['enabled'])?$parameters['enabled']:"";
+			$keep_files=isset($parameters['keep_files'])?sanitize_text_field($parameters['keep_files']):"";
+			$generable=isset($parameters['generable'])?sanitize_text_field($parameters['generable']):"";
+			$so_generable=isset($parameters['so_generable'])?sanitize_text_field($parameters['so_generable']):"";
+			$enabled=isset($parameters['enabled'])?sanitize_text_field($parameters['enabled']):"";
 			if($keep_files=="on")
 				$keep_files=1;
 			else
@@ -3059,8 +3283,8 @@ class honeybadgerAPI{
 			{
 				if($title!=$result->title)
 				{
-					$new_folder_path = ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$this->getFolderName($title);
-					$old_folder_path = ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$this->getFolderName($result->title);
+					$new_folder_path = HONEYBADGER_UPLOADS_PATH."attachments/".$this->getFolderName($title);
+					$old_folder_path = HONEYBADGER_UPLOADS_PATH."attachments/".$this->getFolderName($result->title);
 					rename($old_folder_path,$new_folder_path);
 				}
 			}
@@ -3094,11 +3318,14 @@ class honeybadgerAPI{
 	function save_attachment_subtemplate($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']:0;
-			$content=isset($parameters['content'])?$parameters['content']:"";
+			$content=isset($parameters['content'])?wp_kses_post($parameters['content']):"";
 
 			if(!$id>0 || $content=='')
 				return $this->returnError();
@@ -3115,11 +3342,14 @@ class honeybadgerAPI{
 	function save_so_attachment_subtemplate($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']:0;
-			$content=isset($parameters['content'])?$parameters['content']:"";
+			$content=isset($parameters['content'])?wp_kses_post($parameters['content']):"";
 
 			if(!$id>0 || $content=='')
 				return $this->returnError();
@@ -3136,11 +3366,14 @@ class honeybadgerAPI{
 	function save_so_email_subtemplate($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']:0;
-			$content=isset($parameters['content'])?$parameters['content']:"";
+			$content=isset($parameters['content'])?wp_kses_post($parameters['content']):"";
 
 			if(!$id>0 || $content=='')
 				return $this->returnError();
@@ -3157,6 +3390,9 @@ class honeybadgerAPI{
 	function get_email_template_default($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -3176,6 +3412,9 @@ class honeybadgerAPI{
 	function delete_static_attachment($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -3202,6 +3441,9 @@ class honeybadgerAPI{
 	function delete_attachment_template($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -3214,7 +3456,7 @@ class honeybadgerAPI{
 				if(!empty($result))
 				{
 					$folder_name = $this->getFolderName($result->title);
-					$folder_path = ABSPATH."wp-content/plugins/honeybadger-it/attachments/".$folder_name;
+					$folder_path = HONEYBADGER_UPLOADS_PATH."attachments/".$folder_name;
 				}
 				
 				$sql="delete from ".$wpdb->prefix."honeybadger_attachments where id='".esc_sql($id)."'";
@@ -3236,11 +3478,14 @@ class honeybadgerAPI{
 	function send_attachment_template_test($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$id=isset($parameters['id'])?(int)$parameters['id']:0;
-			$send_to=isset($parameters['send_to'])?$parameters['send_to']:"";
+			$send_to=isset($parameters['send_to'])?sanitize_email($parameters['send_to']):"";
 			$attachments=isset($_FILES['file'])?$_FILES['file']:array();
 			if($id>0 && $send_to!="" && is_email($send_to) && is_array($attachments))
 			{
@@ -3249,14 +3494,27 @@ class honeybadgerAPI{
 				if(isset($attachment->id))
 				{
 					$folder_name = $this->getFolderName($attachment->title);
-					$target_file=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$folder_name.".pdf";
-					if(move_uploaded_file($attachments['tmp_name'][0], $target_file))
+					$target_file=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$folder_name.".pdf";
+					if (!function_exists('wp_handle_upload'))
+			        	require_once(ABSPATH . 'wp-admin/includes/file.php');
+			        $uploadedfile = array(
+			            'name'     => $attachments['name'][0],
+			            'type'     => $attachments['type'][0],
+			            'tmp_name' => $attachments['tmp_name'][0],
+			            'error'    => $attachments['error'][0],
+			            'size'     => $attachments['size'][0]
+			        );
+			        $upload_overrides = array( 'test_form' => false );
+					$movefile=wp_handle_upload($uploadedfile, $upload_overrides);
+					if ( $movefile && !isset( $movefile['error'] ) && isset($movefile['file']) && file_exists($movefile['file']))
 					{
+						copy($movefile['file'],$target_file);
+						unlink($movefile['file']);
 						$file_size=filesize($target_file);
 						$file_size=round($file_size / 1024);
 						$mailer = WC()->mailer();
-						$subject=__("Test attachment","honeyb").": ".$attachment->title." (".$file_size."Kb)";
-						$heading=__("Attached","honeyb")." (".$file_size."Kb)";
+						$subject=esc_html__("Test attachment","honeyb").": ".$attachment->title." (".$file_size."Kb)";
+						$heading=esc_html__("Attached","honeyb")." (".$file_size."Kb)";
 						$content = $this->get_custom_attachment_html( $heading, $mailer );
 						$headers = "Content-Type: text/html\r\n";
 						$all_attachments=array($target_file);
@@ -3266,7 +3524,7 @@ class honeybadgerAPI{
 							foreach($all_attachments as $attachment)
 							{
 								$file_name=$this->removeMd5FromFilename(basename($attachment));
-								$new_path=ABSPATH."wp-content/plugins/honeybadger-it/attachments/tmp/".$file_name;
+								$new_path=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$file_name;
 								if($file_name!=$new_path && copy($attachment,$new_path))
 									$tmp_attachments[]=$new_path;
 								else
@@ -3303,8 +3561,11 @@ class honeybadgerAPI{
 	}
 	function get_custom_attachment_html( $heading, $mailer )
 	{
-		$template=__DIR__."/emails/attachment_email.php";
-		$template_name="/emails/attachment_email.php";
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
+		$template=HONEYBADGER_PLUGIN_PATH."includes/emails/attachment_email.php";
+		$template_name="includes/emails/attachment_email.php";
 		return wc_get_template_html( $template_name, array(
 			'email_heading' => $heading,
 			'sent_to_admin' => false,
@@ -3312,7 +3573,7 @@ class honeybadgerAPI{
 			'email'         => $mailer
 		),
 		$template,
-		__DIR__
+		HONEYBADGER_PLUGIN_PATH
 		);
 	}
 	function getFolderName($title="")
@@ -3328,12 +3589,15 @@ class honeybadgerAPI{
 	function add_new_order_note($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$order_id=isset($parameters['order_id'])?(int)$parameters['order_id']:0;
-			$note=isset($parameters['note'])?$parameters['note']:"";
-			$type=isset($parameters['type'])?$parameters['type']:"";
+			$note=isset($parameters['note'])?sanitize_textarea_field($parameters['note']):"";
+			$type=isset($parameters['type'])?sanitize_text_field($parameters['type']):"";
 			if($order_id>0 && $note!="" && $type!="")
 			{
 				$order = wc_get_order($order_id);
@@ -3350,6 +3614,9 @@ class honeybadgerAPI{
 	}
 	function get_stock_settings($request)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$settings=new stdClass;
@@ -3366,16 +3633,19 @@ class honeybadgerAPI{
 	function save_stock_settings($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
-			$woocommerce_manage_stock=isset($parameters['woocommerce_manage_stock'])?$parameters['woocommerce_manage_stock']:"";
-			$woocommerce_notify_low_stock=isset($parameters['woocommerce_notify_low_stock'])?$parameters['woocommerce_notify_low_stock']:"";
-			$woocommerce_notify_no_stock=isset($parameters['woocommerce_notify_no_stock'])?$parameters['woocommerce_notify_no_stock']:"";
-			$woocommerce_stock_email_recipient=isset($parameters['woocommerce_stock_email_recipient'])?$parameters['woocommerce_stock_email_recipient']:"";
-			$woocommerce_notify_low_stock_amount=isset($parameters['woocommerce_notify_low_stock_amount'])?$parameters['woocommerce_notify_low_stock_amount']:"";
-			$woocommerce_notify_no_stock_amount=isset($parameters['woocommerce_notify_no_stock_amount'])?$parameters['woocommerce_notify_no_stock_amount']:"";
-			$enable_product_variation_extra_images=isset($parameters['enable_product_variation_extra_images'])?$parameters['enable_product_variation_extra_images']:"";
+			$woocommerce_manage_stock=isset($parameters['woocommerce_manage_stock'])?sanitize_text_field($parameters['woocommerce_manage_stock']):"";
+			$woocommerce_notify_low_stock=isset($parameters['woocommerce_notify_low_stock'])?sanitize_text_field($parameters['woocommerce_notify_low_stock']):"";
+			$woocommerce_notify_no_stock=isset($parameters['woocommerce_notify_no_stock'])?sanitize_text_field($parameters['woocommerce_notify_no_stock']):"";
+			$woocommerce_stock_email_recipient=isset($parameters['woocommerce_stock_email_recipient'])?sanitize_email($parameters['woocommerce_stock_email_recipient']):"";
+			$woocommerce_notify_low_stock_amount=isset($parameters['woocommerce_notify_low_stock_amount'])?sanitize_text_field($parameters['woocommerce_notify_low_stock_amount']):"";
+			$woocommerce_notify_no_stock_amount=isset($parameters['woocommerce_notify_no_stock_amount'])?sanitize_text_field($parameters['woocommerce_notify_no_stock_amount']):"";
+			$enable_product_variation_extra_images=isset($parameters['enable_product_variation_extra_images'])?sanitize_text_field($parameters['enable_product_variation_extra_images']):"";
 			update_option("woocommerce_manage_stock",$woocommerce_manage_stock);
 			update_option("woocommerce_notify_low_stock",$woocommerce_notify_low_stock);
 			update_option("woocommerce_notify_no_stock",$woocommerce_notify_no_stock);
@@ -3390,6 +3660,9 @@ class honeybadgerAPI{
 	function split_order($request)
 	{
 		global $wpdb, $woocommerce;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -3409,9 +3682,9 @@ class honeybadgerAPI{
 				$woocommerce->frontend_includes();
 				$session_class = apply_filters( 'woocommerce_session_handler', 'WC_Session_Handler' );
 				require_once WC()->plugin_path() .'/includes/class-wc-cart-session.php';
-				$woocommerce->session  = new WC_Session_Handler();
-				$woocommerce->cart     = new WC_Cart();
-				$woocommerce->customer = new WC_Customer();
+				$woocommerce->session  = new \WC_Session_Handler();
+				$woocommerce->cart     = new \WC_Cart();
+				$woocommerce->customer = new \WC_Customer();
 				if (! defined('WOOCOMMERCE_CHECKOUT')) define('WOOCOMMERCE_CHECKOUT', true);
 				$woocommerce->cart->empty_cart();
 				if(count($new_products)>0)
@@ -3546,7 +3819,7 @@ class honeybadgerAPI{
 							}
 						}
 						$order=wc_get_order($id);
-						$order->add_order_note(__("Order split by HoneyBadger IT, split from","honeyb")." ".$order_id);
+						$order->add_order_note(esc_html__("Order split by HoneyBadger IT, split from","honeyb")." ".$order_id);
 						update_post_meta($id,'_cart_hash',$new_cart_hash);
 						update_post_meta($id,'_honeybadger_split_from',$order_id);
 						$order->calculate_taxes();
@@ -3611,7 +3884,7 @@ class honeybadgerAPI{
 								}
 							}
 						}
-						$order_obj->add_order_note(__("Order was split by HoneyBadger IT, split in","honeyb")." ".$id);
+						$order_obj->add_order_note(esc_html__("Order was split by HoneyBadger IT, split in","honeyb")." ".$id);
 						$old_value=get_post_meta($order_id,'_honeybadger_split_in',true);
 						$new_split_ids=array();
 						if($old_value!="")
@@ -3649,6 +3922,9 @@ class honeybadgerAPI{
 	function split_refunds_if_multiple($order_id=0)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if($order_id>0)
 		{
 			$main_order_obj=wc_get_order($order_id);
@@ -3753,6 +4029,9 @@ class honeybadgerAPI{
 	}
 	function recalculate_order_totals($order_id=0)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if($order_id>0)
 		{
 			$order_obj=wc_get_order($order_id);
@@ -3764,6 +4043,9 @@ class honeybadgerAPI{
 	function recalculate_refund_order_totals($order_id=0)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if($order_id>0)
 		{
 			$refund_order=wc_get_order($order_id);
@@ -3778,6 +4060,9 @@ class honeybadgerAPI{
 	function get_refunded_qty($order_id=0,$item_id=0,$product_id=0)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		$refunded_qty=0;
 		if($order_id>0 && ($item_id>0 || $product_id>0))
 		{
@@ -3822,6 +4107,9 @@ class honeybadgerAPI{
 	function get_refunded_amount_order_id($order_id=0,$item_id=0)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		$refunded_value=0;
 		$post_id=0;
 		$order_item_id=0;
@@ -3871,6 +4159,9 @@ class honeybadgerAPI{
 	function get_wc_order_item_meta($order_item_id=0,$meta_key='')
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if($order_item_id>0 && $meta_key!='')
 		{
 			$sql="select meta_value from ".$wpdb->prefix."woocommerce_order_itemmeta where order_item_id='".esc_sql($order_item_id)."' and meta_key='".esc_sql($meta_key)."'";
@@ -3882,6 +4173,9 @@ class honeybadgerAPI{
 	}
 	function get_split_new_products($products_to_keep=array(),$product_variations=array(),$product_to_keep_qty=array(),$new_products=array(),$order_id=0)
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(count($products_to_keep)>0 && count($product_variations) && count($product_to_keep_qty)==count($products_to_keep) && count($product_variations)==count($products_to_keep) && count($new_products)>0)
 		{
 			$prods=array();
@@ -3963,11 +4257,14 @@ class honeybadgerAPI{
 	function start_combine_orders($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
 			$order_id=isset($parameters['order_id'])?(int)$parameters['order_id']:0;
-			$order_status=isset($parameters['order_status'])?$parameters['order_status']:"";
+			$order_status=isset($parameters['order_status'])?sanitize_text_field($parameters['order_status']):"";
 			$return_orders=array();
 			$order=wc_get_order($order_id);
 			$customer_orders=array();
@@ -3991,7 +4288,7 @@ class honeybadgerAPI{
 						continue;
 					$siblings[]=$stmp;
 				}
-				$sql="select ID, post_status from ".$wpdb->prefix."posts where ID in ('".implode("','",$siblings)."')";
+				$sql="select ID, post_status from ".$wpdb->prefix."posts where ID in ('".implode("','",array_map('esc_sql',$siblings))."')";
 				$results=$wpdb->get_results($sql);
 				if(is_array($results))
 				{
@@ -4079,6 +4376,9 @@ class honeybadgerAPI{
 	function combine_orders($request)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if(!empty($request))
 		{
 			$parameters = $request->get_params();
@@ -4178,7 +4478,7 @@ class honeybadgerAPI{
 				if(in_array($split_from,$order_ids))
 					$split_from='';
 				$order=wc_get_order($order_id);
-				$order->add_order_note(__("Order combined by HoneyBadger IT, combined from","honeyb")." ".$order_id." ".implode(" ",$order_ids));
+				$order->add_order_note(esc_html__("Order combined by HoneyBadger IT, combined from","honeyb")." ".$order_id." ".implode(" ",$order_ids));
 				update_post_meta($order_id,'_honeybadger_split_from',$split_from);
 				update_post_meta($order_id,'_honeybadger_split_in',implode(",",$new_split_ids));
 				$order->calculate_taxes();
@@ -4236,6 +4536,9 @@ class honeybadgerAPI{
 	function getOrderItems($order_id=0)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if($order_id>0)
 		{
 			$sql="select * from ".$wpdb->prefix."woocommerce_order_items i 
@@ -4249,6 +4552,10 @@ class honeybadgerAPI{
 	function combineOrderProducts($order_id=0)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
+		$order_id=(int)$order_id;
 		if($order_id>0)
 		{
 			$order_items=$this->getOrderItems($order_id);
@@ -4409,6 +4716,9 @@ class honeybadgerAPI{
 	}
 	function unlinkAttachmentFileDuplicate($path="")
 	{
+		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		    return;
+		}
 		if($path!="")
 		{
 			$file=basename($path);

@@ -38,15 +38,22 @@ if ( ! defined( 'WPINC' ) ) {
  * Rename this for your plugin and update it as you release new versions.
  */
 define( 'HONEYBADGER_IT_VERSION', '1.0.0' );
+define( 'HONEYBADGER_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
+define( 'HONEYBADGER_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+$upload_dir = wp_upload_dir();
+if(!empty($upload_dir['basedir']))
+    define( 'HONEYBADGER_UPLOADS_PATH', $upload_dir['basedir'].'/honeybadger-it/' );
+else
+    define( 'HONEYBADGER_UPLOADS_PATH', '' );
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-honeybadger-it-activator.php
  */
-function activate_honeybadger_it() {
-    add_option("honeybadger_activation_done","yes");
+function honeybadger_it_activate_the_honeybadger_it_plugin() {
+    add_option("the_honeybadger_it_activation_is_done","yes");
     require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it-activator.php';
-    $activator=new Honeybadger_IT_Activator;
+    $activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
     $activator->activate();
 }
 
@@ -54,45 +61,45 @@ function activate_honeybadger_it() {
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-honeybadger-it-deactivator.php
  */
-function deactivate_honeybadger_it() {
+function honeybadger_it_deactivate_the_honeybadger_it_plugin() {
     require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it-deactivator.php';
-    Honeybadger_IT_Deactivator::deactivate();
+    $deactivator=new HoneyBadgerIT\Honeybadger_IT_Deactivator;
+    $deactivator->deactivate();
 }
 
-register_activation_hook( __FILE__, 'activate_honeybadger_it' );
-register_deactivation_hook( __FILE__, 'deactivate_honeybadger_it' );
+register_activation_hook( __FILE__, 'honeybadger_it_activate_the_honeybadger_it_plugin' );
+register_deactivation_hook( __FILE__, 'honeybadger_it_deactivate_the_honeybadger_it_plugin' );
 
 // Creating table whenever a new blog is created
-function new_blog_honeybadger_it($blog_id, $user_id, $domain, $path, $site_id, $meta) {
+function new_blog_honeybadger_it_plugin_check($blog_id, $user_id, $domain, $path, $site_id, $meta) {
     require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it-activator.php';
-    $activator=new Honeybadger_IT_Activator;
+    $activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
     $activator->on_create_blog($blog_id, $user_id, $domain, $path, $site_id, $meta);
 }
-add_action( 'wpmu_new_blog', 'new_blog_honeybadger_it', 10, 6 );
+add_action( 'wpmu_new_blog', 'new_blog_honeybadger_it_plugin_check', 10, 6 );
 
 // Deleting the table whenever a blog is deleted
-function on_delete_blog_honeybadger_it( $tables ) {
+function on_delete_blog_honeybadger_it_plugin_check( $tables ) {
     require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it-activator.php';
-    $activator=new Honeybadger_IT_Activator;
+    $activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
     return $activator->on_delete_blog($tables);
 }
-add_filter( 'wpmu_drop_tables', 'on_delete_blog_honeybadger_it' );
+add_filter( 'wpmu_drop_tables', 'on_delete_blog_honeybadger_it_plugin_check' );
 
-function honeybadger_it_check_version() {
+function honeybadger_it_check_version_plugin_check() {
     if (HONEYBADGER_IT_VERSION !== get_option('HONEYBADGER_IT_VERSION')){
         require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it-activator.php';
-        $activator=new Honeybadger_IT_Activator;
+        $activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
         $activator->versionChanges();
     }
 }
-add_action('plugins_loaded', 'honeybadger_it_check_version');
+add_action('plugins_loaded', 'honeybadger_it_check_version_plugin_check');
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it.php';
-
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it.php';
 /**
  * Begins execution of the plugin.
  *
@@ -102,69 +109,70 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it.php';
  *
  * @since    1.0.0
  */
-function run_honeybadger_it() {
+function run_honeybadger_it_plugin_start() {
 
-    $plugin = new Honeybadger_IT();
+    $plugin = new HoneyBadgerIT\Honeybadger_IT();
     $plugin->run();
     
 }
-function run_honeybadger_it_main_page(){
+function run_honeybadger_it_plugin_admin_main_page(){
     require_once dirname( __FILE__ )  . '/admin/partials/honeybadger-it-admin-display.php';
 }
-add_action('admin_menu', 'admin_menu_honeybadger_it');
-function admin_menu_honeybadger_it()
+add_action('admin_menu', 'admin_menu_honeybadger_it_plugin_menu_items');
+function admin_menu_honeybadger_it_plugin_menu_items()
 {
     require_once dirname( __FILE__ )  . '/admin/partials/honeybadger_svg.php';
-    add_menu_page( "HoneyBadger.IT", "HoneyBadger.IT", "administrator", "honeybadger-it", "run_honeybadger_it_main_page", $honeybadger_icon, 54.9);
-    add_submenu_page( "honeybadger-it", __('Status','honeyb'), __('Status','honeyb'), "administrator", "honeybadger-it","run_honeybadger_it_main_page",1);
-    add_submenu_page( "honeybadger-it", __('Settings','honeyb'), __('Settings','honeyb'), "administrator", "honeybadger-settings","run_honeybadger_it_main_page",2);
-    add_submenu_page( "honeybadger-it", __('REST API','honeyb'), __('REST API','honeyb'), "administrator", "honeybadger-rest-api","run_honeybadger_it_main_page",3);
-    add_submenu_page( "honeybadger-it", __('Tools','honeyb'), __('Tools','honeyb'), "administrator", "honeybadger-tools","run_honeybadger_it_main_page",4);
+    add_menu_page( "HoneyBadger.IT", "HoneyBadger.IT", "administrator", "honeybadger-it", "run_honeybadger_it_plugin_admin_main_page", $honeybadger_icon, 54.9);
+    add_submenu_page( "honeybadger-it", __('Status','honeyb'), __('Status','honeyb'), "administrator", "honeybadger-it","run_honeybadger_it_plugin_admin_main_page",1);
+    add_submenu_page( "honeybadger-it", __('Settings','honeyb'), __('Settings','honeyb'), "administrator", "honeybadger-settings","run_honeybadger_it_plugin_admin_main_page",2);
+    add_submenu_page( "honeybadger-it", __('REST API','honeyb'), __('REST API','honeyb'), "administrator", "honeybadger-rest-api","run_honeybadger_it_plugin_admin_main_page",3);
+    add_submenu_page( "honeybadger-it", __('Tools','honeyb'), __('Tools','honeyb'), "administrator", "honeybadger-tools","run_honeybadger_it_plugin_admin_main_page",4);
 }
 
-run_honeybadger_it();
+run_honeybadger_it_plugin_start();
 
-function rest_oauth1_load() {
-    add_filter( 'determine_current_user', 'honeybadger_determine_current_user' );
+function honeybadger_it_plugin_rest_oauth2_load() {
+    add_filter( 'determine_current_user', 'honeybadger_plugin_determine_current_user_oauth2' );
 }
-add_action( 'init', 'rest_oauth1_load' );
+add_action( 'init', 'honeybadger_it_plugin_rest_oauth2_load' );
 
-add_filter( 'plugin_action_links', 'honeybadger_show_settings_link', 10, 2 );
+add_filter( 'plugin_action_links', 'honeybadger_show_plugin_admin_settings_link', 10, 2 );
 
-function honeybadger_show_settings_link( $links, $file ) 
+function honeybadger_show_plugin_admin_settings_link( $links, $file ) 
 {
     if ( $file == plugin_basename(dirname(__FILE__) . '/honeybadger-it.php') ) 
     {
-        $links = array_merge(array('<a href="admin.php?page=honeybadger-it">'.__('Settings','mtt').'</a>'),$links);
+        $links = array_merge(array('<a href="'.admin_url().'admin.php?page=honeybadger-it">'.__('Settings','honeyb').'</a>'),$links);
     }
     return $links;
 }
 
-global $honeybadger_config;
-global $honeybadger_config_front;
+global $honeybadger_it_plugin_admin_config;
+global $honeybadger_it_plugin_admin_config_front;
 global $wpdb;
-$honeybadger_config=new stdClass;
-$honeybadger_config_front=new stdClass;
+$honeybadger_it_plugin_admin_config=new stdClass;
+$honeybadger_it_plugin_admin_config_front=new stdClass;
 
-if(get_option("honeybadger_activation_done")=="yes")
+if(get_option("the_honeybadger_it_activation_is_done")=="yes")
 {
     $sql="select * from ".$wpdb->prefix."honeybadger_config where 1";
     $results=$wpdb->get_results($sql);
     if(is_array($results)){
         foreach($results as $r){
-            if(!isset($honeybadger_config->{$r->config_name}))
-                $honeybadger_config->{$r->config_name}=$r->config_value;
-            if(!isset($honeybadger_config_front->{$r->config_name}) && $r->show_front==1)
-                $honeybadger_config_front->{$r->config_name}=$r->config_value;
+            if(!isset($honeybadger_it_plugin_admin_config->{$r->config_name}))
+                $honeybadger_it_plugin_admin_config->{$r->config_name}=$r->config_value;
+            if(!isset($honeybadger_it_plugin_admin_config_front->{$r->config_name}) && $r->show_front==1)
+                $honeybadger_it_plugin_admin_config_front->{$r->config_name}=$r->config_value;
         }
     }
 }
-function honeybadger_determine_current_user()
+function honeybadger_plugin_determine_current_user_oauth2()
 {
     global $wpdb;
     if(!defined('REST_REQUEST'))
         return;
     $user_id=username_exists("honeybadger".get_current_blog_id());
+
     if($user_id>0)
     {
         $headers = apache_request_headers();
@@ -190,29 +198,28 @@ function honeybadger_determine_current_user()
     }
     return 0;
 }
-function honeybadger_rest_oauth2_force_reauthentication() {
+function honeybadger_it_plugin_rest_oauth2_force_reauthentication() {
     
     if ( is_user_logged_in() ) {
         return;
     }
-
     // Force reauthentication
     global $current_user;
     $current_user = null;
 
     wp_get_current_user();
 }
-add_action( 'init', 'honeybadger_rest_oauth2_force_reauthentication', 100 );
+add_action( 'init', 'honeybadger_it_plugin_rest_oauth2_force_reauthentication', 100 );
 
-function honeybadgerTestRestRoute( WP_REST_Request $request ) {
+function honeybadgerItPluginTestRestRoute( WP_REST_Request $request ) {
     $has_user = $request->get_param( 'has_user' );
     include ABSPATH."wp-includes/version.php";
-    $response = new WP_REST_Response(array("status"=>"ok","has_user"=>$has_user,"wp_version"=>$wp_version,"wc_version"=>WC_VERSION,"hb_version"=>HONEYBADGER_IT_VERSION));
+    $response = new WP_REST_Response(array("status"=>"ok","has_user"=>sanitize_text_field($has_user),"wp_version"=>sanitize_text_field($wp_version),"wc_version"=>WC_VERSION,"hb_version"=>HONEYBADGER_IT_VERSION));
     $response->set_status(200);
 
     return $response; 
 }
-function honeybadgerValidateCallback($data)
+function honeybadgerItPluginValidateCallback($data)
 {
     if(is_numeric($data))
         return true;
@@ -222,10 +229,10 @@ function honeybadgerValidateCallback($data)
 add_action( 'rest_api_init', function () {
   register_rest_route( 'honeybadger-it/v1', '/ping/(?P<id>\d+)', array(
     'methods' => array('GET','POST'),
-    'callback' => 'honeybadgerTestRestRoute',
+    'callback' => 'honeybadgerItPluginTestRestRoute',
     'args' => array(
       'id' => array(
-        'validate_callback' => 'honeybadgerValidateCallback'
+        'validate_callback' => 'honeybadgerItPluginValidateCallback'
       ),
     ),
     'permission_callback' => function () {
@@ -233,14 +240,19 @@ add_action( 'rest_api_init', function () {
     }
   ) );
 } );
-
-if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup_step,array(1,2,3)))
+if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadger_it_plugin_admin_config->setup_step,array(1,2,3)))
 {
-    require_once dirname( __FILE__ )  . '/includes/rest-controller.php';
-    add_action( 'init', 'register_honeybadger_order_statuses' );
-    function register_honeybadger_order_statuses() {
+    function honeybadger_register_rest_routes() {
+        require_once plugin_dir_path( __FILE__ )  . 'includes/rest-controller.php';
+        $controller = new HoneyBadgerIT\HoneyBadger_REST_Controller();
+        $controller->register_routes();
+    }
+     
+    add_action( 'rest_api_init', 'honeybadger_register_rest_routes' );
+    add_action( 'init', 'register_honeybadger_it_plugin_order_statuses' );
+    function register_honeybadger_it_plugin_order_statuses() {
         global $wpdb;
-        $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed');
+        $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed','wc-checkout-draft');
         $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in ('".implode("','",$default_statuses)."')";
         $results=$wpdb->get_results($sql);
         if(is_array($results))
@@ -259,10 +271,10 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
         }
         
     }
-    add_filter( 'wc_order_statuses', 'honeybadger_new_wc_order_statuses' );
-    function honeybadger_new_wc_order_statuses( $order_statuses ) {
+    add_filter( 'wc_order_statuses', 'honeybadger_it_plugin_new_wc_order_statuses' );
+    function honeybadger_it_plugin_new_wc_order_statuses( $order_statuses ) {
         global $wpdb;
-        $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed');
+        $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed','wc-checkout-draft');
         $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in ('".implode("','",$default_statuses)."')";
         $results=$wpdb->get_results($sql);
         if(is_array($results))
@@ -274,7 +286,7 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
         }
         return $order_statuses;
     }
-    function honeybadger_admin_footer_function() {
+    function honeybadger_it_plugin_admin_footer_function() {
         global $wpdb, $post_type;
         if ( $post_type == 'shop_order' ) {
             $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where 1";
@@ -285,56 +297,55 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
                 $row=$wpdb->get_row($sql);
                 if(isset($row->config_value) && $row->config_value=="yes")
                 {
-                    ?>
-                    <style type="text/css">
-                        <?php
-                        foreach($results as $status)
-                        {
-                            ?>
-                            .order-status.status-<?php echo esc_attr(str_ireplace('wc-','',$status->custom_order_status));?>{
-                                background: <?php echo $status->bg_color;?>;
-                                color: <?php echo $status->txt_color;?>;
-                            }
-                            <?php
-                        }
-                        ?>
-                    </style>
-                    <?php
-
+                    $data_css='';
+                    foreach($results as $status)
+                    {
+                        $data_css.="
+                        .order-status.status-".esc_attr(str_ireplace('wc-','',$status->custom_order_status))."{
+                        background: ".$status->bg_color.";
+                        color: ".$status->txt_color.";
+                        ";
+                    }
+                    wp_register_style( 'honeybadger_it_css_setup_display_footer_section_handler', false );
+                    wp_enqueue_style( 'honeybadger_it_css_setup_display_footer_section_handler' );
+                    wp_add_inline_style( 'honeybadger_it_css_setup_display_footer_section_handler', $data_css );
                 }
-                $default_order_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed');
-            ?>
-                <script type="text/javascript">
-                    jQuery(document).ready(function() {
-                        <?php
-                        foreach($results as $r)
-                        {
-                            if(!in_array($r->custom_order_status,$default_order_statuses))
-                            {
-                                ?>
-                                jQuery('<option>').val('mark_<?php echo str_replace("wc-","",$r->custom_order_status);?>').text('<?php _e( 'Change status to '.str_replace("wc-","",$r->custom_order_status), 'woocommerce' ); ?>').appendTo("select[name='action']");
-                                jQuery('<option>').val('mark_<?php echo str_replace("wc-","",$r->custom_order_status);?>').text('<?php _e( 'Change status to '.str_replace("wc-","",$r->custom_order_status), 'woocommerce' ); ?>').appendTo("select[name='action2']");   
-                                <?php
-                            }
-                        }
-                        ?>
-                    });
-                </script>
-            <?php
+                $default_order_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed','wc-checkout-draft');
+                $data_js='jQuery(document).ready(function() {';
+                foreach($results as $r)
+                {
+                    if(!in_array($r->custom_order_status,$default_order_statuses))
+                    {
+                        $data_js.="jQuery('<option>').val('mark_".esc_attr(str_replace("wc-","",$r->custom_order_status))."').text('".esc_attr(__( 'Change status to '.str_replace("wc-","",$r->custom_order_status), 'woocommerce' ))."').appendTo(\"select[name='action']\");";
+                        $data_js.="jQuery('<option>').val('mark_".esc_attr(str_replace("wc-","",$r->custom_order_status))."').text('".esc_attr(__( 'Change status to '.str_replace("wc-","",$r->custom_order_status), 'woocommerce' ))."').appendTo(\"select[name='action2']\");";
+                    }
+                }
+                $data_js.='});';
+                wp_register_script( 'honeybadger_it_js_footer_section_inline_script_handler', '' );
+                wp_enqueue_script( 'honeybadger_it_js_footer_section_inline_script_handler' );
+                wp_add_inline_script("honeybadger_it_js_footer_section_inline_script_handler",$data_js);
             }
         }
     }
-    add_action('admin_footer', 'honeybadger_admin_footer_function');
-    function honeybadger_filter_wc_get_template( $template_path, $template_name, $args ) {
+    add_action('admin_footer', 'honeybadger_it_plugin_admin_footer_function');
+    function honeybadger_it_plugin_filter_wc_get_template( $template_path, $template_name, $args ) {
         global $wpdb;
+        $advanced_styles=array('emails/email-header.php','emails/email-footer.php','emails/email-styles.php','emails/email-addresses.php','emails/email-customer-details.php','emails/email-downloads.php','emails/email-order-details.php','emails/email-order-items.php');
+        if(in_array($template_name,$advanced_styles))
+            $honeybadger_emails_dir = HONEYBADGER_UPLOADS_PATH.'emails';
+        else
+            $honeybadger_emails_dir = HONEYBADGER_PLUGIN_PATH.'includes/emails';
         $sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where template='".esc_sql(basename($template_name))."' and enabled=1";
         $result=$wpdb->get_row($sql);
         if(isset($result->id) && $result->id>0)
-            $template_path=__DIR__."/includes/emails/".basename($template_name);
+        {
+            if(file_exists($honeybadger_emails_dir."/".basename($template_name)))
+                $template_path=$honeybadger_emails_dir."/".basename($template_name);
+        }
         return $template_path;
     };
-    add_filter( 'wc_get_template', 'honeybadger_filter_wc_get_template', 999, 3 );
-    function honeybadger_change_email_subject( $subject, $order, $emailer) {
+    add_filter( 'wc_get_template', 'honeybadger_it_plugin_filter_wc_get_template', 999, 3 );
+    function honeybadger_it_plugin_change_email_subject( $subject, $order, $emailer) {
         global $wpdb;
         $status="wc-".$order->get_status();
         if($emailer->id=='new_order')
@@ -353,7 +364,7 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
         $result=$wpdb->get_row($sql);
         if(isset($result->id))
         {
-            $subject=$result->subject;
+            $subject=__($result->subject,"honeyb");
             $subject=str_ireplace("{site_title}", get_bloginfo( 'name', 'display' ) ,$subject);
             $subject=str_ireplace("{customer}", $order->get_billing_first_name() ,$subject);
             $subject=str_ireplace("{customer_full_name}", $order->get_formatted_billing_full_name() ,$subject);
@@ -363,7 +374,7 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
 
             if(($status=='wc-refunded' && $emailer->partial_refund) || ($status=='wc-customer-invoice' && $order->needs_payment())) 
             {
-                $other_subject=$result->other_subject;
+                $other_subject=__($result->other_subject,"honeyb");
                 $other_subject=str_ireplace("{site_title}", get_bloginfo( 'name', 'display' ) ,$other_subject);
                 $other_subject=str_ireplace("{customer}", $order->get_billing_first_name() ,$other_subject);
                 $other_subject=str_ireplace("{customer_full_name}", $order->get_formatted_billing_full_name() ,$other_subject);
@@ -375,26 +386,26 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
         }
         return $subject;
     }
-    add_filter('woocommerce_email_subject_new_order', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_customer_processing_order', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_customer_completed_order', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_customer_invoice', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_customer_note', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_customer_new_account', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_cancelled_order', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_failed_order', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_customer_on_hold_order', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_customer_refunded_order', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_customer_reset_password', 'honeybadger_change_email_subject', 1, 99);
-    add_filter('woocommerce_email_subject_customer_invoice_paid', 'honeybadger_change_email_subject', 1, 99);
-    add_action('woocommerce_order_status_changed', 'honey_send_custom_email_notifications', 10, 4 );
-    function honey_send_custom_email_notifications( $order_id, $old_status, $new_status, $order ){
+    add_filter('woocommerce_email_subject_new_order', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_customer_processing_order', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_customer_completed_order', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_customer_invoice', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_customer_note', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_customer_new_account', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_cancelled_order', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_failed_order', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_customer_on_hold_order', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_customer_refunded_order', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_customer_reset_password', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_filter('woocommerce_email_subject_customer_invoice_paid', 'honeybadger_it_plugin_change_email_subject', 1, 99);
+    add_action('woocommerce_order_status_changed', 'honeybadger_it_plugin_send_custom_email_notifications', 10, 4 );
+    function honeybadger_it_plugin_send_custom_email_notifications( $order_id, $old_status, $new_status, $order ){
         global $wpdb;
         $user = wp_get_current_user();
         $roles = ( array ) $user->roles;
-        if(isset($_POST['method']) && $_POST['method']=='save_order_status' && defined('REST_REQUEST') && in_array("honeybadger",$roles))
+        if(isset($_POST['method']) && sanitize_text_field($_POST['method'])=='save_order_status' && defined('REST_REQUEST') && in_array("honeybadger",$roles))
         {
-            if(isset($_POST['notify_customer']) && $_POST['notify_customer']==1)
+            if(isset($_POST['notify_customer']) && is_numeric($_POST['notify_customer']) && $_POST['notify_customer']==1)
             {
                 $emails=array(
                     'pending'=>'WC_Email_New_Order',
@@ -405,7 +416,7 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
                     'completed'=>'WC_Email_Customer_Completed_Order',
                     'refunded'=>'WC_Email_Customer_Refunded_Order'
                 );
-                $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed');
+                $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed','wc-checkout-draft');
                 $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in ('".implode("','",$default_statuses)."')";
                 $results=$wpdb->get_results($sql);
                 if(is_array($results))
@@ -421,11 +432,11 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
                 $wc_emails[$emails[$new_status]]->recipient = $customer_email;
                 if(isset($_POST['attachment_ids']))
                 {
-                    add_filter("woocommerce_email_attachments","honeybadger_add_attachments",99);
+                    add_filter("woocommerce_email_attachments","honeybadger_it_plugin_add_attachments",99);
                 }
                 if(isset($_POST['static_attachments']))
                 {
-                    add_filter("woocommerce_email_attachments","honeybadger_add_static_attachments",99);
+                    add_filter("woocommerce_email_attachments","honeybadger_it_plugin_add_static_attachments",99);
                 }
                 $wc_emails[$emails[$new_status]]->trigger( $order_id );
                 if(isset($_POST['attachments_to_be_deleted']) && is_array($_POST['attachments_to_be_deleted']))
@@ -436,27 +447,27 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
             }
         }
     }
-    function honeybadger_add_static_attachments($attachments=array())
+    function honeybadger_it_plugin_add_static_attachments($attachments=array())
     {
-        require_once plugin_dir_path( __FILE__ ) . 'includes/honeybadger-api.php';
-        $honeybadger=new honeybadgerAPI;
+        require_once HONEYBADGER_PLUGIN_PATH . '/includes/honeybadger-api.php';
+        $honeybadger=new HoneyBadgerIT\API\honeybadgerAPI;
         $files=$honeybadger->get_static_attachments();
         return array_merge($attachments,$files);
     }
-    function honeybadger_add_attachments($attachments=array())
+    function honeybadger_it_plugin_add_attachments($attachments=array())
     {
-        require_once plugin_dir_path( __FILE__ ) . 'includes/honeybadger-api.php';
-        $honeybadger=new honeybadgerAPI;
+        require_once HONEYBADGER_PLUGIN_PATH . '/includes/honeybadger-api.php';
+        $honeybadger=new HoneyBadgerIT\API\honeybadgerAPI;
         $files=$honeybadger->save_attachments();
         return array_merge($attachments,$files);
     }
-    add_filter('woocommerce_email_classes', 'honeybadger_custom_order_statuses_email_class', 1, 99);
-    function honeybadger_custom_order_statuses_email_class($emails)
+    add_filter('woocommerce_email_classes', 'honeybadger_it_plugin_custom_order_statuses_email_class', 1, 99);
+    function honeybadger_it_plugin_custom_order_statuses_email_class($emails)
     {
         global $wpdb;
 
-        $page=isset($_GET['page'])?$_GET['page']:"";
-        $tab=isset($_GET['tab'])?$_GET['tab']:"";
+        $page=isset($_GET['page'])?sanitize_text_field($_GET['page']):"";
+        $tab=isset($_GET['tab'])?sanitize_text_field($_GET['tab']):"";
         if($page=='wc-settings' && $tab=='email')
             return $emails;
         $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed');
@@ -477,11 +488,11 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
     };
     add_filter( 'wc_get_template_part', 'honeybadger_filter_wc_get_template_part', 10, 5 ); 
     */
-    add_action( 'woocommerce_email', 'honeybadger_unhook_email_sending', 9999 );
-    function honeybadger_unhook_email_sending( $email_class ) {
+    add_action( 'woocommerce_email', 'honeybadger_it_plugin_unhook_email_sending', 9999 );
+    function honeybadger_it_plugin_unhook_email_sending( $email_class ) {
         if(isset($_POST['order_status']) && isset($_POST['method']) && isset($_POST['notify_customer']) && isset($_POST['honeybadger_request']))
         {
-            $new_status=strtolower($_POST['order_status']);
+            $new_status=strtolower(sanitize_text_field($_POST['order_status']));
             if(strlen($new_status)>3)
             {
                 if($new_status[0]=="w" && $new_status[1]=="c" && $new_status[2]=="-")
@@ -511,12 +522,12 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
             remove_action( 'woocommerce_order_status_completed_notification', array( $email_class->emails['WC_Email_Customer_Completed_Order'], 'trigger' ) );
         }
     }
-    add_filter( 'woocommerce_email_headers', 'honeybadger_woocommerce_email_headers', 9999, 3 );
-    function honeybadger_woocommerce_email_headers( $headers, $email_id, $order ) {
+    add_filter( 'woocommerce_email_headers', 'honeybadger_it_plugin_woocommerce_email_headers', 9999, 3 );
+    function honeybadger_it_plugin_woocommerce_email_headers( $headers, $email_id, $order ) {
         global $wpdb;
         $user = wp_get_current_user();
         $roles = ( array ) $user->roles;
-        $wc_status=isset($_POST['order_status'])?$_POST['order_status']:"";
+        $wc_status=isset($_POST['order_status'])?sanitize_text_field($_POST['order_status']):"";
         if($wc_status!="" && in_array("honeybadger",$roles))
         {
             $sql="select email_bcc from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='".esc_sql($wc_status)."' and email_bcc!='' and enabled=1";
@@ -526,16 +537,16 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
         }
         return $headers;
     }
-    add_filter( 'cron_schedules', 'honeybadger_clean_db_tmp_interval' );
-    function honeybadger_clean_db_tmp_interval( $schedules ) {
+    add_filter( 'cron_schedules', 'honeybadger_it_plugin_clean_db_tmp_interval' );
+    function honeybadger_it_plugin_clean_db_tmp_interval( $schedules ) {
         $schedules['honeybadger_one_day'] = array(
             'interval' => 60*60*24,
             'display' => __('One Day')
         );
         return $schedules;
     }
-    add_action( 'honeybadger_clean_db_tmp', 'honeybadger_clean_db_tmp_run');
-    function honeybadger_clean_db_tmp_run()
+    add_action( 'honeybadger_it_plugin_clean_db_tmp', 'honeybadger_it_plugin_clean_db_tmp_run');
+    function honeybadger_it_plugin_clean_db_tmp_run()
     {
         $dir = plugin_dir_path( __FILE__ ) . 'attachments/tmp';
         $leave_files = array('index.php', '.','..');
@@ -546,10 +557,10 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
             }
         }
     }
-    if ( ! wp_next_scheduled( 'honeybadger_clean_db_tmp' ) ) {
-        wp_schedule_event( time(), 'honeybadger_one_day', 'honeybadger_clean_db_tmp' );
+    if ( ! wp_next_scheduled( 'honeybadger_it_plugin_clean_db_tmp' ) ) {
+        wp_schedule_event( time(), 'honeybadger_one_day', 'honeybadger_it_plugin_clean_db_tmp' );
     }
-    function honeybadger_show_images_sku_in_emails( $args ) {
+    function honeybadger_it_plugin_show_images_sku_in_emails( $args ) {
         global $wpdb;
         global $show_images_in_emails;
         $show_sku_in_emails="";
@@ -587,15 +598,15 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
         }
         return $args;
     }
-    add_filter( 'woocommerce_email_order_items_args', 'honeybadger_show_images_sku_in_emails' );
-    function honeybadger_show_images_in_emails_new_line( $name ) {
+    add_filter( 'woocommerce_email_order_items_args', 'honeybadger_it_plugin_show_images_sku_in_emails' );
+    function honeybadger_it_plugin_show_images_in_emails_new_line( $name ) {
         global $show_images_in_emails;
         if($show_images_in_emails)
             return '<br /><br />'.$name;
         return $name;
     }
-    add_filter( 'woocommerce_order_item_name', 'honeybadger_show_images_in_emails_new_line' );
-    if($honeybadger_config->enable_product_variation_extra_images=='yes')
+    add_filter( 'woocommerce_order_item_name', 'honeybadger_it_plugin_show_images_in_emails_new_line' );
+    if($honeybadger_it_plugin_admin_config->enable_product_variation_extra_images=='yes')
     {
         if(wp_register_script( 'honeybadger-wc-add-to-cart-variation', plugin_dir_url( __FILE__ ) . 'admin/js/wc-add-to-cart-variation.js', array( 'jquery', 'wp-util', 'jquery-blockui', 'wc-add-to-cart-variation' ), false, true ))
         {
@@ -603,9 +614,9 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
             wp_deregister_script('wc-add-to-cart-variation');
             wp_dequeue_script('wc-add-to-cart-variation');
         }
-        add_filter( 'woocommerce_available_variation', 'honeybadger_variation_extra_images',999, 3 );
+        add_filter( 'woocommerce_available_variation', 'honeybadger_it_plugin_variation_extra_images',999, 3 );
     }
-    function honeybadger_variation_extra_images($details, $product_variable, $variation)
+    function honeybadger_it_plugin_variation_extra_images($details, $product_variable, $variation)
     {
         if(isset($_POST['product_id']))
         {
@@ -654,9 +665,9 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
         }
         return $details;
     }
-    add_action( 'woocommerce_reduce_order_stock', 'honeybadger_woocommerce_reduce_order_stock' );
-    add_action( 'woocommerce_restore_order_stock', 'honeybadger_woocommerce_restore_order_stock' );
-    function honeybadger_woocommerce_restore_order_stock($order_id)
+    add_action( 'woocommerce_reduce_order_stock', 'honeybadger_it_plugin_woocommerce_reduce_order_stock' );
+    add_action( 'woocommerce_restore_order_stock', 'honeybadger_it_plugin_woocommerce_restore_order_stock' );
+    function honeybadger_it_plugin_woocommerce_restore_order_stock($order_id)
     {
         global $wpdb;
         if ( is_a( $order_id, 'WC_Order' ) )
@@ -696,7 +707,7 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
             }
         }
     }
-    function honeybadger_woocommerce_reduce_order_stock($order_id)
+    function honeybadger_it_plugin_woocommerce_reduce_order_stock($order_id)
     {
         global $wpdb;
         if ( is_a( $order_id, 'WC_Order' ) )
@@ -734,9 +745,126 @@ if(isset($honeybadger_config->setup_step) && in_array($honeybadger_config->setup
             $wpdb->query($sql);
         }
     }
-function honey_forcelogin_rest_access( $result ) {
-    return 1;
+    function honeybadger_it_plugin_forcelogin_rest_access( $result ) {
+        return 1;
+    }
+    if($honeybadger_it_plugin_admin_config->skip_rest_authentication_errors=='yes')
+        add_filter( 'rest_authentication_errors', 'honeybadger_it_plugin_forcelogin_rest_access', 999 );
 }
-if($honeybadger_config->skip_rest_authentication_errors=='yes')
-    add_filter( 'rest_authentication_errors', 'honey_forcelogin_rest_access', 999 );
+add_action( 'admin_enqueue_scripts', 'honeybadger_it_plugin_settings_update' );
+function honeybadger_it_plugin_settings_update( $hook ) {
+    if ( 'toplevel_page_honeybadger-it' !== $hook ) {
+        return;
+    }
+    wp_enqueue_script(
+        'honeybadger-status-page-ajax-script',
+        plugins_url( '/admin/js/status-page.js', __FILE__ ),
+        array( 'jquery' ),
+        '1.0.0',
+        true
+    );
+    wp_localize_script(
+        'honeybadger-status-page-ajax-script',
+        'honeybadger_ajax_obj',
+        array(
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'honeybadger_it_ajax_nonce' ),
+            'hb_setup_no_us_msg_1'=>esc_attr(__('Seems that something is wrong, please check the below statuses','honeyb')),
+            'hb_setup_no_us_msg_2'=>esc_attr(__('Seems that something is wrong below','honeyb'))
+        ),
+    );
+}
+add_action( 'wp_ajax_honeybadger_it_create_user_role', 'honeybadger_it_plugin_create_user_role' );
+function honeybadger_it_plugin_create_user_role() {
+    check_ajax_referer( 'honeybadger_it_ajax_nonce' );
+    require_once plugin_dir_path( __FILE__ )  . 'includes/honeybadger.php';
+    $honeybadger=new HoneyBadgerIT\honeybadger;
+    $honeybadger->createUserRoleAndUser();
+}
+add_action( 'wp_ajax_create_honeybadger_connection', 'honeybadger_it_plugin_create_honeybadger_connection' );
+function honeybadger_it_plugin_create_honeybadger_connection() {
+    check_ajax_referer( 'honeybadger_it_ajax_nonce' );
+    require_once plugin_dir_path( __FILE__ )  . 'includes/honeybadger.php';
+    $honeybadger=new HoneyBadgerIT\honeybadger;
+    $honeybadger->createHoneybadgerConnection();
+}
+
+add_action( 'wp_ajax_refresh_honeybadger_connection', 'honeybadger_it_plugin_refresh_honeybadger_connection' );
+function honeybadger_it_plugin_refresh_honeybadger_connection() {
+    check_ajax_referer( 'honeybadger_it_ajax_nonce' );
+    require_once plugin_dir_path( __FILE__ )  . 'includes/honeybadger.php';
+    $honeybadger=new HoneyBadgerIT\honeybadger;
+    $honeybadger->refreshHoneybadgerConnection();
+}
+
+add_action( 'rest_api_init', function () {
+  register_rest_route( 'honeybadger-it/v1', '/oauth/', array(
+    'methods' => array('GET','POST'),
+    'callback' => 'honeybadger_it_plugin_get_oauth_response',
+    'args' => array(
+      'id' => array(
+        'validate_callback' => function () {
+          return true;
+        }
+      ),
+    ),
+    'permission_callback' => function () {
+      return true;
+    }
+  ) );
+} );
+
+
+function honeybadger_it_plugin_get_oauth_response(WP_REST_Request $request)
+{
+    if(!empty($request))
+    {
+        $parameters = $request->get_params();
+        $action=isset($parameters['action'])?$parameters['action']:"";
+        if($action=='get_oauth2_authorize_content')
+        {
+            wp_verify_nonce( 'honeybadger_it_oauth_nonce' );
+            require_once HONEYBADGER_PLUGIN_PATH . 'includes/oauth2/authorize.php';
+        }
+        if($action=='get_oauth2_authorize_content_approval')
+        {
+            wp_verify_nonce( 'honeybadger_it_oauth_nonce' );
+            require_once HONEYBADGER_PLUGIN_PATH . 'includes/oauth2/authorize.php';
+        }
+        if($action=='get_oauth2_token')
+        {
+            wp_verify_nonce( 'get_oauth2_token' );
+            require_once HONEYBADGER_PLUGIN_PATH . 'includes/oauth2/token.php';
+        }
+        if($action=='get_oauth2_resource')
+        {
+            wp_verify_nonce( 'honeybadger_it_oauth_nonce' );
+            require_once HONEYBADGER_PLUGIN_PATH . 'includes/oauth2/resource.php';
+        }
+    }
+    exit;
+}
+add_action( 'rest_api_init', function () {
+  register_rest_route( 'honeybadger-it/v1', '/manage_downloads/', array(
+    'methods' => array('GET','POST'),
+    'callback' => 'honeybadger_it_plugin_manage_downloads',
+    'args' => array(
+      'id' => array(
+        'validate_callback' => function () {
+          return true;
+        }
+      ),
+    ),
+    'permission_callback' => function () {
+      return true;
+    }
+  ) );
+} );
+function honeybadger_it_plugin_manage_downloads(WP_REST_Request $request)
+{
+    if(!empty($request))
+    {
+        require_once HONEYBADGER_PLUGIN_PATH . 'get_attachment.php';
+    }
+    exit;
 }

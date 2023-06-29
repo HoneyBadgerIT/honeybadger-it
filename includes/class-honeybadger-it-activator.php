@@ -4,16 +4,28 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
+namespace HoneyBadgerIT;
+
+$upload_dir = wp_upload_dir();
+if(!empty($upload_dir['basedir']))
+{
+    if(!defined('HONEYBADGER_UPLOADS_PATH')){define( 'HONEYBADGER_UPLOADS_PATH', $upload_dir['basedir'].'/honeybadger-it/' );};
+}
+else
+{
+    if(!defined('HONEYBADGER_UPLOADS_PATH')){define( 'HONEYBADGER_UPLOADS_PATH', '' );};
+}
 require_once WP_PLUGIN_DIR . '/honeybadger-it/constants.php';
+
 class Honeybadger_IT_Activator {
 
-	/**
-	 * Short Description. (use period)
-	 *
-	 * Long Description.
-	 *
-	 * @since    1.0.0
-	 */
+    /**
+     * Short Description. (use period)
+     *
+     * Long Description.
+     *
+     * @since    1.0.0
+     */
 
   public $sql1=array();
   public $sql2=array();
@@ -92,7 +104,7 @@ class Honeybadger_IT_Activator {
       update_option('HONEYBADGER_IT_VERSION','1.0.0');
 
     $table_name=$wpdb->prefix.'honeybadger_oauth_clients';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `".$table_name."` (
           client_id             VARCHAR(80)   NOT NULL,
           client_secret         VARCHAR(80),
@@ -106,7 +118,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_custom_order_statuses';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `".$table_name."` (
       id int(11) NOT NULL AUTO_INCREMENT,
       custom_order_status varchar(255)  CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
@@ -121,7 +133,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_access_tokens';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `".$table_name."` (
           access_token         VARCHAR(40)    NOT NULL,
           client_id            VARCHAR(80)    NOT NULL,
@@ -134,7 +146,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_authorization_codes';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `".$table_name."` (
           authorization_code  VARCHAR(40)     NOT NULL,
           client_id           VARCHAR(80)     NOT NULL,
@@ -149,7 +161,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_refresh_tokens';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `".$table_name."` (
           refresh_token       VARCHAR(40)     NOT NULL,
           client_id           VARCHAR(80)     NOT NULL,
@@ -162,7 +174,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_users';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `".$table_name."` (
           username            VARCHAR(80),
           password            VARCHAR(80),
@@ -177,7 +189,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_scopes';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `".$table_name."` (
           scope               VARCHAR(80)     NOT NULL,
           is_default          BOOLEAN,
@@ -187,7 +199,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_jwt';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `".$table_name."` (
           client_id           VARCHAR(80)     NOT NULL,
           subject             VARCHAR(80),
@@ -197,7 +209,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_config';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `$table_name` (
       `id` int(11) NOT NULL AUTO_INCREMENT,
       `config_name` varchar(255) NOT NULL,
@@ -211,7 +223,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_wc_emails';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `$table_name` (
       `id` int(11) NOT NULL AUTO_INCREMENT,
       `wc_status` varchar(255) NOT NULL DEFAULT '',
@@ -235,7 +247,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_emails';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
@@ -253,7 +265,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_attachments';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
@@ -275,7 +287,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_attachments_tpl';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
@@ -287,7 +299,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_attachments_so_tpl';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
@@ -299,7 +311,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_so_emails_tpl';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
@@ -311,7 +323,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_static_attachments';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' ,
@@ -326,7 +338,7 @@ class Honeybadger_IT_Activator {
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_product_stock_log';
-    if( $wpdb->get_var( "show tables like '{$table_name}'" ) != $table_name ) {
+    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
     $sql="CREATE TABLE `$table_name` (
       `order_id` INT(11) NOT NULL DEFAULT '0' ,
       `product_id` INT(11) NOT NULL DEFAULT '0' ,
@@ -363,29 +375,48 @@ class Honeybadger_IT_Activator {
         ('enable_product_variation_extra_images', 'no', '0','".time()."'),
         ('honeybadger_account_email', '', '0','".time()."'),
         ('email_image_sizes', '100x50', '0','".time()."'),
+        ('delete_attachments_upon_uninstall', 'no', '1','".time()."'),
         ('skip_rest_authentication_errors', 'no', '1','".time()."')
         ON DUPLICATE KEY UPDATE mdate=".time().";
     ";
     dbDelta( $sql );
-    
-    $advanced_styles=array('wc-email-header','wc-email-footer','wc-email-styles','wc-email-addresses','wc-email-customer-details','wc-email-downloads','wc-email-order-details','wc-email-order-items');
+
+    $honeybadger_emails_dir = HONEYBADGER_UPLOADS_PATH.'emails';
+    $honeybadger_attachments_dir = HONEYBADGER_UPLOADS_PATH.'attachments';
+    if(!file_exists(HONEYBADGER_UPLOADS_PATH))
+        wp_mkdir_p(HONEYBADGER_UPLOADS_PATH);
+    if(!file_exists($honeybadger_emails_dir))
+        wp_mkdir_p($honeybadger_emails_dir);
+    if(!file_exists($honeybadger_attachments_dir))
+        wp_mkdir_p($honeybadger_attachments_dir);
+    if(!file_exists($honeybadger_attachments_dir.'/static'))
+        wp_mkdir_p($honeybadger_attachments_dir.'/static');
+    if(!file_exists($honeybadger_attachments_dir.'/tmp'))
+        wp_mkdir_p($honeybadger_attachments_dir.'/tmp');
+    if(!file_exists(HONEYBADGER_UPLOADS_PATH."index.php"))
+        file_put_contents(HONEYBADGER_UPLOADS_PATH."index.php",'<?php // Silence is golden');
+    if(!file_exists($honeybadger_emails_dir."/index.php"))
+        file_put_contents($honeybadger_emails_dir."/index.php",'<?php // Silence is golden');
+    if(!file_exists($honeybadger_attachments_dir."/index.php"))
+        file_put_contents($honeybadger_attachments_dir."/index.php",'<?php // Silence is golden');
+    if(!file_exists($honeybadger_attachments_dir."/static/index.php"))
+        file_put_contents($honeybadger_attachments_dir."/static/index.php",'<?php // Silence is golden');
+    if(!file_exists($honeybadger_attachments_dir."/tmp/index.php"))
+        file_put_contents($honeybadger_attachments_dir."/tmp/index.php",'<?php // Silence is golden');
+    $advanced_styles=array('email-header','email-footer','email-styles','email-addresses','email-customer-details','email-downloads','email-order-details','email-order-items');
     foreach($advanced_styles as $style)
     {
-      $file_name=str_ireplace("wc-","",$style).".php";
-      if(!is_file(__DIR__."/emails/".$file_name))
-      {
-        if(is_file(get_template_directory().'/woocommerce/emails/'.$file_name))
+        $file_name=$style.".php";
+        if(!is_file($honeybadger_emails_dir."/".$file_name))
         {
-          file_put_contents(__DIR__."/emails/".$file_name,file_get_contents(get_template_directory().'/woocommerce/emails/'.$file_name));
+            if(is_file(get_template_directory().'/woocommerce/emails/'.$file_name))
+            {
+                file_put_contents($honeybadger_emails_dir."/".$file_name,file_get_contents(get_template_directory().'/woocommerce/emails/'.$file_name));
+            }
+            else if(is_file(WP_PLUGIN_DIR."/woocommerce/templates/emails/".$file_name))
+                file_put_contents($honeybadger_emails_dir."/".$file_name,file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/".$file_name));
         }
-        else
-        {
-          if(is_file(ABSPATH."wp-content/plugins/woocommerce/templates/emails/".$file_name))
-            file_put_contents(__DIR__."/emails/".$file_name,file_get_contents(ABSPATH."wp-content/plugins/woocommerce/templates/emails/".$file_name));
-        }
-      }
     }
-
   }
   public function runFunctionsForMultiOrSingleBlog($the_function=""){
     global $wpdb;
@@ -403,9 +434,9 @@ class Honeybadger_IT_Activator {
         }
     }
   }
-	public function activate() {
+    public function activate() {
         $this->runFunctionsForMultiOrSingleBlog("createTables");
-	}
+    }
   // Creating table whenever a new blog is created
   function on_create_blog( $blog_id, $user_id, $domain, $path, $site_id, $meta ) {
       if ( is_plugin_active_for_network( 'honeybadger-it/honeybadger-it.php' ) ) {
@@ -426,12 +457,31 @@ class Honeybadger_IT_Activator {
   }
   function deleteHoneyBadgerTables(){
     global $wpdb;
+    $sql="select config_value from ".$wpdb->prefix."honeybadger_config where config_name='delete_attachments_upon_uninstall'";
+    $result=$wpdb->get_row($sql);
+    if(isset($result->config_value) && $result->config_value=='yes')
+        $this->honeybadger_remove_uploads_folder(HONEYBADGER_UPLOADS_PATH);
     foreach($this->honeybadgerTables as $table)
       $wpdb->query( "DROP TABLE IF EXISTS ".$wpdb->prefix.$table );
     delete_option('HONEYBADGER_IT_VERSION');
   }
+    function honeybadger_remove_uploads_folder($dir)
+    {
+        if (!file_exists($dir))
+            return true;
+        if (!is_dir($dir))
+            return unlink($dir);
+        foreach (scandir($dir) as $item)
+        {
+            if ($item == '.' || $item == '..')
+                continue;
+            if (!$this->honeybadger_remove_uploads_folder($dir . "/" . $item))
+              return false;
+        }
+        return rmdir($dir);
+    }
   function deleteTables(){
-    delete_option("honeybadger_activation_done");
+    delete_option("the_honeybadger_it_activation_is_done");
     $this->runFunctionsForMultiOrSingleBlog("deleteHoneyBadgerTables");
   }
   function versionChanges(){

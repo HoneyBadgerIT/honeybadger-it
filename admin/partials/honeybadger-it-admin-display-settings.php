@@ -8,46 +8,51 @@ if ( ! current_user_can( 'manage_options' ) ) {
     return;
 }
 $hb_msg="";
-$action=isset($_POST['action'])?$_POST['action']:"";
+$action=isset($_POST['action'])?sanitize_text_field($_POST['action']):"";
 if($action=="save_settings")
 {
+    check_admin_referer( 'honeybadger_it_settings_page_form' );
     $hb_msg=$honeybadger->saveSettings();
-    $honeybadger=new honeybadger;
+    $honeybadger=new HoneyBadgerIT\honeybadger;
 }
 ?>
-<h2><?php _e('Settings','honeyb');?></h2>
+<h2><?php esc_html_e('Settings','honeyb');?></h2>
 <?php
 if($hb_msg!="")
 {
     ?>
-    <div class="<?php echo $hb_msg['status'];?> notice is-dismissible">
-        <p><?php echo $hb_msg['msg'];?></p>
+    <div class="<?php echo esc_attr($hb_msg['status']);?> notice is-dismissible">
+        <p><?php echo esc_html($hb_msg['cnt'])." ".esc_html__($hb_msg['msg'],"honeyb");?></p>
     </div>
     <?php
 }
+$nonce = wp_create_nonce( 'honeybadger_it_settings_page_form' );
 ?>
-<form action="" method="post" onsubmit="return validateHbSettingsForm()">
+<form action="" method="post">
 <input type="hidden" name="action" value="save_settings" />
+<input type="hidden" id="_wpnonce" name="_wpnonce" value="<?php echo esc_attr($nonce);?>" />
 <table class="widefat" id="hb-status-table" cellspacing="0">
     <tbody>
         <?php
         $explanations=array();
-        $explanations['curl_ssl_verify']=__('Set to NO to don\'t verify the SSL certificate','honeyb');
-        $explanations['use_status_colors_on_wc']=__('Set to YES to use order statuses colors set on HoneyBadger IT in your WC admin orders list','honeyb');
-        $explanations['skip_rest_authentication_errors']=__('Skip REST API Authentication errors, sometimes plugins like Force Login disable the REST API if the user is not logged in, we need the API public for the setup part, afterwards a user is created to login to your shop','honeyb');
+        $explanations['curl_ssl_verify']=esc_html__('Set to NO to don\'t verify the SSL certificate','honeyb');
+        $explanations['use_status_colors_on_wc']=esc_html__('Set to YES to use order statuses colors set on HoneyBadger IT in your WC admin orders list','honeyb');
+        $explanations['delete_attachments_upon_uninstall']=esc_html__('If set to yes attachment files like invoices will be removed when the plugin is uninstalled','honeyb');
+        $explanations['skip_rest_authentication_errors']=esc_html__('Skip REST API Authentication errors, sometimes plugins like Force Login disable the REST API if the user is not logged in, we need the API public for the setup part, afterwards a user is created to login to your shop','honeyb');
+        
         foreach($honeybadger->config_front as $config_name => $config_value)
         {
             ?>
             <tr>
-                <td><?php echo $config_name;?></td>
+                <td><?php echo esc_html__($config_name);?></td>
                 <td>
                     <?php
                     if($config_name=='curl_ssl_verify')
                     {
                         ?>
                         <select class="button wp-generate-pw hide-if-no-js" name="curl_ssl_verify" id="curl_ssl_verify">
-                          <option value="yes"<?php echo($config_value=='yes')?" selected":"";?>>Yes</option>
-                          <option value="no"<?php echo($config_value=='no')?" selected":"";?>>No</option>
+                          <option value="yes"<?php echo(esc_html($config_value)=='yes')?" selected":"";?>><?php esc_html_e("Yes","honeyb");?></option>
+                          <option value="no"<?php echo(esc_html($config_value)=='no')?" selected":"";?>><?php esc_html_e("No","honeyb");?></option>
                         </select>
                         <?php
                     }
@@ -55,8 +60,17 @@ if($hb_msg!="")
                     {
                         ?>
                         <select class="button wp-generate-pw hide-if-no-js" name="use_status_colors_on_wc" id="use_status_colors_on_wc">
-                          <option value="yes"<?php echo($config_value=='yes')?" selected":"";?>>Yes</option>
-                          <option value="no"<?php echo($config_value=='no')?" selected":"";?>>No</option>
+                          <option value="yes"<?php echo(esc_html($config_value)=='yes')?" selected":"";?>><?php esc_html_e("Yes","honeyb");?></option>
+                          <option value="no"<?php echo(esc_html($config_value)=='no')?" selected":"";?>><?php esc_html_e("No","honeyb");?></option>
+                        </select>
+                        <?php
+                    }
+                    else if($config_name=='delete_attachments_upon_uninstall')
+                    {
+                        ?>
+                        <select class="button wp-generate-pw hide-if-no-js" name="delete_attachments_upon_uninstall" id="delete_attachments_upon_uninstall">
+                          <option value="yes"<?php echo(esc_html($config_value)=='yes')?" selected":"";?>><?php esc_html_e("Yes","honeyb");?></option>
+                          <option value="no"<?php echo(esc_html($config_value)=='no')?" selected":"";?>><?php esc_html_e("No","honeyb");?></option>
                         </select>
                         <?php
                     }
@@ -64,16 +78,10 @@ if($hb_msg!="")
                     {
                         ?>
                         <select class="button wp-generate-pw hide-if-no-js" name="skip_rest_authentication_errors" id="skip_rest_authentication_errors">
-                          <option value="yes"<?php echo($config_value=='yes')?" selected":"";?>>Yes</option>
-                          <option value="no"<?php echo($config_value=='no')?" selected":"";?>>No</option>
+                          <option value="yes"<?php echo(esc_html($config_value)=='yes')?" selected":"";?>><?php esc_html_e("Yes","honeyb");?></option>
+                          <option value="no"<?php echo(esc_html($config_value)=='no')?" selected":"";?>><?php esc_html_e("No","honeyb");?></option>
                         </select>
                         <?php
-                    }
-                    else
-                    {
-                    ?>
-                    <input type="text" name="<?php echo $config_name;?>" id="<?php echo $config_name;?>" value="<?php echo esc_attr($config_value);?>" />
-                    <?php
                     }
                     ?>
                 </td>
@@ -90,24 +98,3 @@ if($hb_msg!="")
     </tbody>
 </table>
 </form>
-<script type="text/javascript">
-<!--
-function validateHbSettingsForm()
-{
-    <?php
-    foreach($honeybadger->config_front as $config_name => $config_value)
-    {
-    ?>
-        if(jQuery('#<?php echo $config_name;?>').val()=="")
-        {
-            alert("<?php echo esc_attr(__('Please input a value here','honeyb'));?>");
-            jQuery('#<?php echo $config_name;?>').focus();
-            return false;
-        }
-    <?php
-    }
-    ?>
-    return true;
-}
-//-->
-</script>

@@ -4,6 +4,7 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
+namespace HoneyBadgerIT;
 class Honeybadger_IT_Public {
 
 	/**

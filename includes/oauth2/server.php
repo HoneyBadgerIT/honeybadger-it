@@ -1,13 +1,6 @@
 <?php
-date_default_timezone_set('UTC');
-if ( ! defined( 'ABSPATH' ) ) {
-	require_once("../../../../../wp-load.php");
-}
-require_once("../honeybadger.php");
-$honeybadger=new honeybadger;
-
-// error reporting (this is a demo, after all!)
-ini_set('display_errors',1);error_reporting(E_ALL);
+require_once(HONEYBADGER_PLUGIN_PATH."includes/honeybadger.php");
+$honeybadger=new HoneyBadgerIT\honeybadger;
 
 // Autoloading (composer is preferred, but for this example let's just do this)
 require_once(__DIR__.'/src/OAuth2/Autoloader.php');

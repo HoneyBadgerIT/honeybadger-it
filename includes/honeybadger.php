@@ -4,7 +4,10 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
-require_once WP_PLUGIN_DIR . '/honeybadger-it/constants.php';
+namespace HoneyBadgerIT;
+use \stdClass;
+
+require_once HONEYBADGER_PLUGIN_PATH . 'constants.php';
 class honeybadger{
 	
 	public $config;
@@ -27,15 +30,25 @@ class honeybadger{
 	function is_woocommerce_activated(){
 		if ( class_exists( 'woocommerce' ) ) { return true; } else { return false; }
 	}
+	function rutime($ru, $rus, $index) {
+	    return ($ru["ru_$index.tv_sec"]*1000 + intval($ru["ru_$index.tv_usec"]/1000))
+	     -  ($rus["ru_$index.tv_sec"]*1000 + intval($rus["ru_$index.tv_usec"]/1000));
+	}
 	function simpleCurlRequest($url) {
-	  $ch = curl_init($url);
-	  curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-	  if(strtolower($this->config->curl_ssl_verify)=="no")
-	  	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-	  $response = curl_exec($ch);
-	  $info = curl_getinfo($ch);
-	  curl_close($ch);
-	  return array('response'=>$response,'time'=>$info['total_time']);
+		$verify_ssl=true;
+		if(strtolower($this->config->curl_ssl_verify)=="no")
+			$verify_ssl=false;
+		$start = microtime(true);
+		$body="";
+		$response = wp_remote_get( $url, array('sslverify' => $verify_ssl) );
+		if ( is_wp_error( $response ) ) {
+			$error_message = $response->get_error_message();
+			echo $error_message;
+		}
+		else
+			$body = wp_remote_retrieve_body( $response );
+		$time_elapsed_secs = microtime(true) - $start;
+		return array('response'=>$body,'time'=>number_format(round($time_elapsed_secs,2),2,".",""));
 	}
 	function checkIfSSL(){
 		$stream = stream_context_create (array("ssl" => array("capture_peer_cert" => true)));
@@ -83,7 +96,7 @@ class honeybadger{
 	   return $wc_activated;
 	}
 	function checkRestApiV2(){
-		$response_arr=$this->simpleCurlRequest(get_site_url()."/wp-json/wp/v2");
+		$response_arr=$this->simpleCurlRequest(get_rest_url()."wp/v2");
 		$response=$response_arr['response'];
 		if($response!="")
 			$response=json_decode($response);
@@ -92,10 +105,10 @@ class honeybadger{
 		return false;
 	}
 	function chechIfSelfSigned(){
-		$url              = get_site_url();
+		$url              = get_rest_url();
 		$new_url=str_ireplace("https://","",$url);
 		$new_url=str_ireplace("http://","",$new_url);
-		$new_url="https://".$new_url."/wp-json/wp/v2";
+		$new_url="https://".$new_url."wp/v2";
 		$response_arr=$this->simpleCurlRequest($new_url);
 		$response=$response_arr['response'];
 		if($response!="")
@@ -107,22 +120,29 @@ class honeybadger{
 	function saveSettings()
 	{
 		global $wpdb;
-		$_POST=stripslashes_deep($_POST);
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$cnt=0;
-		foreach($_POST as $config_name => $config_value)
+		$config_values=array('curl_ssl_verify'=>'','use_status_colors_on_wc'=>'','delete_attachments_upon_uninstall'=>'','skip_rest_authentication_errors'=>'');
+		foreach($config_values as $config_name => $config_value)
 		{
-			if($config_name!="" && isset($this->config_front->$config_name))
+			if(isset($_POST[$config_name]))
 			{
-				$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($config_value)."' where config_name='".esc_sql($config_name)."'";
-				if(!$wpdb->query($sql) && $wpdb->last_error !== '')
+				$the_config_value=sanitize_text_field($_POST[$config_name]);
+				if(in_array($the_config_value,array('yes','no')) && isset($this->config_front->$config_name))
 				{
-					return array('status'=>'error','msg'=>__('Error: ','honeyb').htmlspecialchars( $wpdb->last_query, ENT_QUOTES ));
+					$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($the_config_value)."' where config_name='".esc_sql($config_name)."'";
+					if(!$wpdb->query($sql) && $wpdb->last_error !== '')
+					{
+						return array('status'=>'error','msg'=>"Error: in saving settings");
+					}
+					else
+						$cnt++;
 				}
-				else
-					$cnt++;
 			}
 		}
-		return array('status'=>'updated','msg'=>$cnt." ".__('Settings updated','honeyb'));
+		return array('status'=>'updated','cnt'=>$cnt,'msg'=>"Settings updated");
 	}
 	function doTokensCleanup()
 	{
@@ -134,22 +154,24 @@ class honeybadger{
 	}
 	function createUserRoleAndUser()
 	{
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$this->doTokensCleanup();
 		if(!$GLOBALS['wp_roles']->is_role("honeybadger"))
 			add_role("honeybadger","HoneyBadger",array("use_honeybadger_api"=>true));
 		if(!$GLOBALS['wp_roles']->is_role("honeybadger"))
 		{
-			echo json_encode(array("status"=>"error", "msg"=>'<div class="hb-notice-error">
-			        <p>'.__("Cannot create Honeybadger user role","honeyb").'</p>
-			     </div>'));
-			exit;
+			wp_send_json(array("status"=>"error", "msg"=>'<div class="hb-notice-error">
+			        <p>'.esc_html__("Cannot create Honeybadger user role","honeyb").'</p>
+			     </div>', 'nonce'=>wp_create_nonce( 'honeybadger_it_ajax_nonce' )));
 		}
 		$user=array(
 			"user_pass"=>bin2hex(random_bytes(16)),
 			"user_login"=>"honeybadger".get_current_blog_id(),
 			"user_nicename"=>"HoneyBadger",
 			"user_email"=>bin2hex(random_bytes(8))."@honeybadger.it",
-			"description"=>__('This user is used for the HoneyBadger IT communications through the REST API','honeyb'),
+			"description"=>esc_html__('This user is used for the HoneyBadger IT communications through the REST API','honeyb'),
 			"role"=>"honeybadger",
 		);
 		if(!username_exists("honeybadger".get_current_blog_id()))
@@ -157,27 +179,28 @@ class honeybadger{
 			$user_id=wp_insert_user($user);
 			if(is_int($user_id))
 			{
-				echo json_encode(array("status"=>"ok", "msg"=>'<div class="hb-notice-updated">
-				        <p>'.__("Honeybadger user created with success","honeyb").'</p>
-				     </div>'));
-				exit;
+				wp_send_json(array("status"=>"ok", "msg"=>'<div class="hb-notice-updated">
+				        <p>'.esc_html__("Honeybadger user created with success","honeyb").'</p>
+				     </div>', 'nonce'=>wp_create_nonce( 'honeybadger_it_ajax_nonce' )));
 			}
 			else
 			{
-				echo json_encode(array("status"=>"error", "msg"=>'<div class="hb-notice-error">
-				        <p>'.__("Cannot create Honeybadger user","honeyb").'</p>
-				     </div>'));
-				exit;
+				wp_send_json(array("status"=>"error", "msg"=>'<div class="hb-notice-error">
+				        <p>'.esc_html__("Cannot create Honeybadger user","honeyb").'</p>
+				     </div>', 'nonce'=>wp_create_nonce( 'honeybadger_it_ajax_nonce' )));
 			}
 		}
 		if(username_exists("honeybadger".get_current_blog_id()))
-			echo json_encode(array("status"=>"ok", "msg"=>'<div class="hb-notice-updated">
-			        <p>'.__("Honeybadger user created with success","honeyb").'</p>
-			     </div>'));
+			wp_send_json(array("status"=>"ok", "msg"=>'<div class="hb-notice-updated">
+			        <p>'.esc_html__("Honeybadger user already exists from previous setup","honeyb").'</p>
+			     </div>', 'nonce'=>wp_create_nonce( 'honeybadger_it_ajax_nonce' )));
 	}
 	function createHoneybadgerConnection()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		//create the client credentials
 		$client_id=bin2hex(random_bytes(16));
 		$client_secret=bin2hex(random_bytes(16));
@@ -202,24 +225,31 @@ class honeybadger{
 				user_id='".esc_sql($user_id)."'";
 				if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				{
-					echo json_encode(array("status"=>"error", "msg"=>'<div class="hb-notice-error">
-					        <p>'.__("Cannot create Honeybadger client","honeyb").'</p>
-					     </div>'));
-					exit;
+					wp_send_json(array("status"=>"error", "msg"=>'<div class="hb-notice-error">
+					        <p>'.esc_html__("Cannot create Honeybadger client","honeyb").'</p>
+					     </div>', 'nonce'=>wp_create_nonce( 'honeybadger_it_ajax_nonce' )));
 				}
 			}
 			$url = get_site_url();
 			$domain=str_ireplace("https://","",$url);
 			$domain=str_ireplace("http://","",$domain);
-			$params="client_id=".$client_id."&client_secret=".$client_secret."&domain=".$domain."&verify_ssl=".$verify_ssl;
+			$nonce=wp_create_nonce( 'honeybadger_it_oauth_nonce' );
+			$rest_url=get_rest_url();
+			$rest_url=str_ireplace(get_site_url(), "", $rest_url);
+			$params="rest_url=".$rest_url."&nonce=".rawurlencode($nonce)."&client_id=".rawurlencode($client_id)."&client_secret=".rawurlencode($client_secret)."&domain=".rawurlencode($domain)."&verify_ssl=".rawurlencode($verify_ssl);
 			$url="https://".HONEYBADGER_IT_TARGET_SUBDOMAIN.".honeybadger.it/oauth.php";
 			$result=$this->doHoneyBadgerCurlRequest($url,$params);
-			echo json_encode(array("status"=>"ok", "msg"=>$result['response'].'</div>'));
+			wp_send_json(array("status"=>"ok", "msg"=>$result['response'], 'nonce'=>wp_create_nonce( 'honeybadger_it_oauth_nonce' )));
 		}
+		else
+			esc_html_e("missing user id","honeyb");
 	}
 	function refreshHoneybadgerConnection()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$this->doTokensCleanup();
 		$user_id=username_exists("honeybadger".get_current_blog_id());
 		$verify_ssl=$this->config->curl_ssl_verify;
@@ -242,37 +272,48 @@ class honeybadger{
 			$url = get_site_url();
 			$domain=str_ireplace("https://","",$url);
 			$domain=str_ireplace("http://","",$domain);
-			$params="client_id=".$client_id."&client_secret=".$client_secret."&domain=".$domain."&verify_ssl=".$verify_ssl;
+			$nonce=wp_create_nonce( 'honeybadger_it_oauth_nonce' );
+			$rest_url=get_rest_url();
+			$rest_url=str_ireplace(get_site_url(), "", $rest_url);
+			$params="rest_url=".rawurlencode($rest_url)."&nonce=".rawurlencode($nonce)."&client_id=".rawurlencode($client_id)."&client_secret=".rawurlencode($client_secret)."&domain=".rawurlencode($domain)."&verify_ssl=".rawurlencode($verify_ssl);
 			$result=$this->doHoneyBadgerCurlRequest("https://".HONEYBADGER_IT_TARGET_SUBDOMAIN.".honeybadger.it/oauth.php",$params);
-			echo json_encode(array("status"=>"ok", "msg"=>$result['response'].'</div>'));
+			wp_send_json(array("status"=>"ok", "msg"=>$result['response']));
 		}
 	}
 	function doHoneyBadgerCurlRequest($url="",$params="") {
-		$cookie=bin2hex(random_bytes(16)).".txt";
-		//touch($cookie);
-		$ch = curl_init($url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+		$verify_ssl=true;
 		if(strtolower($this->config->curl_ssl_verify)=="no")
-			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($ch, CURLOPT_POST, 1);
-		//curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie);
-		//curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie);
-		curl_setopt($ch, CURLOPT_POSTFIELDS,$params);
-		$response = curl_exec($ch);
-		$info = curl_getinfo($ch);
-		curl_close($ch);
-		return array('response'=>$response,'time'=>$info['total_time']);
+			$verify_ssl=false;
+		$start = microtime(true);
+		$args=array();
+		parse_str($params,$args);
+		$args=array('method' => 'POST','body' => array_merge(array('sslverify' => $verify_ssl),$args));
+		$body="";
+		$response = wp_remote_post( $url, $args );
+		if ( is_wp_error( $response ) ) {
+			$error_message = $response->get_error_message();
+			echo $error_message;
+		}
+		else
+			$body = wp_remote_retrieve_body( $response );
+		$time_elapsed_secs = microtime(true) - $start;
+		return array('response'=>$body,'time'=>number_format(round($time_elapsed_secs,2),2,".",""));
 	}
 	function setCurrentSetupStep($step=0)
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($step)."' where config_name='setup_step'";
 		$wpdb->query($sql);
 	}
 	function setSettingValue($setting="",$value="")
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		if($setting!="" && $value!="")
 		{
 			$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($value)."' where config_name='".esc_sql($setting)."'";
@@ -282,6 +323,9 @@ class honeybadger{
 	function doOauthPingTest()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$user_id=username_exists("honeybadger".get_current_blog_id());
 		if($user_id>0)
 		{
@@ -289,7 +333,7 @@ class honeybadger{
 			$result=$wpdb->get_row($sql);
 			if(isset($result->client_id))
 			{
-				$response=$this->simpleCurlRequest("https://".HONEYBADGER_IT_TARGET_SUBDOMAIN.".honeybadger.it/test_oauth.php?client_id=".$result->client_id);
+				$response=$this->simpleCurlRequest("https://".HONEYBADGER_IT_TARGET_SUBDOMAIN.".honeybadger.it/test_oauth.php?client_id=".sanitize_text_field($result->client_id));
 				if(isset($response['response']))
 				{
 					$result=json_decode($response['response']);
@@ -314,27 +358,27 @@ class honeybadger{
 						$this->setSettingValue("setup_step",$setup_step);
 						if($this->config->is_refresh==1)
 						{
-							?>
-							<style type="text/css">
-								#hb-status-update{
-									display: none;
-								}
-								#hb-one-moment{
-									display: block!important;
-								}
-							</style>
-							<script type="text/javascript">
-						        <!--
-						        window.location.href = "<?php echo get_site_url();?>/wp-admin/admin.php?page=honeybadger-it";
-						        //-->
-						    </script>
-							<?php
+							$data_css='
+							#hb-status-update{
+								display: none;
+							}
+							#hb-one-moment{
+								display: block!important;
+							}';
+							wp_register_style( 'honeybadger_it_css_setup_display_section_handler', false );
+							wp_enqueue_style( 'honeybadger_it_css_setup_display_section_handler' );
+							wp_add_inline_style( 'honeybadger_it_css_setup_display_section_handler', $data_css );
+
+							$data_js='window.location.href = "'.esc_url(admin_url().'admin.php?page=honeybadger-it').'";';
+							wp_register_script( 'honeybadger_it_js_tools_inline_script_handler', '' );
+							wp_enqueue_script( 'honeybadger_it_js_tools_inline_script_handler' );
+							wp_add_inline_script("honeybadger_it_js_tools_inline_script_handler",$data_js);
 							return true;
 						}
 						else
 						{
 							echo '<div class="hb-notice-updated">
-						        <p>'.__("Honeybadger Oauth setup with success","honeyb").'</p>
+						        <p>'.esc_html__("Honeybadger Oauth setup with success","honeyb").'</p>
 						     </div>';
 						     return true;
 					 	}
@@ -343,12 +387,15 @@ class honeybadger{
 			}
 		}
 		echo '<div class="hb-notice-error">
-		        <p>'.__("Error in Oauth REST API communication between your site and HoneyBadger IT","honeyb").'</p>
+		        <p>'.esc_html__("Error in Oauth REST API communication between your site and HoneyBadger IT","honeyb").'</p>
 		     </div>';
 	}
 	function restartTheSetup()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where 1";
 		$wpdb->query($sql);
 		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where 1";
@@ -359,6 +406,9 @@ class honeybadger{
 	function getHbClientId()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$user_id=username_exists("honeybadger".get_current_blog_id());
 		if($user_id>0)
 		{
@@ -372,6 +422,9 @@ class honeybadger{
 	function getHbClientSecret()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$user_id=username_exists("honeybadger".get_current_blog_id());
 		if($user_id>0)
 		{
@@ -393,11 +446,13 @@ class honeybadger{
 	function setupTheHbAccount()
 	{
 		global $wpdb;
-		$_POST=stripslashes_deep($_POST);
-		$email=isset($_POST['hb_email'])?$_POST['hb_email']:"";
-		$password=isset($_POST['hb_password'])?$_POST['hb_password']:"";
-		$first_name=isset($_POST['hb_first_name'])?$_POST['hb_first_name']:"";
-		$last_name=isset($_POST['hb_last_name'])?$_POST['hb_last_name']:"";
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
+		$email=isset($_POST['hb_email'])?sanitize_email($_POST['hb_email']):"";
+		$password=isset($_POST['hb_password'])?sanitize_text_field($_POST['hb_password']):"";
+		$first_name=isset($_POST['hb_first_name'])?sanitize_text_field($_POST['hb_first_name']):"";
+		$last_name=isset($_POST['hb_last_name'])?sanitize_text_field($_POST['hb_last_name']):"";
 		$client_id=$this->getHbClientId();
 
 		if($client_id && $email!="" && $password!="")
@@ -405,14 +460,14 @@ class honeybadger{
 			if(!$this->validateEmail($email))
 			{
 				echo '<div class="notice notice-error is-dismissible">
-			        <p>'.__("Please input a valid email address","honeyb").'</p>
+			        <p>'.esc_html__("Please input a valid email address","honeyb").'</p>
 			     </div>';
 			     return;
 			}
 			if(!preg_match('/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/', $password))
 			{
 				echo '<div class="notice notice-error is-dismissible">
-			        <p>'.__("Please input a Password [6 to 20 characters which contain at least one numeric digit, one uppercase and one lowercase letter]","honeyb").'</p>
+			        <p>'.esc_html__("Please input a Password [6 to 20 characters which contain at least one numeric digit, one uppercase and one lowercase letter]","honeyb").'</p>
 			     </div>';
 			     return;
 			}
@@ -422,19 +477,19 @@ class honeybadger{
 			if($woocommerce_prices_include_tax=='no')
 				$so_tax_included=0;
 			$url="https://".HONEYBADGER_IT_TARGET_SUBDOMAIN.".honeybadger.it/create_new_user.php";
-			$params="email=".$email."&password=".$password."&first_name=".$first_name."&last_name=".$last_name."&so_tax_included=".$so_tax_included."&client_id=".$client_id;
+			$params="email=".rawurlencode($email)."&password=".rawurlencode($password)."&first_name=".rawurlencode($first_name)."&last_name=".rawurlencode($last_name)."&so_tax_included=".rawurlencode($so_tax_included)."&client_id=".rawurlencode($client_id);
 			$result=$this->doHoneyBadgerCurlRequest($url,$params);
 			$decoded=json_decode($result['response']);
 			if(isset($decoded->status) && $decoded->status=="ok")
 			{
 				echo '<div class="notice notice updated is-dismissible">
-			        <p>'.__("Your HoneyBadger IT account created with success! Please check your email and verify your email address in order for the account to be activated.","honeyb").'</p>
+			        <p>'.esc_html__("Your HoneyBadger IT account created with success! Please check your email and verify your email address in order for the account to be activated.","honeyb").'</p>
 			     </div>';
 			    $sql="update ".$wpdb->prefix."honeybadger_config set config_value='3' where config_name='setup_step'";
 				$wpdb->query($sql);
 				$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($email)."' where config_name='honeybadger_account_email'";
 				$wpdb->query($sql);
-				$location=get_site_url()."/wp-admin/admin.php?page=honeybadger-it&msg=created";
+				$location=admin_url()."admin.php?page=honeybadger-it&msg=created";
     			header("Location: $location");
 			}
 			else
@@ -443,59 +498,82 @@ class honeybadger{
 				if(isset($decoded->msg))
 					$reason=$decoded->msg;
 				echo '<div class="notice notice-error is-dismissible">
-		        	<p>'.__($reason,"honeyb").'</p>
+		        	<p>'.esc_html__($reason,"honeyb").'</p>
 		     	</div>';
 			}
 		}
 		else
 		{
 			echo '<div class="notice notice-error is-dismissible">
-		        <p>'.__("Something is wrong, please reinstall the plugin and restart the setup process","honeyb").'</p>
+		        <p>'.esc_html__("Something is wrong, please reinstall the plugin and restart the setup process","honeyb").'</p>
 		     </div>';
 		}
 	}
 	function changeClientIdAndSecret()
 	{
 		global $wpdb;
-		$_POST=stripslashes_deep($_POST);
-		$client_id=isset($_POST['client_id'])?$_POST['client_id']:"";
-		$client_secret=isset($_POST['client_secret'])?$_POST['client_secret']:"";
-
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
+		$client_id=isset($_POST['client_id'])?sanitize_text_field($_POST['client_id']):"";
+		$client_secret=isset($_POST['client_secret'])?sanitize_text_field($_POST['client_secret']):"";
 		if($client_id!="" && $client_secret!="")
 		{
 			$old_client_id=$this->getHbClientId();
-			$sql="update ".$wpdb->prefix."honeybadger_oauth_clients set 
-			client_id='".esc_sql($client_id)."',
-			client_secret='".esc_sql($client_secret)."'
-			where
-			client_id='".esc_sql($old_client_id)."'";
-			if((!$wpdb->query($sql) && $wpdb->last_error !== '') || $wpdb->rows_affected==0 )
-				return array('status'=>'error','msg'=>__('Something went wrong when updating the database, please start the setup first and try again','honeyb'));
+			if($old_client_id!=$client_id)
+			{
+				$sql="update ".$wpdb->prefix."honeybadger_oauth_clients set 
+				client_id='".esc_sql($client_id)."',
+				client_secret='".esc_sql($client_secret)."'
+				where
+				client_id='".esc_sql($old_client_id)."'";
+				if((!$wpdb->query($sql) && $wpdb->last_error !== '') || $wpdb->rows_affected==0 )
+					return array('status'=>'error','msg'=>'Something went wrong when updating the database, please start the setup first and try again');
+				else
+				{
+					$this->restartTheSetup();
+					return array('status'=>'updated','msg'=>'Credentials updated with success, please redo the setup again now');
+				}
+			}
 			else
 			{
-				$this->restartTheSetup();
-				return array('status'=>'updated','msg'=>__('Credentials updated with success, please redo the setup again now','honeyb'));
+				$sql="update ".$wpdb->prefix."honeybadger_oauth_clients set 
+				client_secret='".esc_sql($client_secret)."'
+				where
+				client_id='".esc_sql($old_client_id)."'";
+				if((!$wpdb->query($sql) && $wpdb->last_error !== '') )
+					return array('status'=>'error','msg'=>'Something went wrong when updating the database, please start the setup first and try again');
+				else
+				{
+					$this->restartTheSetup();
+					return array('status'=>'updated','msg'=>'Credentials updated with success, please redo the setup again now');
+				}
 			}
 		}
 		else
-			return array('status'=>'error','msg'=>__('Something is wrong, please try again','honeyb'));
+			return array('status'=>'error','msg'=>'Something is wrong, please try again','honeyb');
 	}
 	function revokeHbAccess()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where 1";
 		$wpdb->query($sql);
 		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where 1";
 		$wpdb->query($sql);
 		$sql="update ".$wpdb->prefix."honeybadger_config set config_value='4' where config_name='setup_step'";
 		$wpdb->query($sql);
-		$location=get_site_url()."/wp-admin/admin.php?page=honeybadger-it";
+		$location=admin_url()."admin.php?page=honeybadger-it";
     	header("Location: $location");
 	}
 	function checkAccessTokenExpiry()
 	{
 		global $wpdb;
-
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$sql="select client_id from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where expires>'".date("Y-m-d H:i:s")."'";
 		$results=$wpdb->get_results($sql);
 		if(count($results)>0)
@@ -506,6 +584,9 @@ class honeybadger{
 	function testRestAPI()
 	{
 		global $wpdb;
+		if ( ! current_user_can( 'manage_options' ) ) {
+		    return;
+		}
 		$user_id=username_exists("honeybadger".get_current_blog_id());
 		if($user_id>0)
 		{
@@ -519,13 +600,15 @@ class honeybadger{
 					$result=json_decode($response['response']);
 					if(isset($result->status) && $result->status=='ok')
 					{
-					     return array("status"=>"updated","msg"=>__("REST API working as expected. Ping: ".$response['time']."s","honeyb"));
+					     return array("status"=>"updated","time"=>$response['time'],"msg"=>"REST API working as expected. Ping(s)");
 					}
 					else
-						return array("status"=>"error","msg"=>__("REST API NOT working as expected, or you did not login on the platform for a while","honeyb"));
+						return array("status"=>"error","msg"=>"REST API NOT working as expected, or you did not login on the platform for a while");
 				}
 			}
 		}
+		else
+			return array("status"=>"error","msg"=>"Please setup the HoneyBadger.IT connection first","time"=>0);
 	}
 }
 ?>

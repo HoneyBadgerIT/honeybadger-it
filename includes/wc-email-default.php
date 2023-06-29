@@ -4,12 +4,12 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
-
+namespace HoneyBadgerIT;
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-if ( ! class_exists( 'WC_Email_Default_HoneyBadger', false ) ) :
+if ( ! class_exists( 'WC_Email_Default_HoneyBadger', false ) && class_exists('\WC_Email')) :
 
 	/**
 	 * Customer Completed Order Email.
@@ -21,7 +21,7 @@ if ( ! class_exists( 'WC_Email_Default_HoneyBadger', false ) ) :
 	 * @package     WooCommerce\Classes\Emails
 	 * @extends     WC_Email
 	 */
-	class WC_Email_Default_HoneyBadger extends WC_Email {
+	class WC_Email_Default_HoneyBadger extends \WC_Email {
 
 		/**
 		 * Constructor.
@@ -77,7 +77,7 @@ if ( ! class_exists( 'WC_Email_Default_HoneyBadger', false ) ) :
 		public function get_default_subject() {
 			global $wpdb;
 
-			$order_status=isset($_POST['order_status'])?$_POST['order_status']:"";
+			$order_status=isset($_POST['order_status'])?sanitize_text_field($_POST['order_status']):"";
 			$order_id=isset($_POST['order_id'])?(int)$_POST['order_id']:0;
 			$sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='wc-email-default'";
 			if($order_status!="")

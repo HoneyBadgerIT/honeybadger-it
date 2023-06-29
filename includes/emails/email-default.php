@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 */
 
 global $wpdb;
-$order_status=isset($_POST['order_status'])?$_POST['order_status']:"";
+$order_status=isset($_POST['order_status'])?sanitize_text_field($_POST['order_status']):"";
 $sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='wc-email-default'";
 if($order_status!="")
     $sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='".esc_sql($order_status)."' and enabled=1";
