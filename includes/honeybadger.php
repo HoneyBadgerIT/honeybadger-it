@@ -120,7 +120,7 @@ class honeybadger{
 	function saveSettings()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$cnt=0;
@@ -154,7 +154,7 @@ class honeybadger{
 	}
 	function createUserRoleAndUser()
 	{
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$this->doTokensCleanup();
@@ -198,7 +198,7 @@ class honeybadger{
 	function createHoneybadgerConnection()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		//create the client credentials
@@ -247,7 +247,7 @@ class honeybadger{
 	function refreshHoneybadgerConnection()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$this->doTokensCleanup();
@@ -302,7 +302,7 @@ class honeybadger{
 	function setCurrentSetupStep($step=0)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($step)."' where config_name='setup_step'";
@@ -311,7 +311,7 @@ class honeybadger{
 	function setSettingValue($setting="",$value="")
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if($setting!="" && $value!="")
@@ -323,7 +323,7 @@ class honeybadger{
 	function doOauthPingTest()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$user_id=username_exists("honeybadger".get_current_blog_id());
@@ -393,7 +393,7 @@ class honeybadger{
 	function restartTheSetup()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where 1";
@@ -406,7 +406,7 @@ class honeybadger{
 	function getHbClientId()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$user_id=username_exists("honeybadger".get_current_blog_id());
@@ -422,7 +422,7 @@ class honeybadger{
 	function getHbClientSecret()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$user_id=username_exists("honeybadger".get_current_blog_id());
@@ -446,7 +446,7 @@ class honeybadger{
 	function setupTheHbAccount()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$email=isset($_POST['hb_email'])?sanitize_email($_POST['hb_email']):"";
@@ -512,7 +512,7 @@ class honeybadger{
 	function changeClientIdAndSecret()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$client_id=isset($_POST['client_id'])?sanitize_text_field($_POST['client_id']):"";
@@ -556,7 +556,7 @@ class honeybadger{
 	function revokeHbAccess()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where 1";
@@ -571,7 +571,7 @@ class honeybadger{
 	function checkAccessTokenExpiry()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$sql="select client_id from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where expires>'".date("Y-m-d H:i:s")."'";
@@ -584,7 +584,7 @@ class honeybadger{
 	function testRestAPI()
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		$user_id=username_exists("honeybadger".get_current_blog_id());

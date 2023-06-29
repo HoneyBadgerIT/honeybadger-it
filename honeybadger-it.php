@@ -470,13 +470,15 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
         $tab=isset($_GET['tab'])?sanitize_text_field($_GET['tab']):"";
         if($page=='wc-settings' && $tab=='email')
             return $emails;
-        $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed');
+        $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed','wc-checkout-draft');
         $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in ('".implode("','",$default_statuses)."')";
         $results=$wpdb->get_results($sql);
         if(is_array($results))
         {
+            require_once __DIR__ . '/includes/wc-email-default.php';
+            $default_wc_email_obj=new HoneyBadgerIT\WC_Email_Default_HoneyBadger();
             foreach($results as $r)
-                $emails['WC_Email_Default_HoneyBadger_'.$r->custom_order_status] = include __DIR__ . '/includes/wc-email-default.php';
+                $emails['WC_Email_Default_HoneyBadger_'.$r->custom_order_status] = $default_wc_email_obj;
         }
         return $emails;
     }

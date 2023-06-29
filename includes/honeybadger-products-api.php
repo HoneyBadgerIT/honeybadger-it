@@ -55,7 +55,7 @@ class honeybadgerProductsAPI{
 	function search_customer($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -102,7 +102,7 @@ class honeybadgerProductsAPI{
 	function get_products_by_ids($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -148,7 +148,7 @@ class honeybadgerProductsAPI{
 	function search_product($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -217,7 +217,7 @@ class honeybadgerProductsAPI{
 	function set_customer_to_new_order($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -241,7 +241,7 @@ class honeybadgerProductsAPI{
 	function get_available_payment_shippment_methods($request)
 	{
 		global $wpdb,$woocommerce;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -423,7 +423,7 @@ class honeybadgerProductsAPI{
 	}
 	function check_if_email_exists_for_new_order($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -445,7 +445,7 @@ class honeybadgerProductsAPI{
 	function create_new_order($request)
 	{
 		global $wpdb,$woocommerce;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -644,7 +644,7 @@ class honeybadgerProductsAPI{
 	}
 	function delete_order($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -662,7 +662,7 @@ class honeybadgerProductsAPI{
 	function get_products($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -799,7 +799,7 @@ class honeybadgerProductsAPI{
 	}
 	function save_product_details($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -892,7 +892,7 @@ class honeybadgerProductsAPI{
 	function get_product_details($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -1020,7 +1020,7 @@ class honeybadgerProductsAPI{
 	function get_product_title($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -1042,7 +1042,7 @@ class honeybadgerProductsAPI{
 	function get_media_gallery($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -1119,7 +1119,7 @@ class honeybadgerProductsAPI{
 	}
 	function remove_product_image($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -1136,7 +1136,7 @@ class honeybadgerProductsAPI{
 	}
 	function save_main_product_image($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -1154,7 +1154,7 @@ class honeybadgerProductsAPI{
 	}
 	function save_product_image_gallery($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -1174,7 +1174,7 @@ class honeybadgerProductsAPI{
 	}
 	function update_product_stock($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -1225,7 +1225,7 @@ class honeybadgerProductsAPI{
 	}
 	function get_so_actions($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		global $wpdb;
@@ -1248,7 +1248,7 @@ class honeybadgerProductsAPI{
 	}
 	function get_so_email_attachments($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		global $wpdb;
@@ -1298,7 +1298,7 @@ class honeybadgerProductsAPI{
 	function get_so_email_static_attachments($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -1361,7 +1361,7 @@ class honeybadgerProductsAPI{
 	function get_products_stock_log($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -1389,7 +1389,7 @@ class honeybadgerProductsAPI{
 	function save_products_stock_log($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))

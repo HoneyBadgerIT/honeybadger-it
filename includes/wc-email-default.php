@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-if ( ! class_exists( 'WC_Email_Default_HoneyBadger', false ) && class_exists('\WC_Email')) :
+if ( ! class_exists( 'WC_Email_Default_HoneyBadger' ) && class_exists('\WC_Email')) :
 
 	/**
 	 * Customer Completed Order Email.
@@ -161,5 +161,3 @@ if ( ! class_exists( 'WC_Email_Default_HoneyBadger', false ) && class_exists('\W
 	}
 
 endif;
-
-return new WC_Email_Default_HoneyBadger();

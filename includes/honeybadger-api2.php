@@ -56,7 +56,7 @@ class honeybadgerAPI2{
 	function get_order_statuses($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -103,7 +103,7 @@ class honeybadgerAPI2{
 	function get_dashboard_last_sales_data($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -248,7 +248,7 @@ class honeybadgerAPI2{
 	function get_dashboard_latest_orders_data($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -304,7 +304,7 @@ class honeybadgerAPI2{
 	function get_dashboard_stock_low($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -365,7 +365,7 @@ class honeybadgerAPI2{
 	function get_dashboard_enabled_wc_emails_cnt($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -380,7 +380,7 @@ class honeybadgerAPI2{
 	function get_dashboard_enabled_emails_cnt($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -395,7 +395,7 @@ class honeybadgerAPI2{
 	function get_dashboard_enabled_attachments_cnt($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -410,7 +410,7 @@ class honeybadgerAPI2{
 	function get_dashboard_enabled_static_attachments_cnt($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -425,7 +425,7 @@ class honeybadgerAPI2{
 	function get_dashboard_data($request)
 	{
 		global $wpdb;
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -507,7 +507,7 @@ class honeybadgerAPI2{
 	}
 	function get_saved_attachments($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
@@ -612,7 +612,7 @@ class honeybadgerAPI2{
 	}
 	function delete_remote_item($request)
 	{
-		if ( ! current_user_can( 'use_honeybadger_api' ) ) {
+		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
 		if(!empty($request))
