@@ -5,7 +5,7 @@
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
 namespace HoneyBadgerIT;
-
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 class HoneyBadger_REST_Controller {
  
     public function __construct() {

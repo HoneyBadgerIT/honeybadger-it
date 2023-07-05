@@ -1,5 +1,5 @@
 <?php
-
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 /**
  * The plugin bootstrap file
  *
@@ -45,13 +45,13 @@ $upload_dir = wp_upload_dir();
 if(!empty($upload_dir['basedir']))
     define( 'HONEYBADGER_UPLOADS_PATH', $upload_dir['basedir'].'/honeybadger-it/' );
 else
-    define( 'HONEYBADGER_UPLOADS_PATH', '' );
+    return;
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-honeybadger-it-activator.php
  */
 function honeybadger_it_activate_the_honeybadger_it_plugin() {
-    add_option("the_honeybadger_it_activation_is_done","yes");
+    add_option("honeybadger_the_honeybadger_it_activation_is_done","yes");
     require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it-activator.php';
     $activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
     $activator->activate();
@@ -71,20 +71,20 @@ register_activation_hook( __FILE__, 'honeybadger_it_activate_the_honeybadger_it_
 register_deactivation_hook( __FILE__, 'honeybadger_it_deactivate_the_honeybadger_it_plugin' );
 
 // Creating table whenever a new blog is created
-function new_blog_honeybadger_it_plugin_check($blog_id, $user_id, $domain, $path, $site_id, $meta) {
+function honeybadger_new_blog_honeybadger_it_plugin_check($blog_id, $user_id, $domain, $path, $site_id, $meta) {
     require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it-activator.php';
     $activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
     $activator->on_create_blog($blog_id, $user_id, $domain, $path, $site_id, $meta);
 }
-add_action( 'wpmu_new_blog', 'new_blog_honeybadger_it_plugin_check', 10, 6 );
+add_action( 'wpmu_new_blog', 'honeybadger_new_blog_honeybadger_it_plugin_check', 10, 6 );
 
 // Deleting the table whenever a blog is deleted
-function on_delete_blog_honeybadger_it_plugin_check( $tables ) {
+function honeybadger_on_delete_blog_honeybadger_it_plugin_check( $tables ) {
     require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it-activator.php';
     $activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
     return $activator->on_delete_blog($tables);
 }
-add_filter( 'wpmu_drop_tables', 'on_delete_blog_honeybadger_it_plugin_check' );
+add_filter( 'wpmu_drop_tables', 'honeybadger_on_delete_blog_honeybadger_it_plugin_check' );
 
 function honeybadger_it_check_version_plugin_check() {
     if (HONEYBADGER_IT_VERSION !== get_option('HONEYBADGER_IT_VERSION')){
@@ -109,27 +109,27 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/class-honeybadger-it.php';
  *
  * @since    1.0.0
  */
-function run_honeybadger_it_plugin_start() {
+function honeybadger_run_honeybadger_it_plugin_start() {
 
     $plugin = new HoneyBadgerIT\Honeybadger_IT();
     $plugin->run();
     
 }
-function run_honeybadger_it_plugin_admin_main_page(){
+function honeybadger_run_honeybadger_it_plugin_admin_main_page(){
     require_once dirname( __FILE__ )  . '/admin/partials/honeybadger-it-admin-display.php';
 }
-add_action('admin_menu', 'admin_menu_honeybadger_it_plugin_menu_items');
-function admin_menu_honeybadger_it_plugin_menu_items()
+add_action('admin_menu', 'honeybadger_admin_menu_honeybadger_it_plugin_menu_items');
+function honeybadger_admin_menu_honeybadger_it_plugin_menu_items()
 {
     require_once dirname( __FILE__ )  . '/admin/partials/honeybadger_svg.php';
-    add_menu_page( "HoneyBadger.IT", "HoneyBadger.IT", "administrator", "honeybadger-it", "run_honeybadger_it_plugin_admin_main_page", $honeybadger_icon, 54.9);
-    add_submenu_page( "honeybadger-it", __('Status','honeyb'), __('Status','honeyb'), "administrator", "honeybadger-it","run_honeybadger_it_plugin_admin_main_page",1);
-    add_submenu_page( "honeybadger-it", __('Settings','honeyb'), __('Settings','honeyb'), "administrator", "honeybadger-settings","run_honeybadger_it_plugin_admin_main_page",2);
-    add_submenu_page( "honeybadger-it", __('REST API','honeyb'), __('REST API','honeyb'), "administrator", "honeybadger-rest-api","run_honeybadger_it_plugin_admin_main_page",3);
-    add_submenu_page( "honeybadger-it", __('Tools','honeyb'), __('Tools','honeyb'), "administrator", "honeybadger-tools","run_honeybadger_it_plugin_admin_main_page",4);
+    add_menu_page( "HoneyBadger.IT", "HoneyBadger.IT", "administrator", "honeybadger-it", "honeybadger_run_honeybadger_it_plugin_admin_main_page", $honeybadger_icon, 54.9);
+    add_submenu_page( "honeybadger-it", __('Status','honeyb'), __('Status','honeyb'), "administrator", "honeybadger-it","honeybadger_run_honeybadger_it_plugin_admin_main_page",1);
+    add_submenu_page( "honeybadger-it", __('Settings','honeyb'), __('Settings','honeyb'), "administrator", "honeybadger-settings","honeybadger_run_honeybadger_it_plugin_admin_main_page",2);
+    add_submenu_page( "honeybadger-it", __('REST API','honeyb'), __('REST API','honeyb'), "administrator", "honeybadger-rest-api","honeybadger_run_honeybadger_it_plugin_admin_main_page",3);
+    add_submenu_page( "honeybadger-it", __('Tools','honeyb'), __('Tools','honeyb'), "administrator", "honeybadger-tools","honeybadger_run_honeybadger_it_plugin_admin_main_page",4);
 }
 
-run_honeybadger_it_plugin_start();
+honeybadger_run_honeybadger_it_plugin_start();
 
 function honeybadger_it_plugin_rest_oauth2_load() {
     add_filter( 'determine_current_user', 'honeybadger_plugin_determine_current_user_oauth2' );
@@ -142,9 +142,20 @@ function honeybadger_show_plugin_admin_settings_link( $links, $file )
 {
     if ( $file == plugin_basename(dirname(__FILE__) . '/honeybadger-it.php') ) 
     {
-        $links = array_merge(array('<a href="'.admin_url().'admin.php?page=honeybadger-it">'.__('Settings','honeyb').'</a>'),$links);
+        $links = array_merge(array('<a href="'.esc_url(admin_url().'admin.php?page=honeybadger-it').'">'.__('Settings','honeyb').'</a>'),$links);
     }
     return $links;
+}
+
+function honeybadger_sanitize_file_name_from_path($path="")
+{
+    if($path!="")
+    {
+        $filename=sanitize_file_name(basename($path));
+        $dir=dirname($path);
+        $path=$dir."/".$filename;
+    }
+    return $path;
 }
 
 global $honeybadger_it_plugin_admin_config;
@@ -153,9 +164,9 @@ global $wpdb;
 $honeybadger_it_plugin_admin_config=new stdClass;
 $honeybadger_it_plugin_admin_config_front=new stdClass;
 
-if(get_option("the_honeybadger_it_activation_is_done")=="yes")
+if(get_option("honeybadger_the_honeybadger_it_activation_is_done")=="yes")
 {
-    $sql="select * from ".$wpdb->prefix."honeybadger_config where 1";
+    $sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_config where %d",1);
     $results=$wpdb->get_results($sql);
     if(is_array($results)){
         foreach($results as $r){
@@ -185,9 +196,10 @@ function honeybadger_plugin_determine_current_user_oauth2()
         }
         if($token!="")
         {
-            $sql="select at.access_token, oc.user_id from ".$wpdb->prefix."honeybadger_oauth_access_tokens at 
+            $sql=$wpdb->prepare("select at.access_token, oc.user_id from ".$wpdb->prefix."honeybadger_oauth_access_tokens at 
             inner join ".$wpdb->prefix."honeybadger_oauth_clients oc on oc.client_id=at.client_id
-            where at.access_token='".esc_sql($token)."' and oc.user_id='".esc_sql($user_id)."' and at.expires>='".date("Y-m-d H:i:s")."'";
+            where at.access_token=%s and oc.user_id=%d and at.expires>=%s",
+            array($token,$user_id,date("Y-m-d H:i:s")));
             $result=$wpdb->get_row($sql);
             if(isset($result->user_id) && $result->access_token==$token)
             {
@@ -203,7 +215,6 @@ function honeybadger_it_plugin_rest_oauth2_force_reauthentication() {
     if ( is_user_logged_in() ) {
         return;
     }
-    // Force reauthentication
     global $current_user;
     $current_user = null;
 
@@ -214,7 +225,7 @@ add_action( 'init', 'honeybadger_it_plugin_rest_oauth2_force_reauthentication', 
 function honeybadgerItPluginTestRestRoute( WP_REST_Request $request ) {
     $has_user = $request->get_param( 'has_user' );
     include ABSPATH."wp-includes/version.php";
-    $response = new WP_REST_Response(array("status"=>"ok","has_user"=>sanitize_text_field($has_user),"wp_version"=>sanitize_text_field($wp_version),"wc_version"=>WC_VERSION,"hb_version"=>HONEYBADGER_IT_VERSION));
+    $response = new WP_REST_Response(array("status"=>"ok","has_user"=>sanitize_text_field($has_user),"wp_version"=>sanitize_text_field($wp_version),"wc_version"=>sanitize_text_field(WC_VERSION),"hb_version"=>sanitize_text_field(HONEYBADGER_IT_VERSION)));
     $response->set_status(200);
 
     return $response; 
@@ -249,12 +260,13 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
     }
      
     add_action( 'rest_api_init', 'honeybadger_register_rest_routes' );
-    add_action( 'init', 'register_honeybadger_it_plugin_order_statuses' );
-    function register_honeybadger_it_plugin_order_statuses() {
+    add_action( 'init', 'honeybadger_register_honeybadger_it_plugin_order_statuses' );
+    function honeybadger_register_honeybadger_it_plugin_order_statuses() {
         global $wpdb;
         $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed','wc-checkout-draft');
-        $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in ('".implode("','",$default_statuses)."')";
-        $results=$wpdb->get_results($sql);
+        $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in (".implode(', ', array_fill(0, count($default_statuses), '%s')).")";
+        $query = call_user_func_array(array($wpdb, 'prepare'), array_merge(array($sql), $default_statuses));
+        $results=$wpdb->get_results($query);
         if(is_array($results))
         {
             foreach($results as $r)
@@ -275,8 +287,9 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
     function honeybadger_it_plugin_new_wc_order_statuses( $order_statuses ) {
         global $wpdb;
         $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed','wc-checkout-draft');
-        $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in ('".implode("','",$default_statuses)."')";
-        $results=$wpdb->get_results($sql);
+        $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in (".implode(', ', array_fill(0, count($default_statuses), '%s')).")";
+        $query = call_user_func_array(array($wpdb, 'prepare'), array_merge(array($sql), $default_statuses));
+        $results=$wpdb->get_results($query);
         if(is_array($results))
         {
             foreach($results as $r)
@@ -289,11 +302,11 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
     function honeybadger_it_plugin_admin_footer_function() {
         global $wpdb, $post_type;
         if ( $post_type == 'shop_order' ) {
-            $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where 1";
+            $sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where %d",1);
             $results=$wpdb->get_results($sql);
             if(is_array($results))
             {
-                $sql="select config_value from ".$wpdb->prefix."honeybadger_config where config_name='use_status_colors_on_wc'";
+                $sql=$wpdb->prepare("select config_value from ".$wpdb->prefix."honeybadger_config where config_name=%s",'use_status_colors_on_wc');
                 $row=$wpdb->get_row($sql);
                 if(isset($row->config_value) && $row->config_value=="yes")
                 {
@@ -301,10 +314,10 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
                     foreach($results as $status)
                     {
                         $data_css.="
-                        .order-status.status-".esc_attr(str_ireplace('wc-','',$status->custom_order_status))."{
-                        background: ".$status->bg_color.";
-                        color: ".$status->txt_color.";
-                        ";
+                        .order-status.status-".esc_html(str_ireplace('wc-','',$status->custom_order_status))."{
+                        background: ".esc_html($status->bg_color).";
+                        color: ".esc_html($status->txt_color).";
+                        }";
                     }
                     wp_register_style( 'honeybadger_it_css_setup_display_footer_section_handler', false );
                     wp_enqueue_style( 'honeybadger_it_css_setup_display_footer_section_handler' );
@@ -335,7 +348,7 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
             $honeybadger_emails_dir = HONEYBADGER_UPLOADS_PATH.'emails';
         else
             $honeybadger_emails_dir = HONEYBADGER_PLUGIN_PATH.'includes/emails';
-        $sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where template='".esc_sql(basename($template_name))."' and enabled=1";
+        $sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where template=%s and enabled=%d",array(esc_sql(basename($template_name)),1));
         $result=$wpdb->get_row($sql);
         if(isset($result->id) && $result->id>0)
         {
@@ -360,7 +373,7 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
             $status='wc-customer-note';
         else if($emailer->id=='customer_reset_password')
             $status='wc-customer-reset-password';
-        $sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='".esc_sql($status)."' and enabled=1";
+        $sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status=%s and enabled=%d",array($status,1));
         $result=$wpdb->get_row($sql);
         if(isset($result->id))
         {
@@ -417,8 +430,9 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
                     'refunded'=>'WC_Email_Customer_Refunded_Order'
                 );
                 $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed','wc-checkout-draft');
-                $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in ('".implode("','",$default_statuses)."')";
-                $results=$wpdb->get_results($sql);
+                $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in (".implode(', ', array_fill(0, count($default_statuses), '%s')).")";
+                $query = call_user_func_array(array($wpdb, 'prepare'), array_merge(array($sql), $default_statuses));
+                $results=$wpdb->get_results($query);
                 if(is_array($results))
                 {
                     foreach($results as $r)
@@ -442,7 +456,7 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
                 if(isset($_POST['attachments_to_be_deleted']) && is_array($_POST['attachments_to_be_deleted']))
                 {
                     foreach($_POST['attachments_to_be_deleted'] as $file)
-                        unlink($file);
+                        unlink(honeybadger_sanitize_file_name_from_path($file));
                 }
             }
         }
@@ -471,8 +485,9 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
         if($page=='wc-settings' && $tab=='email')
             return $emails;
         $default_statuses=array('wc-pending','wc-processing','wc-on-hold','wc-completed','wc-cancelled','wc-refunded','wc-failed','wc-checkout-draft');
-        $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in ('".implode("','",$default_statuses)."')";
-        $results=$wpdb->get_results($sql);
+        $sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status not in (".implode(', ', array_fill(0, count($default_statuses), '%s')).")";
+        $query = call_user_func_array(array($wpdb, 'prepare'), array_merge(array($sql), $default_statuses));
+        $results=$wpdb->get_results($query);
         if(is_array($results))
         {
             require_once __DIR__ . '/includes/wc-email-default.php';
@@ -532,7 +547,7 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
         $wc_status=isset($_POST['order_status'])?sanitize_text_field($_POST['order_status']):"";
         if($wc_status!="" && in_array("honeybadger",$roles))
         {
-            $sql="select email_bcc from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='".esc_sql($wc_status)."' and email_bcc!='' and enabled=1";
+            $sql=$wpdb->prepare("select email_bcc from ".$wpdb->prefix."honeybadger_wc_emails where wc_status=%s and email_bcc!='' and enabled=%d",array($wc_status,1));
             $result=$wpdb->get_row($sql);
             if(isset($result->email_bcc) && $result->email_bcc!="")
                 $headers .= "Bcc: ".trim($result->email_bcc)."\r\n";
@@ -567,8 +582,10 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
         global $show_images_in_emails;
         $show_sku_in_emails="";
         $email_image_sizes="";
-        $sql="select config_name, config_value from ".$wpdb->prefix."honeybadger_config where config_name in ('show_images_in_emails','show_sku_in_emails','email_image_sizes')";
-        $config=$wpdb->get_results($sql);
+        $required_values=array('show_images_in_emails','show_sku_in_emails','email_image_sizes');
+        $sql="select config_name, config_value from ".$wpdb->prefix."honeybadger_config where config_name in (".implode(", ",array_fill(0,count($required_values),'%s')).")";
+        $query=call_user_func_array(array($wpdb,'prepare'),array_merge(array($sql),$required_values));
+        $config=$wpdb->get_results($query);
         if(is_array($config))
         {
             foreach($config as $cfg)
@@ -691,20 +708,20 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
                 continue;
             $product_name=$product->get_title();
             $product_id=$item->get_product_id();
-            $sql="select reduced_stock from ".$wpdb->prefix."honeybadger_product_stock_log where  order_id='".esc_sql($order_id)."' and product_id='".esc_sql($product_id)."'";
+            $sql=$wpdb->prepare("select reduced_stock from ".$wpdb->prefix."honeybadger_product_stock_log where  order_id=%d and product_id=%s",array($order_id,$product_id));
             $result=$wpdb->get_row($sql);
             if(isset($result->reduced_stock))
             {
-                $sql="insert into ".$wpdb->prefix."honeybadger_product_stock_log set
-                order_id='".esc_sql($order_id)."',
-                product_id='".esc_sql($product_id)."',
-                product_title='".esc_sql($product_name)."',
-                restored_stock='".esc_sql($result->reduced_stock)."',
-                mdate='".time()."'
+                $sql=$wpdb->prepare("insert into ".$wpdb->prefix."honeybadger_product_stock_log set
+                order_id=%d,
+                product_id=%d,
+                product_title=%s,
+                restored_stock=%d,
+                mdate=%d
                 on duplicate key update
-                restored_stock='".esc_sql($result->reduced_stock)."',
+                restored_stock=%s,
                 done=0,
-                mdate='".time()."'";
+                mdate=%d",array($order_id,$product_id,$product_name,$result->reduced_stock,time(),$result->reduced_stock,time()));
                 $wpdb->query($sql);
             }
         }
@@ -732,18 +749,18 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
                 continue;
             $product_name=$product->get_title();
             $product_id=$item->get_product_id();
-            $sql="insert into ".$wpdb->prefix."honeybadger_product_stock_log set
-            order_id='".esc_sql($order_id)."',
-            product_id='".esc_sql($product_id)."',
-            product_title='".esc_sql($product_name)."',
-            reduced_stock='".esc_sql($item_stock_reduced)."',
+            $sql=$wpdb->prepare("insert into ".$wpdb->prefix."honeybadger_product_stock_log set
+            order_id=%d,
+            product_id=%d,
+            product_title=%s,
+            reduced_stock=%d,
             restored_stock=0,
-            mdate='".time()."'
+            mdate=%d
             on duplicate key update
-            reduced_stock='".esc_sql($item_stock_reduced)."',
+            reduced_stock=%d
             restored_stock=0,
             done=0,
-            mdate='".time()."'";
+            mdate=%d",array($order_id,$product_id,$product_name,$item_stock_reduced,time(),$item_stock_reduced,time()));
             $wpdb->query($sql);
         }
     }

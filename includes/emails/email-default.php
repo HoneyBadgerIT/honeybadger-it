@@ -13,9 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 global $wpdb;
 $order_status=isset($_POST['order_status'])?sanitize_text_field($_POST['order_status']):"";
-$sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='wc-email-default'";
+$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status=%s",'wc-email-default');
 if($order_status!="")
-    $sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='".esc_sql($order_status)."' and enabled=1";
+    $sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status=%s and enabled=%d",array($order_status,1));
 $result=$wpdb->get_row($sql);
 $email_subheading="";
 if(isset($result->id))
@@ -49,7 +49,7 @@ if(isset($result->id))
 do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
 <?php
 if($email_subheading!="")
-    echo $email_subheading;
+    echo wp_kses_post( wpautop( wptexturize($email_subheading)));
 else
 {
 ?>

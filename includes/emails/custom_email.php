@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 global $wpdb;
 if($tpl_id>0)
 {
-	$sql="select * from ".$wpdb->prefix."honeybadger_emails where id=".$tpl_id;
+	$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_emails where id=%d",$tpl_id);
 	$email_tpl=$wpdb->get_row($sql);
 	if(isset($email_tpl->content))
 	{
@@ -149,7 +149,7 @@ if($tpl_id>0)
 		    }
 		}
 		
-		echo $content;
+		echo wp_kses_post( wpautop( wptexturize($content)));
 
 		do_action( 'woocommerce_email_footer', $email );
 	}

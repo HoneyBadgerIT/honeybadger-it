@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 global $wpdb;
-$sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='wc-customer-new-account' and enabled=1";
+$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='wc-customer-new-account' and enabled=%d",1);
 $result=$wpdb->get_row($sql);
 $email_subheading="";
 if(isset($result->id))
@@ -47,9 +47,9 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
 <?php
 if($email_subheading!="")
 {
-    echo $email_subheading;
+    echo wp_kses_post( wpautop( wptexturize($email_subheading)));
     if ( 'yes' === get_option( 'woocommerce_registration_generate_password' ) && $password_generated )
-        echo $other_subheading_1;
+        echo wp_kses_post( wpautop( wptexturize($other_subheading_1)));
 }
 else
 {

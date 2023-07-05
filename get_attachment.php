@@ -4,7 +4,7 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
-
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 $path=isset($_GET['path'])?sanitize_text_field($_GET['path']):"";
 $key=isset($_GET['key'])?sanitize_text_field($_GET['key']):"";
 if($key!="" && $path!="")

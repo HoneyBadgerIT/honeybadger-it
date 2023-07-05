@@ -6,6 +6,7 @@
  */
 namespace HoneyBadgerIT\API;
 use \stdClass;
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 class honeybadgerProductsAPI{
 	public $config;
 	public $config_front;
@@ -13,7 +14,7 @@ class honeybadgerProductsAPI{
 		global $wpdb;
 		$this->config=new stdClass;
 		$this->config_front=new stdClass;
-		$sql="select * from ".$wpdb->prefix."honeybadger_config where 1";
+		$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_config where 1");
 		$results=$wpdb->get_results($sql);
 		if($results){
 			foreach($results as $r){
@@ -157,7 +158,7 @@ class honeybadgerProductsAPI{
 			$product_name=isset($parameters['product_name'])?sanitize_text_field($parameters['product_name']):"";
 			if($product_name!="")
 			{
-				$sql="select ID from ".$wpdb->prefix."posts where post_title like '%".esc_sql($product_name)."%' and (post_type='product' or post_type='product_variation') order by post_title";
+				$sql=$wpdb->prepare("select ID from ".$wpdb->prefix."posts where post_title like %s and (post_type='product' or post_type='product_variation') order by post_title","%".$product_name."%");
 				$results=$wpdb->get_results($sql);
 				if(is_array($results) && count($results)>0)
 				{
@@ -672,7 +673,7 @@ class honeybadgerProductsAPI{
 			$start=isset($parameters['start'])?(int)$parameters['start']:0;
 			$search=isset($parameters['search'])?sanitize_text_field($parameters['search']):"";
 			$order_arr=isset($parameters['order'])?$parameters['order']:array();
-			$sql="select count(ID) as total from ".$wpdb->prefix."posts where (post_type='product' or post_type='product_variation') and post_status='publish'";
+			$sql=$wpdb->prepare("select count(ID) as total from ".$wpdb->prefix."posts where (post_type='product' or post_type='product_variation') and post_status='publish'");
 			$result=$wpdb->get_row($sql);
 			$total_products=0;
 			if(isset($result->total))
@@ -696,26 +697,26 @@ class honeybadgerProductsAPI{
 				$order_by[]="p.ID desc";
 			if($search!="")
 			{
-				$sql="select count(p.ID) as total from ".$wpdb->prefix."posts p where (p.post_type='product' or p.post_type='product_variation') and 
+				$sql=$wpdb->prepare("select count(p.ID) as total from ".$wpdb->prefix."posts p where (p.post_type='product' or p.post_type='product_variation') and 
 				p.post_status='publish' and
-				(p.ID like '%".esc_sql($search)."%' or
-				p.post_title like '%".esc_sql($search)."%')";
+				(p.ID like %s or
+				p.post_title like %s",array());
 				$result=$wpdb->get_row($sql);
 				if(isset($result->total))
 					$total_filtered_products=$result->total;
 
-				$sql="select p.ID from ".$wpdb->prefix."posts p where (p.post_type='product' or p.post_type='product_variation') and 
+				$sql=$wpdb->prepare("select p.ID from ".$wpdb->prefix."posts p where (p.post_type='product' or p.post_type='product_variation') and 
 				p.post_status='publish' and
-				(p.ID like '%".esc_sql($search)."%' or
-				p.post_title like '%".esc_sql($search)."%')
+				(p.ID like %s or
+				p.post_title like %s
 				order by ".implode(",",$order_by)."
-				limit ".$start.",".$limit;
+				limit ".esc_sql($start).",".esc_sql($limit),array("%".$search."%","%".$search."%"));
 			}
 			else
 			{
-				$sql="select p.ID from ".$wpdb->prefix."posts p where (p.post_type='product' or p.post_type='product_variation') and p.post_status='publish'
+				$sql=$wpdb->prepare("select p.ID from ".$wpdb->prefix."posts p where (p.post_type='product' or p.post_type='product_variation') and p.post_status='publish'
 				order by ".implode(",",$order_by)."
-				limit ".$start.",".$limit;
+				limit ".esc_sql($start).",".esc_sql($limit));
 			}
 			$results=$wpdb->get_results($sql);
 			$products=array();
@@ -933,7 +934,7 @@ class honeybadgerProductsAPI{
 				$product->siblings=$product_obj->get_children();
 				if(is_array($product->siblings) && count($product->siblings)==0 && $product_id!=$main_product_id)
 				{
-					$sql="select meta_value from ".$wpdb->prefix."postmeta where meta_key='_children' and post_id='".esc_sql($main_product_id)."' and meta_value like '%i:".esc_sql($product_id)."%'";
+					$sql=$wpdb->prepare("select meta_value from ".$wpdb->prefix."postmeta where meta_key='_children' and post_id=%d and meta_value like %s",array($main_product_id,"%i:".$product_id."%"));
 					$result=$wpdb->get_row($sql);
 					if(isset($result->meta_value) && $result->meta_value!="")
 					{
@@ -1030,7 +1031,7 @@ class honeybadgerProductsAPI{
 			if($product_id>0)
 			{
 				$product="";
-				$sql="select post_title from ".$wpdb->prefix."posts where ID='".esc_sql($product_id)."'";
+				$sql=$wpdb->prepare("select post_title from ".$wpdb->prefix."posts where ID=%d",$product_id);
 				$result=$wpdb->get_row($sql);
 				if(isset($result->post_title))
 					$product=$result->post_title;
@@ -1059,37 +1060,37 @@ class honeybadgerProductsAPI{
 				$total=0;
 				if($search!="")
 				{
-					$sql="SELECT count(*) as total from ".$wpdb->prefix."posts p WHERE p.post_mime_type LIKE 'image/%'
+					$sql=$wpdb->prepare("SELECT count(*) as total from ".$wpdb->prefix."posts p WHERE p.post_mime_type LIKE 'image/%'
 					and (
-					p.post_title like '%".esc_sql($search)."%' or
-					p.post_content like '%".esc_sql($search)."%' or
-					p.post_excerpt like '%".esc_sql($search)."%'
-					)";
+					p.post_title like %s
+					p.post_content like %s or
+					p.post_excerpt like %s
+					)",array("%".$search."%","%".$search."%","%".$search."%"));
 				}
 				else
-					$sql="SELECT count(*) as total from ".$wpdb->prefix."posts WHERE ".$wpdb->prefix."posts.post_mime_type LIKE 'image/%'";
+					$sql=$wpdb->prepare("SELECT count(*) as total from ".$wpdb->prefix."posts WHERE ".$wpdb->prefix."posts.post_mime_type LIKE 'image/%'");
 				$result=$wpdb->get_row($sql);
 				if(isset($result->total))
 					$total=$result->total;
 				if($search!="")
 				{
-					$sql="SELECT p.ID, p.post_title
+					$sql=$wpdb->prepare("SELECT p.ID, p.post_title
 					FROM ".$wpdb->prefix."posts p
 					WHERE p.post_mime_type LIKE 'image/%' and (
-					p.post_title like '%".esc_sql($search)."%' or
-					p.post_content like '%".esc_sql($search)."%' or
-					p.post_excerpt like '%".esc_sql($search)."%'
+					p.post_title like %s
+					p.post_content like %s or
+					p.post_excerpt like %s
 					)
 					ORDER BY p.post_date DESC
-					LIMIT ".$start.", ".$end;
+					LIMIT ".esc_sql($start).",".esc_sql($end),array("%".$search."%","%".$search."%","%".$search."%"));
 				}
 				else
 				{
-					$sql="SELECT p.ID, p.post_title
+					$sql=$wpdb->prepare("SELECT p.ID, p.post_title
 					FROM ".$wpdb->prefix."posts p
 					WHERE p.post_mime_type LIKE 'image/%'
 					ORDER BY p.post_date DESC
-					LIMIT ".$start.", ".$end;
+					LIMIT ".esc_sql($start).",".esc_sql($end));
 				}
 				$posts=$wpdb->get_results($sql);
 				$posts_ids=array();
@@ -1235,10 +1236,13 @@ class honeybadgerProductsAPI{
 			$order_state=isset($parameters['order_state'])?sanitize_text_field($parameters['order_state']):"";
 			$order_status="";
 			if($order_state!="")
-				$order_status=" and so_states like'%".esc_sql($order_state)."%'";
-			$sql="select id, title, so_states from ".$wpdb->prefix."honeybadger_emails where enabled=1 and so_states<>''".$order_status." order by id";
+			{
+				$sql=$wpdb->prepare("select id, title, so_states from ".$wpdb->prefix."honeybadger_emails where enabled=1 and so_states<>'' and so_states like %s order by id","%".$order_state."%");
+			}
+			else
+				$sql=$wpdb->prepare("select id, title, so_states from ".$wpdb->prefix."honeybadger_emails where enabled=1 and so_states<>'' order by id");
 			$email_actions=$wpdb->get_results($sql);
-			$sql="select id, title from ".$wpdb->prefix."honeybadger_attachments where so_generable=1 and enabled=1 order by id";
+			$sql=$wpdb->prepare("select id, title from ".$wpdb->prefix."honeybadger_attachments where so_generable=1 and enabled=1 order by id");
 			$generable_attachments=$wpdb->get_results($sql);
 			$email_attachments=$this->get_so_email_attachments($request);
 			$static_attachments=$this->get_so_email_static_attachments($request);
@@ -1260,7 +1264,7 @@ class honeybadgerProductsAPI{
 			{
 				$filter_attachments=array();
 				$email_ids=array();
-				$sql="select id from ".$wpdb->prefix."honeybadger_emails where so_states like '%".$status."%' and enabled=1";
+				$sql=$wpdb->prepare("select id from ".$wpdb->prefix."honeybadger_emails where so_states like %s and enabled=1","%".$status."%");
 				$results=$wpdb->get_results($sql);
 				if(is_array($results))
 				{
@@ -1271,12 +1275,13 @@ class honeybadgerProductsAPI{
 				{
 					foreach($email_ids as $email_id)
 					{
-						$sql="select a.id from ".$wpdb->prefix."honeybadger_attachments a where 
+						$sql=$wpdb->prepare("select a.id from ".$wpdb->prefix."honeybadger_attachments a where 
 						a.enabled=1 and
-						(a.attach_to_emails='".esc_sql($email_id)."' or
-						a.attach_to_emails like '".esc_sql($email_id).",%' or
-						a.attach_to_emails like '%,".esc_sql($email_id)."' or
-						a.attach_to_emails like '%,".esc_sql($email_id).",%')";
+						(a.attach_to_emails=%s
+						a.attach_to_emails like %s or
+						a.attach_to_emails like %s or
+						a.attach_to_emails like %s)",
+						array($email_id,$email_id.",%","%,".$email_id,"%,".$email_id.",%"));
 						$results=$wpdb->get_results($sql);
 						if(is_array($results))
 						{
@@ -1287,8 +1292,9 @@ class honeybadgerProductsAPI{
 					if(count($filter_attachments))
 					{
 						$filter_attachments=array_unique($filter_attachments);
-						$sql="select id, title, attach_to_emails, generable from ".$wpdb->prefix."honeybadger_attachments where id in (".implode(",",array_map('esc_sql',$filter_attachments)).") and enabled=1";
-						return $wpdb->get_results($sql);
+						$sql="select id, title, attach_to_emails, generable from ".$wpdb->prefix."honeybadger_attachments where id in (".implode(', ', array_fill(0, count($filter_attachments), '%s')).") and enabled=1";
+						$query = call_user_func_array(array($wpdb, 'prepare'), array_merge(array($sql), $filter_attachments));
+						return $wpdb->get_results($query);
 					}
 				}
 			}
@@ -1310,7 +1316,7 @@ class honeybadgerProductsAPI{
 			{
 				$filter_attachments=array();
 				$email_ids=array();
-				$sql="select id from ".$wpdb->prefix."honeybadger_emails where so_states like '%".$status."%' and enabled=1";
+				$sql=$wpdb->prepare("select id from ".$wpdb->prefix."honeybadger_emails where so_states like %s and enabled=1","%".$status."%");
 				$results=$wpdb->get_results($sql);
 				if(is_array($results))
 				{
@@ -1321,12 +1327,13 @@ class honeybadgerProductsAPI{
 				{
 					foreach($email_ids as $email_id)
 					{
-						$sql="select a.id from ".$wpdb->prefix."honeybadger_static_attachments a where 
+						$sql=$wpdb->prepare("select a.id from ".$wpdb->prefix."honeybadger_static_attachments a where 
 						a.enabled=1 and
-						(a.emails='".esc_sql($email_id)."' or
-						a.emails like '".esc_sql($email_id).",%' or
-						a.emails like '%,".esc_sql($email_id)."' or
-						a.emails like '%,".esc_sql($email_id).",%')";
+						(a.emails=%s or
+						a.emails like %s or
+						a.emails like %s or
+						a.emails like %s)",
+						array($email_id,$email_id.",%","%,".$email_id,"%,".$email_id.",%"));
 						$results=$wpdb->get_results($sql);
 						if(is_array($results))
 						{
@@ -1336,13 +1343,13 @@ class honeybadgerProductsAPI{
 					}
 					if(count($filter_attachments))
 					{
-						$filter_attachments=array_unique($filter_attachments);
-						$filter_sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where id in (".implode(",",array_map('esc_sql',$filter_attachments)).") and enabled=1";
+						$sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where id in (".implode(', ', array_fill(0, count($filter_attachments), '%s')).") and enabled=1";
+						$filter_sql = call_user_func_array(array($wpdb, 'prepare'), array_merge(array($sql), $filter_attachments));
 					}
 				}
 			}
 			if($filter_sql=="")
-				$sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where enabled=1 order by title";
+				$sql=$wpdb->prepare("select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where enabled=1 order by title");
 			else
 				$sql=$filter_sql;
 			$results=$wpdb->get_results($sql);
@@ -1370,17 +1377,17 @@ class honeybadgerProductsAPI{
 			$product_ids=isset($parameters['product_ids'])?$parameters['product_ids']:array();
 			if(is_array($product_ids) && count($product_ids)>0)
 			{
-				for($i=0;$i<count($product_ids);$i++)
-					$product_ids[$i]=esc_sql($product_ids[$i]);
-				$sql="delete from ".$wpdb->prefix."honeybadger_product_stock_log where product_id not in ('".implode("','",array_map('esc_sql',$product_ids))."')";
+				$sql="delete from ".$wpdb->prefix."honeybadger_product_stock_log where product_id not in (".implode(', ', array_fill(0, count($product_ids), '%s')).")";
+				$query = call_user_func_array(array($wpdb, 'prepare'), array_merge(array($sql), $product_ids));
 				$wpdb->query($sql);
-				$sql="select * from ".$wpdb->prefix."honeybadger_product_stock_log where done=0 order by mdate";
+
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_product_stock_log where done=0 order by mdate");
 				$results=$wpdb->get_results($sql);
 				return $this->returnOk($results);
 			}
 			else
 			{
-				$sql="delete from ".$wpdb->prefix."honeybadger_product_stock_log where 1";
+				$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_product_stock_log where 1");
 				$wpdb->query($sql);
 			}
 		}
@@ -1405,7 +1412,7 @@ class honeybadgerProductsAPI{
 				{
 					$restored[$i]=(int)$restored[$i];
 					$restored_oids[$i]=(int)$restored_oids[$i];
-					$sql="delete from ".$wpdb->prefix."honeybadger_product_stock_log where product_id='".esc_sql($restored[$i])."' and order_id='".esc_sql($restored_oids[$i])."' and restored_stock>0 and reduced_stock>0";
+					$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_product_stock_log where product_id=%d and order_id=%d and restored_stock>0 and reduced_stock>0",array($restored[$i],$restored_oids[$i]));
 					$wpdb->query($sql);
 				}
 			}
@@ -1415,12 +1422,12 @@ class honeybadgerProductsAPI{
 				{
 					$reduced[$i]=(int)$reduced[$i];
 					$reduced_oids[$i]=(int)$reduced_oids[$i];
-					$sql="update ".$wpdb->prefix."honeybadger_product_stock_log set
+					$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_product_stock_log set
 					done=1
 					where
-					product_id='".esc_sql($reduced[$i])."' and 
-					order_id='".esc_sql($reduced_oids[$i])."' and 
-					reduced_stock>0";
+					product_id=%d and 
+					order_id=%d and 
+					reduced_stock>0",array($reduced[$i],$reduced_oids[$i]));
 					$wpdb->query($sql);
 				}
 			}

@@ -5,6 +5,7 @@
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
 namespace HoneyBadgerIT;
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 class Honeybadger_IT_Public {
 
 	/**

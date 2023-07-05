@@ -4,6 +4,7 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 if ( ! current_user_can( 'manage_options' ) ) {
     return;
 }

@@ -6,7 +6,7 @@
  */
 namespace HoneyBadgerIT;
 use \stdClass;
-
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 require_once HONEYBADGER_PLUGIN_PATH . 'constants.php';
 class honeybadger{
 	
@@ -16,7 +16,7 @@ class honeybadger{
 		global $wpdb;
 		$this->config=new stdClass;
 		$this->config_front=new stdClass;
-		$sql="select * from ".$wpdb->prefix."honeybadger_config where 1";
+		$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_config where 1");
 		$results=$wpdb->get_results($sql);
 		if($results){
 			foreach($results as $r){
@@ -43,7 +43,7 @@ class honeybadger{
 		$response = wp_remote_get( $url, array('sslverify' => $verify_ssl) );
 		if ( is_wp_error( $response ) ) {
 			$error_message = $response->get_error_message();
-			echo $error_message;
+			echo esc_html($error_message);
 		}
 		else
 			$body = wp_remote_retrieve_body( $response );
@@ -132,7 +132,7 @@ class honeybadger{
 				$the_config_value=sanitize_text_field($_POST[$config_name]);
 				if(in_array($the_config_value,array('yes','no')) && isset($this->config_front->$config_name))
 				{
-					$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($the_config_value)."' where config_name='".esc_sql($config_name)."'";
+					$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value=%s where %s",array($the_config_value,$config_name));
 					if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 					{
 						return array('status'=>'error','msg'=>"Error: in saving settings");
@@ -147,9 +147,9 @@ class honeybadger{
 	function doTokensCleanup()
 	{
 		global $wpdb;
-		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where expires<'".date("Y-m-d H:i:s")."'";
+		$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where expires<%s",date("Y-m-d H:i:s"));
 		$wpdb->query($sql);
-		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where expires<'".date("Y-m-d H:i:s")."'";
+		$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where expires<%s",date("Y-m-d H:i:s"));
 		$wpdb->query($sql);
 	}
 	function createUserRoleAndUser()
@@ -208,7 +208,7 @@ class honeybadger{
 		$verify_ssl=$this->config->curl_ssl_verify;
 		if(is_int($user_id))
 		{
-			$sql="select * from ".$wpdb->prefix."honeybadger_oauth_clients where user_id='".esc_sql($user_id)."'";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_oauth_clients where user_id=%d",$user_id);
 			$result=$wpdb->get_row($sql);
 
 			if(isset($result->user_id))
@@ -218,11 +218,12 @@ class honeybadger{
 			}
 			else
 			{
-				$sql="insert into ".$wpdb->prefix."honeybadger_oauth_clients set
-				client_id='".esc_sql($client_id)."',
-				client_secret='".esc_sql($client_secret)."',
-				redirect_uri='https://".esc_sql(HONEYBADGER_IT_TARGET_SUBDOMAIN).".honeybadger.it/oauth.php',
-				user_id='".esc_sql($user_id)."'";
+				$sql=$wpdb->prepare("insert into ".$wpdb->prefix."honeybadger_oauth_clients set
+				client_id=%s,
+				client_secret=%s,
+				redirect_uri=%s,
+				user_id=%d",
+				array($client_id,$client_secret,sanitize_text_field("https://".HONEYBADGER_IT_TARGET_SUBDOMAIN.".honeybadger.it/oauth.php"),$user_id));
 				if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				{
 					wp_send_json(array("status"=>"error", "msg"=>'<div class="hb-notice-error">
@@ -256,7 +257,7 @@ class honeybadger{
 		if(is_int($user_id))
 		{
 			$this->setSettingValue("is_refresh","1");
-			$sql="select * from ".$wpdb->prefix."honeybadger_oauth_clients where user_id='".esc_sql($user_id)."'";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_oauth_clients where user_id=%d",$user_id);
 			$result=$wpdb->get_row($sql);
 			$client_id="";
 			$client_secret="";
@@ -264,9 +265,9 @@ class honeybadger{
 			{
 				$client_id=$result->client_id;
 				$client_secret=$result->client_secret;
-				$sql="delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where 1";
+				$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where 1");
 				$wpdb->query($sql);
-				$sql="delete from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where 1";
+				$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where 1");
 				$wpdb->query($sql);
 			}
 			$url = get_site_url();
@@ -292,7 +293,7 @@ class honeybadger{
 		$response = wp_remote_post( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error_message = $response->get_error_message();
-			echo $error_message;
+			echo esc_html($error_message);
 		}
 		else
 			$body = wp_remote_retrieve_body( $response );
@@ -305,7 +306,7 @@ class honeybadger{
 		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
-		$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($step)."' where config_name='setup_step'";
+		$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value=%s where config_name='setup_step'",$step);
 		$wpdb->query($sql);
 	}
 	function setSettingValue($setting="",$value="")
@@ -316,7 +317,7 @@ class honeybadger{
 		}
 		if($setting!="" && $value!="")
 		{
-			$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($value)."' where config_name='".esc_sql($setting)."'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value=%s where config_name=%s",array($value,$setting));
 			$wpdb->query($sql);
 		}
 	}
@@ -329,7 +330,7 @@ class honeybadger{
 		$user_id=username_exists("honeybadger".get_current_blog_id());
 		if($user_id>0)
 		{
-			$sql="select client_id from ".$wpdb->prefix."honeybadger_oauth_clients where user_id=".$user_id;
+			$sql=$wpdb->prepare("select client_id from ".$wpdb->prefix."honeybadger_oauth_clients where user_id=%d",$user_id);
 			$result=$wpdb->get_row($sql);
 			if(isset($result->client_id))
 			{
@@ -341,7 +342,7 @@ class honeybadger{
 					{
 						if(isset($result->account_email) && $result->account_email!="")
 						{
-							$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($result->account_email)."' where config_name='honeybadger_account_email'";
+							$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value=%s where config_name='honeybadger_account_email'",$result->account_email);
 							$wpdb->query($sql);
 						}
 						if(isset($result->has_user) && $result->has_user=="yes")
@@ -396,11 +397,11 @@ class honeybadger{
 		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
-		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where 1";
+		$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where 1");
 		$wpdb->query($sql);
-		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where 1";
+		$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where 1");
 		$wpdb->query($sql);
-		$sql="update ".$wpdb->prefix."honeybadger_config set config_value='0' where config_name='setup_step'";
+		$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value='0' where config_name='setup_step'");
 		$wpdb->query($sql);
 	}
 	function getHbClientId()
@@ -412,7 +413,7 @@ class honeybadger{
 		$user_id=username_exists("honeybadger".get_current_blog_id());
 		if($user_id>0)
 		{
-			$sql="select client_id from ".$wpdb->prefix."honeybadger_oauth_clients where user_id=".$user_id;
+			$sql=$wpdb->prepare("select client_id from ".$wpdb->prefix."honeybadger_oauth_clients where user_id=%d",$user_id);
 			$result=$wpdb->get_row($sql);
 			if(isset($result->client_id))
 				return $result->client_id;
@@ -428,7 +429,7 @@ class honeybadger{
 		$user_id=username_exists("honeybadger".get_current_blog_id());
 		if($user_id>0)
 		{
-			$sql="select client_secret from ".$wpdb->prefix."honeybadger_oauth_clients where user_id=".$user_id;
+			$sql=$wpdb->prepare("select client_secret from ".$wpdb->prefix."honeybadger_oauth_clients where user_id=%d",$user_id);
 			$result=$wpdb->get_row($sql);
 			if(isset($result->client_secret))
 				return $result->client_secret;
@@ -485,9 +486,9 @@ class honeybadger{
 				echo '<div class="notice notice updated is-dismissible">
 			        <p>'.esc_html__("Your HoneyBadger IT account created with success! Please check your email and verify your email address in order for the account to be activated.","honeyb").'</p>
 			     </div>';
-			    $sql="update ".$wpdb->prefix."honeybadger_config set config_value='3' where config_name='setup_step'";
+			    $sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value='3' where config_name='setup_step'");
 				$wpdb->query($sql);
-				$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($email)."' where config_name='honeybadger_account_email'";
+				$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value=%s where config_name='honeybadger_account_email'",$email);
 				$wpdb->query($sql);
 				$location=admin_url()."admin.php?page=honeybadger-it&msg=created";
     			header("Location: $location");
@@ -522,11 +523,12 @@ class honeybadger{
 			$old_client_id=$this->getHbClientId();
 			if($old_client_id!=$client_id)
 			{
-				$sql="update ".$wpdb->prefix."honeybadger_oauth_clients set 
-				client_id='".esc_sql($client_id)."',
-				client_secret='".esc_sql($client_secret)."'
+				$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_oauth_clients set 
+				client_id=%s,
+				client_secret=%s
 				where
-				client_id='".esc_sql($old_client_id)."'";
+				client_id=%s",
+				array($client_id,$client_secret,$old_client_id));
 				if((!$wpdb->query($sql) && $wpdb->last_error !== '') || $wpdb->rows_affected==0 )
 					return array('status'=>'error','msg'=>'Something went wrong when updating the database, please start the setup first and try again');
 				else
@@ -537,10 +539,11 @@ class honeybadger{
 			}
 			else
 			{
-				$sql="update ".$wpdb->prefix."honeybadger_oauth_clients set 
-				client_secret='".esc_sql($client_secret)."'
+				$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_oauth_clients set 
+				client_secret=%s
 				where
-				client_id='".esc_sql($old_client_id)."'";
+				client_id=%s",
+				array($client_secret,$old_client_id));
 				if((!$wpdb->query($sql) && $wpdb->last_error !== '') )
 					return array('status'=>'error','msg'=>'Something went wrong when updating the database, please start the setup first and try again');
 				else
@@ -559,11 +562,11 @@ class honeybadger{
 		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
-		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where 1";
+		$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_oauth_access_tokens where 1");
 		$wpdb->query($sql);
-		$sql="delete from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where 1";
+		$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where 1");
 		$wpdb->query($sql);
-		$sql="update ".$wpdb->prefix."honeybadger_config set config_value='4' where config_name='setup_step'";
+		$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value='4' where config_name='setup_step'");
 		$wpdb->query($sql);
 		$location=admin_url()."admin.php?page=honeybadger-it";
     	header("Location: $location");
@@ -574,7 +577,7 @@ class honeybadger{
 		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
-		$sql="select client_id from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where expires>'".date("Y-m-d H:i:s")."'";
+		$sql=$wpdb->prepare("select client_id from ".$wpdb->prefix."honeybadger_oauth_refresh_tokens where expires>%s",date("Y-m-d H:i:s"));
 		$results=$wpdb->get_results($sql);
 		if(count($results)>0)
 			return true;
@@ -590,7 +593,7 @@ class honeybadger{
 		$user_id=username_exists("honeybadger".get_current_blog_id());
 		if($user_id>0)
 		{
-			$sql="select client_id from ".$wpdb->prefix."honeybadger_oauth_clients where user_id=".$user_id;
+			$sql=$wpdb->prepare("select client_id from ".$wpdb->prefix."honeybadger_oauth_clients where user_id=%d",$user_id);
 			$result=$wpdb->get_row($sql);
 			if(isset($result->client_id))
 			{

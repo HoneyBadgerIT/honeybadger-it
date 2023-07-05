@@ -4,6 +4,7 @@
  * @subpackage Honeybadger_IT/admin
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 if ( ! current_user_can( 'manage_options' ) ) {
     return;
 }
@@ -85,7 +86,7 @@ $nonce = wp_create_nonce( 'honeybadger_it_settings_page_form' );
                     }
                     ?>
                 </td>
-                <td><?php echo $explanations[$config_name];?></td>
+                <td><?php echo esc_html($explanations[$config_name]);?></td>
             </tr>
             <?php
         }

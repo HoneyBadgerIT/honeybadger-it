@@ -53,7 +53,7 @@ class honeywpdb implements
      */
     public function checkClientCredentials($client_id, $client_secret = null)
     {
-    	$sql="select * from ".$this->config['client_table']." where client_id='".esc_sql($client_id)."'";
+    	$sql=$this->db->prepare("select * from ".$this->config['client_table']." where client_id=%s",$client_id);
         $result=$this->db->get_row($sql);
     	if(isset($result->client_secret) && $result->client_secret==$client_secret)
     		return true;
@@ -65,7 +65,7 @@ class honeywpdb implements
      */
     public function isPublicClient($client_id)
     {
-    	$sql="select * from ".$this->config['client_table']." where client_id='".esc_sql($client_id)."'";
+    	$sql=$this->db->prepare("select * from ".$this->config['client_table']." where client_id=%s",$client_id);
         $result=$this->db->get_row($sql);
     	if(isset($result->client_id) && !empty($result->client_id))
     		return true;
@@ -77,7 +77,7 @@ class honeywpdb implements
      */
     public function getClientDetails($client_id)
     {
-    	$sql="select * from ".$this->config['client_table']." where client_id='".esc_sql($client_id)."'";
+    	$sql=$this->db->prepare("select * from ".$this->config['client_table']." where client_id=%s",$client_id);
         $result=$this->db->get_row($sql);
     	if(isset($result->client_id) && !empty($result->client_id))
         	return (array) $result;
@@ -96,16 +96,16 @@ class honeywpdb implements
     {
         // if it exists, update it.
         if ($this->getClientDetails($client_id)) {
-        	$sql="update ".$this->config['client_table']." set client_secret='".esc_sql($client_secret)."', redirect_uri='".esc_sql($redirect_uri)."', grant_types='".esc_sql($grant_types)."', scope='".esc_sql($scope)."', user_id='".esc_sql($user_id)."', where client_id='".esc_sql($client_id)."'";
+        	$sql=$this->db->prepare("update ".$this->config['client_table']." set client_secret=%s, redirect_uri=%s, grant_types=%s, scope=%s, user_id=%s, where client_id=%s",array($client_secret,$redirect_uri,$grant_types,$scope,$user_id,$client_id));
         } else {
-        	$sql="insert into ".$this->config['client_table']." set
-        	client_id='".esc_sql($client_id)."',
-        	client_secret='".esc_sql($client_secret)."',
-        	redirect_uri='".esc_sql($redirect_uri)."',
-        	grant_types='".esc_sql($grant_types)."',
-        	scope='".esc_sql($scope)."',
-        	user_id='".esc_sql($user_id)."'
-        	";
+        	$sql=$this->db->prepare("insert into ".$this->config['client_table']." set
+        	client_id=%s,
+        	client_secret=%s,
+        	redirect_uri=%s,
+        	grant_types=%s,
+        	scope=%s,
+        	user_id=%s
+        	",array($client_id,$client_secret,$redirect_uri,$grant_types,$scope,$user_id));
         }
         if(!$this->db->query($sql) && $this->db->last_error !== '')
         	return false;
@@ -134,7 +134,7 @@ class honeywpdb implements
      */
     public function getAccessToken($access_token)
     {
-    	$sql="select * from ".$this->config['access_token_table']." where access_token='".esc_sql($access_token)."'";
+    	$sql=$this->db->prepare("select * from ".$this->config['access_token_table']." where access_token=%s",$access_token);
     	$token = $this->db->get_row( $sql, ARRAY_A );
 
         if (isset($token['expires'])) {
@@ -159,20 +159,20 @@ class honeywpdb implements
         $this->db->query("delete from ".$this->config['access_token_table']." where 1");
         // if it exists, update it.
         if ($this->getAccessToken($access_token)) {
-        	$sql="update ".$this->config['access_token_table']." set
-        	client_id='".esc_sql($client_id)."',
-        	expires='".esc_sql($expires)."',
-        	user_id='".esc_sql($user_id)."',
-        	scope='".esc_sql($scope)."'
+        	$sql=$this->db->prepare("update ".$this->config['access_token_table']." set
+        	client_id=%s,
+        	expires=%s,
+        	user_id=%s,
+        	scope=%s
         	where
-        	access_token='".esc_sql($access_token)."'";
+        	access_token=%s",array($client_id,$expires,$user_id,$scope,$access_token));
         } else {
-        	$sql="insert into ".$this->config['access_token_table']." set
-        	access_token='".esc_sql($access_token)."',
-        	client_id='".esc_sql($client_id)."',
-        	expires='".esc_sql($expires)."',
-        	user_id='".esc_sql($user_id)."',
-        	scope='".esc_sql($scope)."'";
+        	$sql=$this->db->prepare("insert into ".$this->config['access_token_table']." set
+        	access_token=%s,
+        	client_id=%s,
+        	expires=%s,
+        	user_id=%s,
+        	scope=%s",array($access_token,$client_id,$expires,$user_id,$scope));
         }
 
         if(!$this->db->query($sql) && $this->db->last_error !== '')
@@ -185,7 +185,7 @@ class honeywpdb implements
      */
     public function unsetAccessToken($access_token)
     {
-    	$sql="delete from ".$this->config['access_token_table']." where access_token='".esc_sql($access_token)."'";
+    	$sql=$this->db->prepare("delete from ".$this->config['access_token_table']." where access_token=%s",$access_token);
     	if(!$this->db->query($sql) && $this->db->last_error !== '')
         	return false;
         return true;
@@ -197,7 +197,7 @@ class honeywpdb implements
      */
     public function getAuthorizationCode($code)
     {
-    	$sql="select * from ".$this->config['code_table']." where authorization_code='".esc_sql($code)."'";
+    	$sql=$this->db->prepare("select * from ".$this->config['code_table']." where authorization_code=%s",$code);
     	$code = $this->db->get_row( $sql, ARRAY_A );
         if (isset($code['expires'])) {
             // convert date string back to timestamp
@@ -226,23 +226,23 @@ class honeywpdb implements
 
         // if it exists, update it.
         if ($this->getAuthorizationCode($code)) {
-        	$sql="update ".$this->config['code_table']." set 
-        	client_id='".esc_sql($client_id)."',
-        	user_id='".esc_sql($user_id)."',
-        	redirect_uri='".esc_sql($redirect_uri)."',
-        	expires='".esc_sql($expires)."',
-        	scope='".esc_sql($scope)."'
+        	$sql=$this->db->prepare("update ".$this->config['code_table']." set 
+        	client_id=%s,
+        	user_id=%s,
+        	redirect_uri=%s,
+        	expires=%s,
+        	scope=%s
         	where
-        	authorization_code='".esc_sql($code)."'
-        	";
+        	authorization_code=%s
+        	",array($client_id,$user_id,$redirect_uri,$expires,$scope,$code));
         } else {
-        	$sql="insert into ".$this->config['code_table']." set 
-        	authorization_code='".esc_sql($code)."',
-        	client_id='".esc_sql($client_id)."',
-        	user_id='".esc_sql($user_id)."',
-        	redirect_uri='".esc_sql($redirect_uri)."',
-        	expires='".esc_sql($expires)."',
-        	scope='".esc_sql($scope)."'";
+        	$sql=$this->db->prepare("insert into ".$this->config['code_table']." set 
+        	authorization_code=%s,
+        	client_id=%s,
+        	user_id=%s,
+        	redirect_uri=%s,
+        	expires=%s,
+        	scope=%s",array($code,$client_id,$user_id,$redirect_uri,$expires,$scope));
         }
 
         if(!$this->db->query($sql) && $this->db->last_error !== '')
@@ -266,24 +266,24 @@ class honeywpdb implements
 
         // if it exists, update it.
         if ($this->getAuthorizationCode($code)) {
-        	$sql="update ".$this->config['code_table']." set 
-        	client_id='".esc_sql($client_id)."',
-        	user_id='".esc_sql($user_id)."',
-        	redirect_uri='".esc_sql($redirect_uri)."',
-        	expires='".esc_sql($expires)."',
-        	scope='".esc_sql($scope)."',
-        	id_token='".esc_sql($id_token)."'
+        	$sql=$this->db->prepare("update ".$this->config['code_table']." set 
+        	client_id=%s,
+        	user_id=%s,
+        	redirect_uri=%s,
+        	expires=%s,
+        	scope=%s,
+        	id_token=%s
         	where
-        	authorization_code='".esc_sql($id_token)."'";
+        	authorization_code=%s",array($client_id,$user_id,$redirect_uri,$expires,$scope,$id_token));
         } else {
-            $sql="insert into ".$this->config['code_table']." set 
-        	authorization_code='".esc_sql($code)."',
-        	client_id='".esc_sql($client_id)."',
-        	user_id='".esc_sql($user_id)."',
-        	redirect_uri='".esc_sql($redirect_uri)."',
-        	expires='".esc_sql($expires)."',
-        	scope='".esc_sql($scope)."',
-        	id_token='".esc_sql($id_token)."'";
+            $sql=$this->db->prepare("insert into ".$this->config['code_table']." set 
+        	authorization_code=%s,
+        	client_id=%s,
+        	user_id=%s,
+        	redirect_uri=%s,
+        	expires=%s,
+        	scope=%s,
+        	id_token=%s",array($code,$client_id,$user_id,$redirect_uri,$expires,$scope,$id_token));
         }
 
         if(!$this->db->query($sql) && $this->db->last_error !== '')
@@ -296,7 +296,7 @@ class honeywpdb implements
      */
     public function expireAuthorizationCode($code)
     {
-    	$sql="delete from ".$this->config['code_table']." where authorization_code='".esc_sql($code)."'";
+    	$sql=$this->db->prepare("delete from ".$this->config['code_table']." where authorization_code=%s",$code);
     	if(!$this->db->query($sql) && $this->db->last_error !== '')
         	return false;
         return true;
@@ -328,7 +328,7 @@ class honeywpdb implements
      */
     public function getRefreshToken($refresh_token)
     {
-    	$sql="select * from ".$this->config['refresh_token_table']." where refresh_token='".esc_sql($refresh_token)."'";
+    	$sql=$this->db->prepare("select * from ".$this->config['refresh_token_table']." where refresh_token=%s",$refresh_token);
 
         $token = $this->db->get_row( $sql, ARRAY_A );
         if (isset($token['expires'])) {
@@ -397,13 +397,13 @@ class honeywpdb implements
         // convert expires to datestring
         $expires = date('Y-m-d H:i:s', $expires);
 
-        $sql="insert into ".$this->config['refresh_token_table']." set
-        refresh_token='".esc_sql($refresh_token)."',
-        client_id='".esc_sql($client_id)."',
-        user_id='".esc_sql($user_id)."',
-        expires='".esc_sql($expires)."',
-        scope='".esc_sql($scope)."'
-        ";
+        $sql=$this->db->prepare("insert into ".$this->config['refresh_token_table']." set
+        refresh_token=%s,
+        client_id=%s,
+        user_id=%s,
+        expires=%s,
+        scope=%s
+        ",array($refresh_token,$client_id,$user_id,$expires,$scope));
         if(!$this->db->query($sql) && $this->db->last_error !== '')
         	return false;
         return true;
@@ -414,7 +414,7 @@ class honeywpdb implements
      */
     public function unsetRefreshToken($refresh_token)
     {
-    	$sql="delete from ".$this->config['refresh_token_table']." where refresh_token='".esc_sql($refresh_token)."'";
+    	$sql=$this->db->prepare("delete from ".$this->config['refresh_token_table']." where refresh_token=%s",$refresh_token);
     	if(!$this->db->query($sql) && $this->db->last_error !== '')
         	return false;
         return true;
@@ -441,7 +441,7 @@ class honeywpdb implements
      */
     public function getUser($username)
     {
-    	$sql="select * from ".$this->config['user_table']." where username='".esc_sql($username)."'";
+    	$sql=$this->db->prepare("select * from ".$this->config['user_table']." where username=%s",$username);
         $userInfo = $this->db->get_row( $sql, ARRAY_A );
         if (!$userInfo['username'])
             return false;
@@ -467,19 +467,19 @@ class honeywpdb implements
 
         // if it exists, update it.
         if ($this->getUser($username)) {
-        	$sql="update ".$this->config['user_table']." set 
-        	password='".esc_sql($password)."',
-        	first_name='".esc_sql($firstName)."',
-        	last_name='".esc_sql($lastName)."'
+        	$sql=$this->db->prepare("update ".$this->config['user_table']." set 
+        	password=%s,
+        	first_name=%s,
+        	last_name=%s
         	where
-        	username='".esc_sql($username)."'
-        	";
+        	username=%s
+        	",array($password,$firstName,$lastName,$username));
         } else {
-        	$sql="insert into  ".$this->config['user_table']." set 
-        	username='".esc_sql($username)."',
-        	password='".esc_sql($password)."',
-        	first_name='".esc_sql($firstName)."',
-        	last_name='".esc_sql($lastName)."'";
+        	$sql=$this->db->prepare("insert into  ".$this->config['user_table']." set 
+        	username=%s,
+        	password=%s,
+        	first_name=%s,
+        	last_name=%s",array($username,$password,$firstName,$lastName));
         }
 
         if(!$this->db->query($sql) && $this->db->last_error !== '')
@@ -493,9 +493,9 @@ class honeywpdb implements
     public function scopeExists($scope)
     {
         $scope = explode(' ', $scope);
-        $whereIn = implode(',', array_fill(0, count($scope), '?'));
-        $sql="select count(scope) as count from ".$this->config['scope_table']."where scope in (".$whereIn.")";
-        $result = $this->db->get_row( $sql, ARRAY_A );
+        $sql="select count(scope) as count from ".$this->config['scope_table']."where scope in (".implode(', ', array_fill(0, count($scope), '%s')).")";
+        $query = call_user_func_array(array($this->db, 'prepare'), array_merge(array($sql), $scope));
+        $result = $this->db->get_row( $query, ARRAY_A );
 
         if (isset($result['count'])) {
             return $result['count'] == count($scope);
@@ -509,7 +509,7 @@ class honeywpdb implements
      */
     public function getDefaultScope($client_id = null)
     {
-    	$sql="select scope from ".$this->config['scope_table']." where is_default is null";
+    	$sql=$this->db->prepare("select scope from ".$this->config['scope_table']." where is_default is null");
         $results=$this->db->get_results($sql);
         $result=(array)$results;
         if ($result) {
@@ -530,7 +530,7 @@ class honeywpdb implements
      */
     public function getClientKey($client_id, $subject)
     {
-    	$sql="select public_key from ".$this->config['jwt_table']." where client_id='".esc_sql($client_id)."' and subject='".esc_sql($subject)."'";
+    	$sql=$this->db->prepare("select public_key from ".$this->config['jwt_table']." where client_id=%s and subject=%s",array($client_id,$subject));
     	$result=$this->db->get_row($sql);
     	if(isset($result->public_key))
     		return $result->public_key;
@@ -562,12 +562,12 @@ class honeywpdb implements
      */
     public function getJti($client_id, $subject, $audience, $expires, $jti)
     {
-    	$sql="select * from ".$this->config['jti_table']." where
-    	issuer='".esc_sql($client_id)."' and 
-    	subject='".esc_sql($subject)."' and 
-    	audience='".esc_sql($audience)."' and 
-    	expires='".esc_sql($expires)."' and 
-    	jti='".esc_sql($jti)."'";
+    	$sql=$this->db->prepare("select * from ".$this->config['jti_table']." where
+    	issuer=%s and 
+    	subject=%s and 
+    	audience=%s and 
+    	expires=%s and 
+    	jti=%s",array($client_id,$subject,$audience,$expires,$jti));
         $result = $this->db->get_row( $sql, ARRAY_A );
         if (isset($result['issuer'])) {
             return array(
@@ -591,12 +591,12 @@ class honeywpdb implements
      */
     public function setJti($client_id, $subject, $audience, $expires, $jti)
     {
-    	$sql="insert into ".$this->config['jti_table']." set
-		issuer='".esc_sql($client_id)."',
-		subject='".esc_sql($subject)."',
-		audience='".esc_sql($audience)."',
-		expires='".esc_sql($expires)."',
-		jti='".esc_sql($jti)."'";
+    	$sql=$this->db->prepare("insert into ".$this->config['jti_table']." set
+		issuer=%s,
+		subject=%s,
+		audience=%s,
+		expires=%s,
+		jti=%s",array($client_id,$subject,$audience,$expires,$jti));
         if(!$this->db->query($sql) && $this->db->last_error !== '')
         	return false;
         return true;
@@ -607,10 +607,10 @@ class honeywpdb implements
      */
     public function getPublicKey($client_id = null)
     {
-		$sql="select public_key from ".$this->config['public_key_table']." where
-		client_id='".esc_sql($client_id)."' or
+		$sql=$this->db->prepare("select public_key from ".$this->config['public_key_table']." where
+		client_id=%s or
 		client_id IS NULL
-		ORDER BY client_id IS NOT NULL DESC";
+		ORDER BY client_id IS NOT NULL DESC",$client_id);
         $result = $this->db->get_row( $sql, ARRAY_A );
         if (isset($result['public_key']))
             return $result['public_key'];
@@ -622,10 +622,10 @@ class honeywpdb implements
      */
     public function getPrivateKey($client_id = null)
     {
-    	$sql="select private_key from ".$this->config['public_key_table']." where 
-    	client_id='".esc_sql($client_id)."' or
+    	$sql=$this->db->prepare("select private_key from ".$this->config['public_key_table']." where 
+    	client_id=%s or
     	client_id IS NULL
-    	ORDER BY client_id IS NOT NULL DESC";
+    	ORDER BY client_id IS NOT NULL DESC",$client_id);
         $result = $this->db->get_row( $sql, ARRAY_A );
         if (isset($result['private_key']))
             return $result['private_key'];
@@ -637,9 +637,9 @@ class honeywpdb implements
      */
     public function getEncryptionAlgorithm($client_id = null)
     {
-    	$sql="select encryption_algorithm from ".$this->config['public_key_table']." where 
-    	client_id='".esc_sql($client_id)."' or
-    	client_id IS NULL ORDER BY client_id IS NOT NULL DESC";
+    	$sql=$this->db->prepare("select encryption_algorithm from ".$this->config['public_key_table']." where 
+    	client_id=%s or
+    	client_id IS NULL ORDER BY client_id IS NOT NULL DESC",$client_id);
         $result = $this->db->get_row( $sql, ARRAY_A );
         if (isset($result['encryption_algorithm']))
             return $result['encryption_algorithm'];
@@ -655,8 +655,8 @@ class honeywpdb implements
      */
     public function getBuildSql($dbName = 'oauth2_server_php')
     {
-        $sql = "
-        CREATE TABLE {$this->config['client_table']} (
+        $sql = $this->db->prepare("
+        CREATE TABLE ".$this->config['client_table']." (
           client_id             VARCHAR(80)   NOT NULL,
           client_secret         VARCHAR(80),
           redirect_uri          VARCHAR(2000),
@@ -666,7 +666,7 @@ class honeywpdb implements
           PRIMARY KEY (client_id)
         );
 
-            CREATE TABLE {$this->config['access_token_table']} (
+            CREATE TABLE ".$this->config['access_token_table']." (
               access_token         VARCHAR(40)    NOT NULL,
               client_id            VARCHAR(80)    NOT NULL,
               user_id              VARCHAR(80),
@@ -675,7 +675,7 @@ class honeywpdb implements
               PRIMARY KEY (access_token)
             );
 
-            CREATE TABLE {$this->config['code_table']} (
+            CREATE TABLE ".$this->config['code_table']." (
               authorization_code  VARCHAR(40)    NOT NULL,
               client_id           VARCHAR(80)    NOT NULL,
               user_id             VARCHAR(80),
@@ -686,7 +686,7 @@ class honeywpdb implements
               PRIMARY KEY (authorization_code)
             );
 
-            CREATE TABLE {$this->config['refresh_token_table']} (
+            CREATE TABLE ".$this->config['refresh_token_table']." (
               refresh_token       VARCHAR(40)    NOT NULL,
               client_id           VARCHAR(80)    NOT NULL,
               user_id             VARCHAR(80),
@@ -695,7 +695,7 @@ class honeywpdb implements
               PRIMARY KEY (refresh_token)
             );
 
-            CREATE TABLE {$this->config['user_table']} (
+            CREATE TABLE ".$this->config['user_table']." (
               username            VARCHAR(80),
               password            VARCHAR(80),
               first_name          VARCHAR(80),
@@ -705,19 +705,19 @@ class honeywpdb implements
               scope               VARCHAR(4000)
             );
 
-            CREATE TABLE {$this->config['scope_table']} (
+            CREATE TABLE ".$this->config['scope_table']." (
               scope               VARCHAR(80)  NOT NULL,
               is_default          BOOLEAN,
               PRIMARY KEY (scope)
             );
 
-            CREATE TABLE {$this->config['jwt_table']} (
+            CREATE TABLE ".$this->config['jwt_table']." (
               client_id           VARCHAR(80)   NOT NULL,
               subject             VARCHAR(80),
               public_key          VARCHAR(2000) NOT NULL
             );
 
-            CREATE TABLE {$this->config['jti_table']} (
+            CREATE TABLE ".$this->config['jti_table']." (
               issuer              VARCHAR(80)   NOT NULL,
               subject             VARCHAR(80),
               audiance            VARCHAR(80),
@@ -725,13 +725,13 @@ class honeywpdb implements
               jti                 VARCHAR(2000) NOT NULL
             );
 
-            CREATE TABLE {$this->config['public_key_table']} (
+            CREATE TABLE ".$this->config['public_key_table']." (
               client_id            VARCHAR(80),
               public_key           VARCHAR(2000),
               private_key          VARCHAR(2000),
               encryption_algorithm VARCHAR(100) DEFAULT 'RS256'
             )
-        ";
+        ");
 
         return $sql;
     }

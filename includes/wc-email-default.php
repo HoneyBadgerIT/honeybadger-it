@@ -79,9 +79,9 @@ if ( ! class_exists( 'WC_Email_Default_HoneyBadger' ) && class_exists('\WC_Email
 
 			$order_status=isset($_POST['order_status'])?sanitize_text_field($_POST['order_status']):"";
 			$order_id=isset($_POST['order_id'])?(int)$_POST['order_id']:0;
-			$sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='wc-email-default'";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='wc-email-default'");
 			if($order_status!="")
-			    $sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='".esc_sql($order_status)."' and enabled=1";
+			    $sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status=%s and enabled=%d",$order_status,1);
 			if($order_id>0)
 			{
 				$order=wc_get_order( $order_id );

@@ -6,7 +6,7 @@
  */
 namespace HoneyBadgerIT\API;
 use \stdClass;
-
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 class honeybadgerAPI2{
 	public $config;
 	public $config_front;
@@ -14,7 +14,7 @@ class honeybadgerAPI2{
 		global $wpdb;
 		$this->config=new stdClass;
 		$this->config_front=new stdClass;
-		$sql="select * from ".$wpdb->prefix."honeybadger_config where 1";
+		$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_config where 1");
 		$results=$wpdb->get_results($sql);
 		if($results){
 			foreach($results as $r){
@@ -74,7 +74,7 @@ class honeybadgerAPI2{
 					$stat->txt_color="";
 					$statuses[]=$stat;
 				}
-				$sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where 1";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where 1");
 				$results=$wpdb->get_results($sql);
 				if(is_array($results))
 				{
@@ -165,7 +165,7 @@ class honeybadgerAPI2{
 				}
 			}
 			$end_date=date("Y-m-d",strtotime($end_date." + 1 day"));
-			$sql="select ID, post_date_gmt from ".$wpdb->prefix."posts where post_type='shop_order' and post_date_gmt>='".esc_sql($start_date)."' and post_date_gmt<='".esc_sql($end_date)."' and post_status='".esc_sql($filter_status)."' order by post_date_gmt";
+			$sql=$wpdb->prepare("select ID, post_date_gmt from ".$wpdb->prefix."posts where post_type='shop_order' and post_date_gmt>=%s and post_date_gmt<=%s and post_status=%s order by post_date_gmt",array($start_date,$end_date,$filter_status));
 			$orders=$wpdb->get_results($sql);
 			if(is_array($orders))
 			{
@@ -195,7 +195,7 @@ class honeybadgerAPI2{
 			}
 			$start_date=date("Y-m-d",strtotime($start_date." -1 year"));
 			$end_date=date("Y-m-d",strtotime($end_date." -1 year"));
-			$sql="select ID, post_date_gmt from ".$wpdb->prefix."posts where post_type='shop_order' and post_date_gmt>='".esc_sql($start_date)."' and post_date_gmt<='".esc_sql($end_date)."' and post_status='".esc_sql($filter_status)."' order by post_date_gmt";
+			$sql=$wpdb->prepare("select ID, post_date_gmt from ".$wpdb->prefix."posts where post_type='shop_order' and post_date_gmt>=%s and post_date_gmt<=%s and post_status=%s order by post_date_gmt",array($start_date,$end_date,$filter_status));
 			$orders=$wpdb->get_results($sql);
 			if(is_array($orders))
 			{
@@ -225,7 +225,7 @@ class honeybadgerAPI2{
 			}
 			$start_date=date("Y-m-d",strtotime($start_date." -1 year"));
 			$end_date=date("Y-m-d",strtotime($end_date." -1 year"));
-			$sql="select ID, post_date_gmt from ".$wpdb->prefix."posts where post_type='shop_order' and post_date_gmt>='".esc_sql($start_date)."' and post_date_gmt<='".esc_sql($end_date)."' and post_status='".esc_sql($filter_status)."' order by post_date_gmt";
+			$sql=$wpdb->prepare("select ID, post_date_gmt from ".$wpdb->prefix."posts where post_type='shop_order' and post_date_gmt>=%s and post_date_gmt<=%s and post_status=%s order by post_date_gmt",array($start_date,$end_date,$filter_status));
 			$orders=$wpdb->get_results($sql);
 			if(is_array($orders))
 			{
@@ -272,7 +272,7 @@ class honeybadgerAPI2{
 						$filter_status=$latest_orders_status;
 				}
 			}
-			$sql="select ID from ".$wpdb->prefix."posts where post_type='shop_order' and post_status='".esc_sql($filter_status)."' order by ID ".$latest_orders_dir." limit ".$latest_orders_limit;
+			$sql=$wpdb->prepare("select ID from ".$wpdb->prefix."posts where post_type='shop_order' and post_status=%s order by ID ".esc_sql($latest_orders_dir)." limit ".esc_sql($latest_orders_limit),$filter_status);
 			$results=$wpdb->get_results($sql);
 			$latest_orders=array();
 			if(is_array($results))
@@ -310,7 +310,7 @@ class honeybadgerAPI2{
 		if(!empty($request))
 		{
 			$products=array();
-			$sql="
+			$sql=$wpdb->prepare("
 			SELECT p.ID, p.post_title, m.meta_value as stock_low, m1.meta_value as stock, m2.meta_value as stock_status,
 			m3.option_value as woocommerce_notify_low_stock_amount, m4.meta_value as manage_stock
 			FROM ".$wpdb->prefix."posts as p 
@@ -326,7 +326,7 @@ class honeybadgerAPI2{
 				(m1.meta_value is not null and m1.meta_value<>'' and (m.meta_value is null or m.meta_value='') and m3.option_value is not null and m3.option_value<>'' and m1.meta_value<=m3.option_value) or
 				((m1.meta_value is null or m1.meta_value='') and (m.meta_value is not null and m.meta_value<>''))))
 			order by p.post_title;
-			";
+			");
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
@@ -370,7 +370,7 @@ class honeybadgerAPI2{
 		}
 		if(!empty($request))
 		{
-			$sql="select count(*) as total from ".$wpdb->prefix."honeybadger_wc_emails where enabled=1";
+			$sql=$wpdb->prepare("select count(*) as total from ".$wpdb->prefix."honeybadger_wc_emails where enabled=1");
 			$result=$wpdb->get_row($sql);
 			if(isset($result->total))
 				return array("enabled_wc_emails_cnt"=>(int)$result->total);
@@ -385,7 +385,7 @@ class honeybadgerAPI2{
 		}
 		if(!empty($request))
 		{
-			$sql="select count(*) as total from ".$wpdb->prefix."honeybadger_emails where enabled=1";
+			$sql=$wpdb->prepare("select count(*) as total from ".$wpdb->prefix."honeybadger_emails where enabled=1");
 			$result=$wpdb->get_row($sql);
 			if(isset($result->total))
 				return array("enabled_emails_cnt"=>(int)$result->total);
@@ -400,7 +400,7 @@ class honeybadgerAPI2{
 		}
 		if(!empty($request))
 		{
-			$sql="select count(*) as total from ".$wpdb->prefix."honeybadger_attachments where enabled=1";
+			$sql=$wpdb->prepare("select count(*) as total from ".$wpdb->prefix."honeybadger_attachments where enabled=1");
 			$result=$wpdb->get_row($sql);
 			if(isset($result->total))
 				return array("enabled_attachments_cnt"=>(int)$result->total);
@@ -415,7 +415,7 @@ class honeybadgerAPI2{
 		}
 		if(!empty($request))
 		{
-			$sql="select count(*) as total from ".$wpdb->prefix."honeybadger_static_attachments where enabled=1";
+			$sql=$wpdb->prepare("select count(*) as total from ".$wpdb->prefix."honeybadger_static_attachments where enabled=1");
 			$result=$wpdb->get_row($sql);
 			if(isset($result->total))
 				return array("enabled_static_attachments_cnt"=>(int)$result->total);

@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 */
 
 global $wpdb;
-$sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='wc-cancelled' and enabled=1";
+$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status='wc-cancelled' and enabled=%d",1);
 $result=$wpdb->get_row($sql);
 $email_subheading="";
 if(isset($result->id))
@@ -49,7 +49,7 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
 
 <?php
 if($email_subheading!="")
-    echo $email_subheading;
+    echo wp_kses_post( wpautop( wptexturize($email_subheading)));
 else
 {
 ?>

@@ -8,7 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-global $wpdb;
 if($content!="")
 {
 	$email_heading=str_ireplace("{customer}",esc_html( $order->get_billing_first_name() ),$email_heading);
@@ -124,7 +123,7 @@ if($content!="")
     	$content=str_ireplace("{woocommerce_email_customer_details}",$message,$content);
     }
 
-	echo $content;
+	echo wp_kses_post( wpautop( wptexturize($content)));
 
 	do_action( 'woocommerce_email_footer', $email );
 

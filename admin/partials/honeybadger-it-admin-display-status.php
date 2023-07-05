@@ -6,7 +6,7 @@
  */
 
 global $wp_version;
-
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 if ( ! current_user_can( 'manage_options' ) ) {
     return;
 }
@@ -121,7 +121,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
         {
             ?>
             <a href="javascript:jQuery('#honeybadger_account_email_a').hide();jQuery('#honeybadger_account_email').show();" id="honeybadger_account_email_a"><small><?php _e("Show account email","honeyb");?></small></a>
-            <span id="honeybadger_account_email" style="display:none;"><?php echo $honeybadger->config->honeybadger_account_email;?></span>
+            <span id="honeybadger_account_email" style="display:none;"><?php echo esc_html($honeybadger->config->honeybadger_account_email);?></span>
             <?php
         }
         ?></p>
@@ -298,7 +298,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
                 $nonce = wp_create_nonce( 'honeybadger_it_setup_revoke_access' );
                 ?>
                 <input type="button" onClick="javascript:refreshHoneybadgerConnection();" class="button-primary hb-setup-no-use leftmarginme" value="<?php echo esc_attr(__("Refresh the HoneyBadger IT Access Tokens","honeyb"));?>" /><br /><br />
-                <form method="post" action="" id="revoke_form" onSubmit="return confirm('<?php echo esc_attr(__("Are you sure you want to revoke the HoneyBadger IT Access?","honeyb"));?>');">
+                <form method="post" action="" id="revoke_form" onSubmit="return confirm('<?php echo esc_js(__("Are you sure you want to revoke the HoneyBadger IT Access?","honeyb"));?>');">
                     <input type="hidden" name="action" value="revoke_access" />
                     <input type="hidden" id="_wpnonce" name="_wpnonce" value="<?php echo esc_attr($nonce);?>" />
                     <input type="submit" class="button-secondary leftmarginme" value="<?php echo esc_attr(__("Revoke HoneyBadger IT Access","honeyb"));?>" />
@@ -357,7 +357,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
         <tr class="hb-show hb-green-color">
             <td><span class="dashicons dashicons-media-code"></span></td>
             <td><?php echo esc_html(__('PHP Version','honeyb'));?></td>
-            <td><?php echo PHP_VERSION;?></td>
+            <td><?php echo esc_html(PHP_VERSION);?></td>
             <td><?php echo esc_html(__('Looks good','honeyb'));?></td>
         </tr>
         <?php
@@ -369,7 +369,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
         <tr class="hb-show hb-red-color">
             <td><span class="dashicons dashicons-media-code"></span></td>
             <td><?php echo esc_html(__('PHP Version','honeyb'));?></td>
-            <td><?php echo PHP_VERSION;?></td>
+            <td><?php echo esc_html(PHP_VERSION);?></td>
             <td><?php echo esc_html(__('PHP 5.4 or greater is required','honeyb'));?> <strong>[<?php echo esc_html(__('Deal Breaker','honeyb'));?>]</strong></td>
         </tr>
         <?php
@@ -380,7 +380,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
         <tr class="hb-show hb-green-color">
             <td><span class="dashicons dashicons-wordpress"></span></td>
             <td><?php echo esc_html(__('WordPress Version','honeyb'));?></td>
-            <td><?php echo $wp_version;?></td>
+            <td><?php echo esc_html($wp_version);?></td>
             <td><?php echo esc_html(__('Looks good','honeyb'));?></td>
         </tr>
         <?php
@@ -392,7 +392,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
         <tr class="hb-show hb-red-color">
             <td><span class="dashicons dashicons-wordpress"></span></td>
             <td><?php echo esc_html(__('WordPress Version','honeyb'));?></td>
-            <td><?php echo $wp_version;?></td>
+            <td><?php echo esc_html($wp_version);?></td>
             <td><?php echo esc_html(__('The plugin was tested from version 5.8.2','honeyb'));?> <strong>[<?php echo esc_html(__('Deal Breaker','honeyb'));?>]</strong></td>
         </tr>
         <?php
@@ -416,7 +416,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
                 <td><span class="dashicons dashicons-share"></span></td>
                 <td><?php esc_html_e('REST API v2','honeyb');?></td>
                 <td><?php esc_html_e('Not Active','honeyb');?></td>
-                <td><?php esc_html_e('REST API does not seam to work (or not working over https), this is needed for the plugin to work, please activate it. Maybe the ssl certificate is not valid? You can use a self signed certificate too (set in settings curl_ssl_verify to no) for testing purposes','honeyb');?> <strong>[<?php _e('Deal Breaker','honeyb');?>]</strong> <a href="<?php echo get_rest_url()."wp/v2";?>" target="_blank"><?php _e('API URL','honeyb');?></a></td>
+                <td><?php esc_html_e('REST API does not seam to work (or not working over https), this is needed for the plugin to work, please activate it. Maybe the ssl certificate is not valid? You can use a self signed certificate too (set in settings curl_ssl_verify to no) for testing purposes','honeyb');?> <strong>[<?php _e('Deal Breaker','honeyb');?>]</strong> <a href="<?php echo esc_url(get_rest_url()."wp/v2");?>" target="_blank"><?php _e('API URL','honeyb');?></a></td>
             </tr>
             <?php
         }
@@ -426,7 +426,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
         <tr class="hb-show hb-green-color">
             <td><span class="dashicons dashicons-cart"></span></td>
             <td><?php esc_html_e('Woocommerce','honeyb');?></td>
-            <td><?php echo WC_VERSION;?></td>
+            <td><?php echo esc_html(WC_VERSION);?></td>
             <td><?php esc_html_e('Looks good','honeyb');?></td>
         </tr>
         <?php
@@ -539,7 +539,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
         <tr class="hb-show hb-green-color">
             <td><span class="dashicons dashicons-media-code"></span></td>
             <td><?php esc_html_e('cUrl Version','honeyb');?></td>
-            <td><?php echo $honeybadger_curl_version;?></td>
+            <td><?php echo esc_html($honeybadger_curl_version);?></td>
             <td><?php esc_html_e('Looks good','honeyb');?></td>
         </tr>
         <?php
@@ -548,7 +548,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
         <tr class="hb-show hb-green-color">
             <td><span class="dashicons dashicons-privacy"></span></td>
             <td><?php esc_html_e('OpenSSL Version','honeyb');?></td>
-            <td><?php echo OPENSSL_VERSION_TEXT;?></td>
+            <td><?php echo esc_html(OPENSSL_VERSION_TEXT);?></td>
             <td><?php esc_html_e('Looks good','honeyb');?></td>
         </tr>
         <?php
@@ -558,7 +558,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
         <tr class="hb-show hb-green-color">
             <td><img id="honeybadger_status" src="<?php echo esc_url(plugin_dir_url( __DIR__ )."images/honeybadger_big_green.png");?>" /></td>
             <td><?php esc_html_e('HoneyBadger Server','honeyb');?></td>
-            <td><?php esc_html_e('Online','honeyb');?> (<?php esc_html_e('Ping','honeyb');?>: <?php echo $honeybadger_online_time;?>s)</td>
+            <td><?php esc_html_e('Online','honeyb');?> (<?php esc_html_e('Ping','honeyb');?>: <?php echo esc_html($honeybadger_online_time);?>s)</td>
             <td><?php esc_html_e('Looks good','honeyb');?></td>
         </tr>
         <?php
@@ -595,7 +595,7 @@ if(isset($_GET['msg']) && sanitize_text_field($_GET['msg'])=='created')
     {
         $html .= $xml->saveXML($node);
     }
-    echo $html;
+    echo $html;// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     ?>
 </div>
 <?php

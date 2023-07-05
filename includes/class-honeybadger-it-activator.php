@@ -5,7 +5,7 @@
  * @author     Claudiu Maftei <claudiu@honeybadger.it>
  */
 namespace HoneyBadgerIT;
-
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 $upload_dir = wp_upload_dir();
 if(!empty($upload_dir['basedir']))
 {
@@ -13,9 +13,11 @@ if(!empty($upload_dir['basedir']))
 }
 else
 {
-    if(!defined('HONEYBADGER_UPLOADS_PATH')){define( 'HONEYBADGER_UPLOADS_PATH', '' );};
+    return;
 }
-require_once WP_PLUGIN_DIR . '/honeybadger-it/constants.php';
+
+require_once(dirname(__FILE__,2)."/constants.php");
+
 
 class Honeybadger_IT_Activator {
 
@@ -51,49 +53,49 @@ class Honeybadger_IT_Activator {
     $this->honeybadgerTables[] = 'honeybadger_attachments_so_tpl';
     $this->honeybadgerTables[] = 'honeybadger_product_stock_log';
 
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_attachments_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (1, 'Order items Head', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>Product</td><td>Quantity</td><td>Price</td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_attachments_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (2, 'Order items', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>{product_name} (#{product_sku})</td><td>{product_quantity}</td><td>{product_price}</td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_attachments_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (3, 'Order items Footer', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>&nbsp;</td><td style=\"text-align: right;\">{subtotal_label}</td><td>{subtotal_value}</td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_attachments_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (1, 'Order items Head', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>Product</td><td>Quantity</td><td>Price</td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_attachments_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (2, 'Order items', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>{product_name} (#{product_sku})</td><td>{product_quantity}</td><td>{product_price}</td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_attachments_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (3, 'Order items Footer', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>&nbsp;</td><td style=\"text-align: right;\">{subtotal_label}</td><td>{subtotal_value}</td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
     
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (1, 'Order items Head', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Product</strong></td><td style=\"width: 10%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Qty</strong></td><td style=\"width: 30%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Price</strong><small>(inc tax)</small></td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (2, 'Order items', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_name}{so_item_sku}{so_supplier_description}</td><td style=\"width: 10%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_qty}</td><td style=\"width: 30%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_total}{supplier_currency}</td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (3, 'Order items Footer', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Subtotal</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_subtotal}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Tax({so_tax}%)</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_tax_total}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Postage</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_postage_cost}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Total</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_total}{supplier_currency}</td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (1, 'Order items Head', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Product</strong></td><td style=\"width: 10%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Qty</strong></td><td style=\"width: 30%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Price</strong><small>(inc tax)</small></td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (2, 'Order items', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_name}{so_item_sku}{so_supplier_description}</td><td style=\"width: 10%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_qty}</td><td style=\"width: 30%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_total}{supplier_currency}</td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (3, 'Order items Footer', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Subtotal</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_subtotal}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Tax({so_tax}%)</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_tax_total}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Postage</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_postage_cost}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Total</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_total}{supplier_currency}</td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
 
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (1, 'Order items Head', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Product</strong></td><td style=\"width: 8%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Qty</strong></td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Price</strong></td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Tax</strong></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Item total</strong></td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (2, 'Order items', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_name}{so_item_sku}{so_supplier_description}</td><td style=\"width: 8%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_qty}</td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_price}{supplier_currency}</td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_tax}{supplier_currency}</td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_total}{supplier_currency}</td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (3, 'Order items Footer', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Subtotal</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_subtotal}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Tax({so_tax}%)</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_tax_total}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Postage</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_postage_cost}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Total</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_total}{supplier_currency}</td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (1, 'Order items Head', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Product</strong></td><td style=\"width: 8%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Qty</strong></td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Price</strong></td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Tax</strong></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Item total</strong></td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (2, 'Order items', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_name}{so_item_sku}{so_supplier_description}</td><td style=\"width: 8%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_qty}</td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_price}{supplier_currency}</td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_tax}{supplier_currency}</td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_total}{supplier_currency}</td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_so_emails_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (3, 'Order items Footer', '<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Subtotal</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_subtotal}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Tax({so_tax}%)</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_tax_total}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Postage</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_postage_cost}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Total</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_total}{supplier_currency}</td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
 
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_attachments_so_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (1, 'Order items Head', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>Product</td><td>Quantity</td><td>Price (inc tax)</td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_attachments_so_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (2, 'Order items', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>{so_item_name}{so_item_sku}{so_supplier_description}</td><td>{so_item_qty}</td><td>{so_item_total}{supplier_currency}</td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
-    $this->sql1[]="INSERT INTO `".$wpdb->prefix."honeybadger_attachments_so_tpl` (`id`, `title`, `content`, `mdate`) VALUES
-        (3, 'Order items Footer', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Subtotal</strong></td><td>{so_subtotal}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Tax({so_tax}%)</strong></td><td>{so_tax_total}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Postage</strong></td><td>{so_postage_cost}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Total</strong></td><td>{so_total}{supplier_currency}</td></tr></tbody></table>', ".time().") ON DUPLICATE KEY UPDATE mdate=".time().";";
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_attachments_so_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (1, 'Order items Head', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>Product</td><td>Quantity</td><td>Price (inc tax)</td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_attachments_so_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (2, 'Order items', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>{so_item_name}{so_item_sku}{so_supplier_description}</td><td>{so_item_qty}</td><td>{so_item_total}{supplier_currency}</td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
+    $this->sql1[]=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_attachments_so_tpl` (`id`, `title`, `content`, `mdate`) VALUES
+        (3, 'Order items Footer', '<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Subtotal</strong></td><td>{so_subtotal}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Tax({so_tax}%)</strong></td><td>{so_tax_total}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Postage</strong></td><td>{so_postage_cost}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Total</strong></td><td>{so_total}{supplier_currency}</td></tr></tbody></table>', %d) ON DUPLICATE KEY UPDATE mdate=%d;",array(time(),time()));
 
-    $this->sql2[]="update `".$wpdb->prefix."honeybadger_attachments_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>Product</td><td>Quantity</td><td>Price</td></tr></tbody></table>' where id=1";
-    $this->sql2[]="update `".$wpdb->prefix."honeybadger_attachments_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>{product_name} (#{product_sku})</td><td>{product_quantity}</td><td>{product_price}</td></tr></tbody></table>' where id=2";
-    $this->sql2[]="update `".$wpdb->prefix."honeybadger_attachments_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>&nbsp;</td><td style=\"text-align: right;\">{subtotal_label}</td><td>{subtotal_value}</td></tr></tbody></table>'where id=3";
+    $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_attachments_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>Product</td><td>Quantity</td><td>Price</td></tr></tbody></table>' where id=1");
+    $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_attachments_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>{product_name} (#{product_sku})</td><td>{product_quantity}</td><td>{product_price}</td></tr></tbody></table>' where id=2");
+    $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_attachments_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>&nbsp;</td><td style=\"text-align: right;\">{subtotal_label}</td><td>{subtotal_value}</td></tr></tbody></table>'where id=3");
 
-    $this->sql2[]="update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Product</strong></td><td style=\"width: 10%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Qty</strong></td><td style=\"width: 30%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Price</strong><small>(inc tax)</small></td></tr></tbody></table>' where id=1";
-    $this->sql2[]="update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_name}{so_item_sku}{so_supplier_description}</td><td style=\"width: 10%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_qty}</td><td style=\"width: 30%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_total}{supplier_currency}</td></tr></tbody></table>' where id=2";
-    $this->sql2[]="update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Subtotal</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_subtotal}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Tax({so_tax}%)</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_tax_total}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Postage</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_postage_cost}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Total</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_total}{supplier_currency}</td></tr></tbody></table>' where id=3";
+    $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Product</strong></td><td style=\"width: 10%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Qty</strong></td><td style=\"width: 30%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\"><strong>Price</strong><small>(inc tax)</small></td></tr></tbody></table>' where id=1");
+    $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_name}{so_item_sku}{so_supplier_description}</td><td style=\"width: 10%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_qty}</td><td style=\"width: 30%; color: rgb(99, 99, 99); border: 1px solid rgb(229, 229, 229); padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; overflow-wrap: break-word;\" align=\"left\">{so_item_total}{supplier_currency}</td></tr></tbody></table>' where id=2");
+    $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Subtotal</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_subtotal}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Tax({so_tax}%)</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_tax_total}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Postage</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_postage_cost}{supplier_currency}</td></tr><tr><td style=\"width: 60%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-right: 0px!important;\" align=\"left\"><strong>Total</strong></td><td style=\"width: 10%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word; border-left: 0px!important;\" align=\"left\">&nbsp;</td><td style=\"width: 30%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_total}{supplier_currency}</td></tr></tbody></table>' where id=3");
 
-    $this->sql2[]="update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Product</strong></td><td style=\"width: 8%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Qty</strong></td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Price</strong></td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Tax</strong></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Item total</strong></td></tr></tbody></table>' where id=1";
-    $this->sql2[]="update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_name}{so_item_sku}{so_supplier_description}</td><td style=\"width: 8%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_qty}</td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_price}{supplier_currency}</td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_tax}{supplier_currency}</td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_total}{supplier_currency}</td></tr></tbody></table>' where id=2";
-    $this->sql2[]="update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Subtotal</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_subtotal}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Tax({so_tax}%)</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_tax_total}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Postage</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_postage_cost}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Total</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_total}{supplier_currency}</td></tr></tbody></table>'where id=3";
+    $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Product</strong></td><td style=\"width: 8%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Qty</strong></td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Price</strong></td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Tax</strong></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\"><strong>Item total</strong></td></tr></tbody></table>' where id=1");
+    $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_name}{so_item_sku}{so_supplier_description}</td><td style=\"width: 8%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_qty}</td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_price}{supplier_currency}</td><td style=\"width: 16%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_tax}{supplier_currency}</td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_item_total}{supplier_currency}</td></tr></tbody></table>' where id=2");
+    $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_so_emails_tpl` set content='<table style=\"table-layout: fixed; color: #636363; border: 1px solid #e5e5e5; vertical-align: middle; width: 100%; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif;\" border=\"1\" cellspacing=\"0\" cellpadding=\"6\"><tbody><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Subtotal</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_subtotal}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Tax({so_tax}%)</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_tax_total}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Postage</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_postage_cost}{supplier_currency}</td></tr><tr><td style=\"width: 35%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;border-right: 0px!important;\" align=\"left\"><strong>Total</strong></td><td style=\"width: 8%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 16%; border: 1px solid #e5e5e5;border-right: 0px!important;border-left: 0px!important;\"></td><td style=\"width: 26%; color: #636363; border: 1px solid #e5e5e5; padding: 12px; text-align: left; vertical-align: middle; font-family: \'Helvetica Neue\', Helvetica, Roboto, Arial, sans-serif; word-wrap: break-word;\" align=\"left\">{so_total}{supplier_currency}</td></tr></tbody></table>'where id=3");
 
-      $this->sql2[]="update `".$wpdb->prefix."honeybadger_attachments_so_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>Product</td><td>Quantity</td><td>Price (inc tax)</td></tr></tbody></table>' where id=1";
-      $this->sql2[]="update `".$wpdb->prefix."honeybadger_attachments_so_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>{so_item_name}{so_item_sku}{so_supplier_description}</td><td>{so_item_qty}</td><td>{so_item_total}{supplier_currency}</td></tr></tbody></table>' where id=2";
-      $this->sql2[]="update `".$wpdb->prefix."honeybadger_attachments_so_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Subtotal</strong></td><td>{so_subtotal}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Tax({so_tax}%)</strong></td><td>{so_tax_total}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Postage</strong></td><td>{so_postage_cost}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Total</strong></td><td>{so_total}{supplier_currency}</td></tr></tbody></table>'where id=3";
+      $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_attachments_so_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>Product</td><td>Quantity</td><td>Price (inc tax)</td></tr></tbody></table>' where id=1");
+      $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_attachments_so_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\" cellpadding=\"4px\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>{so_item_name}{so_item_sku}{so_supplier_description}</td><td>{so_item_qty}</td><td>{so_item_total}{supplier_currency}</td></tr></tbody></table>' where id=2");
+      $this->sql2[]=$wpdb->prepare("update `".$wpdb->prefix."honeybadger_attachments_so_tpl` set content='<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\"><colgroup><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"><col style=\"width: 33.3062%;\"></colgroup><tbody><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Subtotal</strong></td><td>{so_subtotal}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Tax({so_tax}%)</strong></td><td>{so_tax_total}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Postage</strong></td><td>{so_postage_cost}{supplier_currency}</td></tr><tr><td>&nbsp;</td><td style=\"text-align: right;\"><strong>Total</strong></td><td>{so_total}{supplier_currency}</td></tr></tbody></table>'where id=3");
   }
 
   public function createTables(){
@@ -104,8 +106,8 @@ class Honeybadger_IT_Activator {
       update_option('HONEYBADGER_IT_VERSION','1.0.0');
 
     $table_name=$wpdb->prefix.'honeybadger_oauth_clients';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `".$table_name."` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s",$table_name) ) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `".$table_name."` (
           client_id             VARCHAR(80)   NOT NULL,
           client_secret         VARCHAR(80),
           redirect_uri          VARCHAR(2000),
@@ -114,12 +116,12 @@ class Honeybadger_IT_Activator {
           user_id               VARCHAR(80),
           PRIMARY KEY (client_id)
         );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_custom_order_statuses';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `".$table_name."` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `".$table_name."` (
       id int(11) NOT NULL AUTO_INCREMENT,
       custom_order_status varchar(255)  CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
       custom_order_status_title varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
@@ -129,12 +131,12 @@ class Honeybadger_IT_Activator {
       PRIMARY KEY (id),
       UNIQUE KEY custom_order_status (custom_order_status)
     );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_access_tokens';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `".$table_name."` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `".$table_name."` (
           access_token         VARCHAR(40)    NOT NULL,
           client_id            VARCHAR(80)    NOT NULL,
           user_id              VARCHAR(80),
@@ -142,12 +144,12 @@ class Honeybadger_IT_Activator {
           scope                VARCHAR(4000),
           PRIMARY KEY (access_token)
         );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_authorization_codes';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `".$table_name."` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `".$table_name."` (
           authorization_code  VARCHAR(40)     NOT NULL,
           client_id           VARCHAR(80)     NOT NULL,
           user_id             VARCHAR(80),
@@ -157,12 +159,12 @@ class Honeybadger_IT_Activator {
           id_token            VARCHAR(1000),
           PRIMARY KEY (authorization_code)
         );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_refresh_tokens';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `".$table_name."` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `".$table_name."` (
           refresh_token       VARCHAR(40)     NOT NULL,
           client_id           VARCHAR(80)     NOT NULL,
           user_id             VARCHAR(80),
@@ -170,12 +172,12 @@ class Honeybadger_IT_Activator {
           scope               VARCHAR(4000),
           PRIMARY KEY (refresh_token)
         );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_users';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `".$table_name."` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `".$table_name."` (
           username            VARCHAR(80),
           password            VARCHAR(80),
           first_name          VARCHAR(80),
@@ -185,32 +187,32 @@ class Honeybadger_IT_Activator {
           scope               VARCHAR(4000),
           PRIMARY KEY (username)
         );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_scopes';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `".$table_name."` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `".$table_name."` (
           scope               VARCHAR(80)     NOT NULL,
           is_default          BOOLEAN,
           PRIMARY KEY (scope)
         );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_oauth_jwt';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `".$table_name."` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `".$table_name."` (
           client_id           VARCHAR(80)     NOT NULL,
           subject             VARCHAR(80),
           public_key          VARCHAR(2000)   NOT NULL
         );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_config';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `$table_name` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `$table_name` (
       `id` int(11) NOT NULL AUTO_INCREMENT,
       `config_name` varchar(255) NOT NULL,
       `config_value` varchar(255) NOT NULL,
@@ -219,12 +221,12 @@ class Honeybadger_IT_Activator {
       PRIMARY KEY (`id`),
       UNIQUE KEY (`config_name`)
     );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_wc_emails';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `$table_name` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `$table_name` (
       `id` int(11) NOT NULL AUTO_INCREMENT,
       `wc_status` varchar(255) NOT NULL DEFAULT '',
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
@@ -243,12 +245,12 @@ class Honeybadger_IT_Activator {
       PRIMARY KEY (`id`),
       UNIQUE KEY (`wc_status`)
     );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_emails';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `$table_name` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
       `subject` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
@@ -261,12 +263,12 @@ class Honeybadger_IT_Activator {
       `mdate` INT(11) NOT NULL DEFAULT '0' ,
       PRIMARY KEY (`id`)
     );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_attachments';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `$table_name` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
       `content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' ,
@@ -283,48 +285,48 @@ class Honeybadger_IT_Activator {
       `mdate` INT(11) NOT NULL DEFAULT '0' ,
       PRIMARY KEY (`id`)
     );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_attachments_tpl';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `$table_name` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
       `content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' ,
       `mdate` INT(11) NOT NULL DEFAULT '0' ,
       PRIMARY KEY (`id`)
     );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_attachments_so_tpl';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `$table_name` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
       `content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' ,
       `mdate` INT(11) NOT NULL DEFAULT '0' ,
       PRIMARY KEY (`id`)
     );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_so_emails_tpl';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `$table_name` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
       `content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' ,
       `mdate` INT(11) NOT NULL DEFAULT '0' ,
       PRIMARY KEY (`id`)
     );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_static_attachments';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `$table_name` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `$table_name` (
       `id` INT(11) NOT NULL AUTO_INCREMENT ,
       `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' ,
       `path` VARCHAR(512) NOT NULL DEFAULT '' ,
@@ -334,12 +336,12 @@ class Honeybadger_IT_Activator {
       `mdate` INT(11) NOT NULL DEFAULT '0' , 
       PRIMARY KEY (`id`)
     );
-    ";
+    ");
     dbDelta( $sql );
     }
     $table_name=$wpdb->prefix.'honeybadger_product_stock_log';
-    if( $wpdb->get_var( "show tables like '".esc_sql($table_name)."'" ) != $table_name ) {
-    $sql="CREATE TABLE `$table_name` (
+    if( $wpdb->get_var( $wpdb->prepare("show tables like %s" ),$table_name) != $table_name ) {
+    $sql=$wpdb->prepare("CREATE TABLE `$table_name` (
       `order_id` INT(11) NOT NULL DEFAULT '0' ,
       `product_id` INT(11) NOT NULL DEFAULT '0' ,
       `product_title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' ,
@@ -349,36 +351,36 @@ class Honeybadger_IT_Activator {
       `mdate` INT(11) NOT NULL DEFAULT '0',
       UNIQUE KEY (`order_id`, `product_id`)
     );
-    ";
+    ");
     dbDelta( $sql );
     }
 
     dbDelta( $this->sql1 );
     
-    $sql="INSERT INTO `".$wpdb->prefix."honeybadger_config` (`config_name`, `config_value`, `show_front`, `mdate`) VALUES
-        ('curl_ssl_verify', 'yes', '1', '".time()."'),
-        ('access_lifetime', '86400', '0', '".time()."'),
-        ('refresh_token_lifetime', '2419200', '0', '".time()."'),
-        ('ping_url', 'https://".esc_sql(HONEYBADGER_IT_TARGET_SUBDOMAIN).".honeybadger.it/ping.php', '0','".time()."'),
-        ('api_url', 'https://".esc_sql(HONEYBADGER_IT_TARGET_SUBDOMAIN).".honeybadger.it/api.php', '0','".time()."'),
-        ('token_url', 'https://".esc_sql(HONEYBADGER_IT_TARGET_SUBDOMAIN).".honeybadger.it/token.php', '0','".time()."'),
-        ('access_token', '', '0','".time()."'),
-        ('refresh_token', '', '0','".time()."'),
-        ('remote_access_token', '', '0','".time()."'),
-        ('remote_refresh_token', '', '0','".time()."'),
-        ('first_time_installation', '1', '0','".time()."'),
-        ('setup_step', '0', '0','".time()."'),
-        ('is_refresh', '0', '0','".time()."'),
-        ('use_status_colors_on_wc', 'yes', '1','".time()."'),
-        ('show_images_in_emails', 'no', '0','".time()."'),
-        ('show_sku_in_emails', 'no', '0','".time()."'),
-        ('enable_product_variation_extra_images', 'no', '0','".time()."'),
-        ('honeybadger_account_email', '', '0','".time()."'),
-        ('email_image_sizes', '100x50', '0','".time()."'),
-        ('delete_attachments_upon_uninstall', 'no', '1','".time()."'),
-        ('skip_rest_authentication_errors', 'no', '1','".time()."')
+    $sql=$wpdb->prepare("INSERT INTO `".$wpdb->prefix."honeybadger_config` (`config_name`, `config_value`, `show_front`, `mdate`) VALUES
+        ('curl_ssl_verify', 'yes', '1', %d),
+        ('access_lifetime', '86400', '0', %d),
+        ('refresh_token_lifetime', '2419200', '0', %d),
+        ('ping_url', %s, '0',%d),
+        ('api_url', %s, '0',%d),
+        ('token_url', %s, '0',%d),
+        ('access_token', '', '0',%d),
+        ('refresh_token', '', '0',%d),
+        ('remote_access_token', '', '0',%d),
+        ('remote_refresh_token', '', '0',%d),
+        ('first_time_installation', '1', '0',%d),
+        ('setup_step', '0', '0',%d),
+        ('is_refresh', '0', '0',%d),
+        ('use_status_colors_on_wc', 'yes', '1',%d),
+        ('show_images_in_emails', 'no', '0',%d),
+        ('show_sku_in_emails', 'no', '0',%d),
+        ('enable_product_variation_extra_images', 'no', '0',%d),
+        ('honeybadger_account_email', '', '0',%d),
+        ('email_image_sizes', '100x50', '0',%d),
+        ('delete_attachments_upon_uninstall', 'no', '1',%d),
+        ('skip_rest_authentication_errors', 'no', '1',%d)
         ON DUPLICATE KEY UPDATE mdate=".time().";
-    ";
+    ",array(time(),time(),time(),sanitize_text_field("https://".esc_sql(HONEYBADGER_IT_TARGET_SUBDOMAIN).".honeybadger.it/ping.php"),time(),sanitize_text_field("https://".esc_sql(HONEYBADGER_IT_TARGET_SUBDOMAIN).".honeybadger.it/api.php"),time(),sanitize_text_field("https://".esc_sql(HONEYBADGER_IT_TARGET_SUBDOMAIN).".honeybadger.it/token.php"),time(),time(),time(),time(),time(),time(),time(),time(),time(),time(),time(),time(),time(),time(),time(),time(),time()));
     dbDelta( $sql );
 
     $honeybadger_emails_dir = HONEYBADGER_UPLOADS_PATH.'emails';
@@ -413,8 +415,8 @@ class Honeybadger_IT_Activator {
             {
                 file_put_contents($honeybadger_emails_dir."/".$file_name,file_get_contents(get_template_directory().'/woocommerce/emails/'.$file_name));
             }
-            else if(is_file(WP_PLUGIN_DIR."/woocommerce/templates/emails/".$file_name))
-                file_put_contents($honeybadger_emails_dir."/".$file_name,file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/".$file_name));
+            else if(is_file(WC()->plugin_path()."/templates/emails/".$file_name))
+                file_put_contents($honeybadger_emails_dir."/".$file_name,file_get_contents(WC()->plugin_path()."/templates/emails/".$file_name));
         }
     }
   }
@@ -481,7 +483,7 @@ class Honeybadger_IT_Activator {
         return rmdir($dir);
     }
   function deleteTables(){
-    delete_option("the_honeybadger_it_activation_is_done");
+    delete_option("honeybadger_the_honeybadger_it_activation_is_done");
     $this->runFunctionsForMultiOrSingleBlog("deleteHoneyBadgerTables");
   }
   function versionChanges(){

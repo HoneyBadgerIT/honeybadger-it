@@ -12,7 +12,7 @@ do_action( 'woocommerce_email_header', $email_heading, $email );
 
 $content=__('Attached',"honeyb");
 
-echo $content;
+echo esc_html($content);
 
 do_action( 'woocommerce_email_footer', $email );
 

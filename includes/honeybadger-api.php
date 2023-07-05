@@ -6,6 +6,7 @@
  */
 namespace HoneyBadgerIT\API;
 use \stdClass;
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly   
 class honeybadgerAPI{
 
 	public $config;
@@ -16,7 +17,7 @@ class honeybadgerAPI{
 		global $wpdb;
 		$this->config=new stdClass;
 		$this->config_front=new stdClass;
-		$sql="select * from ".$wpdb->prefix."honeybadger_config where 1";
+		$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_config where 1");
 		$results=$wpdb->get_results($sql);
 		if($results){
 			foreach($results as $r){
@@ -60,8 +61,9 @@ class honeybadgerAPI{
 				foreach($statuses as $status => $title)
 					$statuses_arr[]=$status;
 			}
-			$sql="select count(ID) as total from ".$wpdb->prefix."posts where post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."')";
-			$result=$wpdb->get_row($sql);
+			$sql="select count(ID) as total from ".$wpdb->prefix."posts where post_type='shop_order' and post_status in (".implode(', ', array_fill(0, count($statuses_arr), '%s')).")";
+			$query = call_user_func_array(array($wpdb, 'prepare'), array_merge(array($sql), $statuses_arr));
+			$result=$wpdb->get_row($query);
 			if(isset($result->total))
 				$total_orders=$result->total;
 			$limit=isset($parameters['limit'])?(int)$parameters['limit']:10;
@@ -105,7 +107,7 @@ class honeybadgerAPI{
 					if(strtolower($val)==strtolower($search))
 						$search=$key;
 				}
-				$sql="
+				$sql=$wpdb->prepare("
 				SELECT
 				COUNT(DISTINCT(p.ID)) as total
 				FROM
@@ -113,38 +115,38 @@ class honeybadgerAPI{
 				LEFT JOIN ".$wpdb->prefix."postmeta m on m.post_id=p.ID
 				where 
 				p.post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."')
-				".$start_date."
-				".$end_date."
+				".esc_sql($start_date)."
+				".esc_sql($end_date)."
 				and
 				(
-					p.ID like '%".esc_sql($search)."%' or
-					p.post_status like '%".esc_sql($search)."%' or
-					(m.meta_value like '%".esc_sql($search)."%' and m.meta_key in ('_billing_address_index','_shipping_address_index','_billing_last_name','_billing_email'))
+					p.ID like %s or
+					p.post_status like %s or
+					(m.meta_value like %s and m.meta_key in ('_billing_address_index','_shipping_address_index','_billing_last_name','_billing_email'))
 				)
-				";
+				",array("%".$search."%","%".$search."%","%".$search."%"));
 				$result=$wpdb->get_row($sql);
 				if(isset($result->total))
 					$total_filtered_orders=$result->total;
-				$sql="
+				$sql=$wpdb->prepare("
 				SELECT
 				DISTINCT(p.ID)
 				FROM
 				".$wpdb->prefix."posts p
 				LEFT JOIN ".$wpdb->prefix."postmeta m on m.post_id=p.ID
-				".$join_order_total."
+				".esc_sql($join_order_total)."
 				where 
 				p.post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."')
-				".$start_date."
-				".$end_date."
+				".esc_sql($start_date)."
+				".esc_sql($end_date)."
 				and
 				(
-					p.ID like '%".esc_sql($search)."%' or
-					p.post_status like '%".esc_sql($search)."%' or
-					(m.meta_value like '%".esc_sql($search)."%' and m.meta_key in ('_billing_address_index','_shipping_address_index','_billing_last_name','_billing_email'))
+					p.ID like %s or
+					p.post_status like %s or
+					(m.meta_value like %s and m.meta_key in ('_billing_address_index','_shipping_address_index','_billing_last_name','_billing_email'))
 				)
 				group by p.ID
-				order by ".implode(",",$order_by)."
-				limit ".$start.",".$limit;
+				order by ".implode(",",array_map('esc_sql',$order_by))."
+				limit ".esc_sql($start).",".esc_sql($limit),array("%".$search."%","%".$search."%","%".$search."%"));
 				$order_ids=$wpdb->get_results($sql);
 
 				if(count($order_ids)>0)
@@ -164,33 +166,33 @@ class honeybadgerAPI{
 			{
 				if($start_date!="" || $end_date!="")
 				{
-					$sql="
+					$sql=$wpdb->prepare("
 					SELECT
 					COUNT(DISTINCT(p.ID)) as total
 					FROM
 					".$wpdb->prefix."posts p
 					where 
 					p.post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."')
-					".$start_date."
-					".$end_date;
+					".esc_sql($start_date)."
+					".esc_sql($end_date));
 					$result=$wpdb->get_row($sql);
 					if(isset($result->total))
 						$total_filtered_orders=$result->total;
 				}
 				else
 					$total_filtered_orders=$total_orders;
-				$sql="
+				$sql=$wpdb->prepare("
 				SELECT
 				DISTINCT(p.ID)
 				FROM
 				".$wpdb->prefix."posts p
-				".$join_order_total."
+				".esc_sql($join_order_total)."
 				where 
 				p.post_type='shop_order' and p.post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."')
-				".$start_date."
-				".$end_date."
-				order by ".implode(",",$order_by)."
-				limit ".$start.",".$limit;
+				".esc_sql($start_date)."
+				".esc_sql($end_date)."
+				order by ".implode(",",array_map('esc_sql',$order_by))."
+				limit ".esc_sql($start).",".esc_sql($limit));
 				$order_ids=$wpdb->get_results($sql);
 				if(count($order_ids)>0)
 				{
@@ -282,7 +284,7 @@ class honeybadgerAPI{
 					$stat->txt_color="";
 					$statuses[]=$stat;
 				}
-				$sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where 1";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where 1");
 				$results=$wpdb->get_results($sql);
 				if(is_array($results))
 				{
@@ -312,7 +314,7 @@ class honeybadgerAPI{
 	{
 		global $wpdb;
 		$this->setDefaultOrderStatuses();
-		$sql="update ".$wpdb->prefix."honeybadger_config set config_value='0' where config_name='first_time_installation'";
+		$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value='0' where config_name='first_time_installation'");
 		$wpdb->query($sql);
 	}
 	function setDefaultOrderStatuses()
@@ -364,12 +366,12 @@ class honeybadgerAPI{
 				$status->bg_color=sanitize_hex_color($status->bg_color);
 				$status->txt_color=sanitize_hex_color($status->txt_color);
 
-				$sql="insert into ".$wpdb->prefix."honeybadger_custom_order_statuses set
-				custom_order_status='".esc_sql($status->status)."',
-				custom_order_status_title='".esc_sql($status->title)."',
-				bg_color='".esc_sql($status->bg_color)."',
-				txt_color='".esc_sql($status->txt_color)."',
-				mdate='".time()."'";
+				$sql=$wpdb->prepare("insert into ".$wpdb->prefix."honeybadger_custom_order_statuses set
+				custom_order_status=%s,
+				custom_order_status_title=%s,
+				bg_color=%s,
+				txt_color=%s,
+				mdate=%d",array($status->status,$status->title,$status->bg_color,$status->txt_color,time()));
 				$wpdb->query($sql);
 			}
 		}
@@ -393,20 +395,22 @@ class honeybadgerAPI{
 			{
 				for($i=0;$i<count($status);$i++)
 				{
-					$sql="update ".$wpdb->prefix."honeybadger_custom_order_statuses set
-					custom_order_status_title='".esc_sql(sanitize_text_field($title[$i]))."',
-					bg_color='".esc_sql(sanitize_hex_color($bg_color[$i]))."',
-					txt_color='".esc_sql(sanitize_hex_color($txt_color[$i]))."',
-					mdate='".time()."'
-					where custom_order_status='".esc_sql($status[$i])."'";
+					$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_custom_order_statuses set
+					custom_order_status_title=%s,
+					bg_color=%s,
+					txt_color=%s,
+					mdate=%d
+					where custom_order_status=%s",
+					array(sanitize_text_field($title[$i]),sanitize_hex_color($bg_color[$i]),sanitize_hex_color($txt_color[$i]),time(),sanitize_text_field($status[$i])));
 					if($wpdb->query($sql)<1)
 					{
-						$sql="insert into ".$wpdb->prefix."honeybadger_custom_order_statuses set
-						custom_order_status='".esc_sql(sanitize_text_field($status[$i]))."',
-						custom_order_status_title='".esc_sql(sanitize_text_field($title[$i]))."',
-						bg_color='".esc_sql(sanitize_hex_color($bg_color[$i]))."',
-						txt_color='".esc_sql(sanitize_hex_color($txt_color[$i]))."',
-						mdate='".time()."'";
+						$sql=$wpdb->prepare("insert into ".$wpdb->prefix."honeybadger_custom_order_statuses set
+						custom_order_status=%s,
+						custom_order_status_title=%s,
+						bg_color=%s,
+						txt_color=%s,
+						mdate=%d",
+						array(sanitize_text_field($status[$i]),sanitize_text_field($title[$i]),sanitize_hex_color($bg_color[$i]),sanitize_hex_color($txt_color[$i]),time()));
 					}
 					
 					if(!$wpdb->query($sql) && $wpdb->last_error !== '')
@@ -420,7 +424,7 @@ class honeybadgerAPI{
 				$status_colors_on_wc="no";
 				if($use_status_colors_on_wc=="on")
 					$status_colors_on_wc="yes";
-				$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($status_colors_on_wc)."' where config_name='use_status_colors_on_wc'";
+				$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value=%s where config_name='use_status_colors_on_wc'",sanitize_text_field($status_colors_on_wc));
 				if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				{
 					$result=new stdClass;
@@ -452,13 +456,13 @@ class honeybadgerAPI{
 			$status=isset($parameters['status'])?sanitize_text_field($parameters['status']):"";
 			if($status!="")
 			{
-				$sql="select count(ID) as total from ".$wpdb->prefix."posts where post_type='shop_order' and post_status='".esc_sql($status)."'";
+				$sql=$wpdb->prepare("select count(ID) as total from ".$wpdb->prefix."posts where post_type='shop_order' and post_status=%s",$status);
 				$result=$wpdb->get_row($sql);
 				if(isset($result->total) && $result->total>0)
 					return $this->returnError();
 				else
 				{
-					$sql="delete from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status='".esc_sql($status)."'";
+					$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status=%s",sanitize_text_field($status));
 					$wpdb->query($sql);
 					if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 						return $this->returnError();
@@ -631,7 +635,7 @@ class honeybadgerAPI{
 		$order_id=(int)$order_id;
 		if($order_id>0)
 		{
-			$sql="select meta_value from ".$wpdb->prefix."postmeta where post_id='".esc_sql($order_id)."' and (meta_key='_honeybadger_split_from' or meta_key='_honeybadger_split_in')";
+			$sql=$wpdb->prepare("select meta_value from ".$wpdb->prefix."postmeta where post_id=%d and (meta_key='_honeybadger_split_from' or meta_key='_honeybadger_split_in')",$order_id);
 			$results=$wpdb->get_results($sql);
 			$ids=array((string)$order_id);
 			if(is_array($results))
@@ -646,7 +650,7 @@ class honeybadgerAPI{
 				sort($ids);
 				while(true)
 				{
-					$sql="select meta_value from ".$wpdb->prefix."postmeta where post_id in ('".implode("','",array_map('esc_sql',$ids))."') and (meta_key='_honeybadger_split_from' or meta_key='_honeybadger_split_in')";
+					$sql=$wpdb->prepare("select meta_value from ".$wpdb->prefix."postmeta where post_id in ('".implode("','",array_map('esc_sql',$ids))."') and (meta_key='_honeybadger_split_from' or meta_key='_honeybadger_split_in')");
 					$results=$wpdb->get_results($sql);
 					if(is_array($results))
 					{
@@ -686,7 +690,7 @@ class honeybadgerAPI{
 		if ( ! current_user_can( 'use_honeybadger_api' ) && ! current_user_can( 'manage_options' )) {
 		    return;
 		}
-		$sql="select id, title from ".$wpdb->prefix."honeybadger_attachments where generable=1 and enabled=1 order by id";
+		$sql=$wpdb->prepare("select id, title from ".$wpdb->prefix."honeybadger_attachments where generable=1 and enabled=1 order by id");
 		return $wpdb->get_results($sql);
 	}
 	function get_email_attachments($status="")
@@ -699,14 +703,14 @@ class honeybadgerAPI{
 		$filter_attachments=array();
 		if($status!="")
 		{
-			$sql="select a.id from ".$wpdb->prefix."honeybadger_attachments a where a.attach_to_wc_emails like '%wc-".esc_sql($status)."%' and a.enabled=1";
+			$sql=$wpdb->prepare("select a.id from ".$wpdb->prefix."honeybadger_attachments a where a.attach_to_wc_emails like %s and a.enabled=1","%wc-".$status."%");
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
 				foreach($results as $result)
 					$filter_attachments[]=$result->id;
 			}
-			$sql="select a.attach_to_emails from ".$wpdb->prefix."honeybadger_attachments a where attach_to_emails<>'' and a.enabled=1";
+			$sql=$wpdb->prepare("select a.attach_to_emails from ".$wpdb->prefix."honeybadger_attachments a where attach_to_emails<>'' and a.enabled=1");
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
@@ -723,7 +727,7 @@ class honeybadgerAPI{
 				if(count($all_attached_to_emails)>0)
 				{
 					$good_email_ids=array();
-					$sql="select e.id from ".$wpdb->prefix."honeybadger_emails e where e.id in (".implode(",",array_map('esc_sql',$all_attached_to_emails)).") and e.statuses like '%".esc_sql($status)."%' and e.enabled=1";
+					$sql=$wpdb->prepare("select e.id from ".$wpdb->prefix."honeybadger_emails e where e.id in (".implode(",",array_map('esc_sql',$all_attached_to_emails)).") and e.statuses like %s and e.enabled=1","%".$status."%");
 					$results=$wpdb->get_results($sql);
 					if(is_array($results))
 					{
@@ -734,12 +738,13 @@ class honeybadgerAPI{
 					{
 						foreach($good_email_ids as $email_id)
 						{
-							$sql="select a.id from ".$wpdb->prefix."honeybadger_attachments a where 
+							$sql=$wpdb->prepare("select a.id from ".$wpdb->prefix."honeybadger_attachments a where 
 							a.enabled=1 and
-							(a.attach_to_emails='".esc_sql($email_id)."' or
-							a.attach_to_emails like '".esc_sql($email_id).",%' or
-							a.attach_to_emails like '%,".esc_sql($email_id)."' or
-							a.attach_to_emails like '%,".esc_sql($email_id).",%')";
+							(a.attach_to_emails=%s or
+							a.attach_to_emails like %s or
+							a.attach_to_emails like %s or
+							a.attach_to_emails like %s)",
+							array($email_id,$email_id.",%","%,".$email_id,"%,".$email_id.",%"));
 							$results=$wpdb->get_results($sql);
 							if(is_array($results))
 							{
@@ -753,11 +758,11 @@ class honeybadgerAPI{
 			if(count($filter_attachments)>0)
 			{
 				$filter_attachments=array_unique($filter_attachments);
-				$sql="select id, title, attach_to_wc_emails, attach_to_emails, generable from ".$wpdb->prefix."honeybadger_attachments where id in (".implode(",",array_map('esc_sql',$filter_attachments)).") and enabled=1";
+				$sql=$wpdb->prepare("select id, title, attach_to_wc_emails, attach_to_emails, generable from ".$wpdb->prefix."honeybadger_attachments where id in (".implode(",",array_map('esc_sql',$filter_attachments)).") and enabled=1");
 				return $wpdb->get_results($sql);
 			}
 		}
-		$sql="select id, title, attach_to_wc_emails, attach_to_emails, generable from ".$wpdb->prefix."honeybadger_attachments where (attach_to_wc_emails!='' or attach_to_emails!='') and enabled=1";
+		$sql=$wpdb->prepare("select id, title, attach_to_wc_emails, attach_to_emails, generable from ".$wpdb->prefix."honeybadger_attachments where (attach_to_wc_emails!='' or attach_to_emails!='') and enabled=1");
 		return $wpdb->get_results($sql);
 	}
 	function get_email_static_attachments($status="")
@@ -771,14 +776,14 @@ class honeybadgerAPI{
 		$filter_sql="";
 		if($status!="")
 		{
-			$sql="select a.id from ".$wpdb->prefix."honeybadger_static_attachments a where a.wc_emails like '%wc-".esc_sql($status)."%' and a.enabled=1";
+			$sql=$wpdb->prepare("select a.id from ".$wpdb->prefix."honeybadger_static_attachments a where a.wc_emails like %s and a.enabled=1","%wc-".$status."%");
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
 				foreach($results as $result)
 					$filter_attachments[]=$result->id;
 			}
-			$sql="select a.emails from ".$wpdb->prefix."honeybadger_static_attachments a where emails<>'' and a.enabled=1";
+			$sql=$wpdb->prepare("select a.emails from ".$wpdb->prefix."honeybadger_static_attachments a where emails<>'' and a.enabled=1");
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
@@ -795,7 +800,7 @@ class honeybadgerAPI{
 				if(count($all_attached_to_emails)>0)
 				{
 					$good_email_ids=array();
-					$sql="select e.id from ".$wpdb->prefix."honeybadger_emails e where e.id in (".implode(",",array_map('esc_sql',$all_attached_to_emails)).") and e.statuses like '%".esc_sql($status)."%' and e.enabled=1";
+					$sql=$wpdb->prepare("select e.id from ".$wpdb->prefix."honeybadger_emails e where e.id in (".implode(",",array_map('esc_sql',$all_attached_to_emails)).") and e.statuses like %s and e.enabled=1","%".$status."%");
 					$results=$wpdb->get_results($sql);
 					if(is_array($results))
 					{
@@ -806,12 +811,13 @@ class honeybadgerAPI{
 					{
 						foreach($good_email_ids as $email_id)
 						{
-							$sql="select a.id from ".$wpdb->prefix."honeybadger_static_attachments a where 
+							$sql=$wpdb->prepare("select a.id from ".$wpdb->prefix."honeybadger_static_attachments a where 
 							a.enabled=1 and
-							(a.emails='".esc_sql($email_id)."' or
-							a.emails like '".esc_sql($email_id).",%' or
-							a.emails like '%,".esc_sql($email_id)."' or
-							a.emails like '%,".esc_sql($email_id).",%')";
+							(a.emails=%s or
+							a.emails like %s or
+							a.emails like %s or
+							a.emails like %s)",
+							array($email_id,$email_id.",%","%,".$email_id,"%,".$email_id.",%"));
 							$results=$wpdb->get_results($sql);
 							if(is_array($results))
 							{
@@ -825,11 +831,11 @@ class honeybadgerAPI{
 			if(count($filter_attachments)>0)
 			{
 				$filter_attachments=array_unique($filter_attachments);
-				$filter_sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where id in (".implode(",",array_map('esc_sql',$filter_attachments)).") and enabled=1";
+				$filter_sql=$wpdb->prepare("select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where id in (".implode(",",array_map('esc_sql',$filter_attachments)).") and enabled=1");
 			}
 		}
 		if($filter_sql=="")
-			$sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where enabled=1 order by title";
+			$sql=$wpdb->prepare("select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where enabled=1 order by title");
 		else
 			$sql=$filter_sql;
 		$results=$wpdb->get_results($sql);
@@ -852,8 +858,12 @@ class honeybadgerAPI{
 		$status=sanitize_text_field($status);
 		$order_status="";
 		if($status!="")
-			$order_status=" and statuses like'%wc-".esc_sql($status)."%'";
-		$sql="select id, title, statuses from ".$wpdb->prefix."honeybadger_emails where enabled=1 and statuses<>''".$order_status." order by id";
+		{
+			$order_status="";
+			$sql=$wpdb->prepare("select id, title, statuses from ".$wpdb->prefix."honeybadger_emails where enabled=1 and statuses<>'' and statuses like %s order by id","%wc-".$status."%");
+		}
+		else
+			$sql=$wpdb->prepare("select id, title, statuses from ".$wpdb->prefix."honeybadger_emails where enabled=1 and statuses<>'' order by id");
 		return $wpdb->get_results($sql);
 	}
 	function check_for_new_orders()
@@ -869,7 +879,7 @@ class honeybadgerAPI{
 			$statuses_arr=array();
 			foreach($statuses as $status => $title)
 				$statuses_arr[]=$status;
-			$sql="select ID from ".$wpdb->prefix."posts where ID>'".esc_sql($last_order_id)."' and post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."') order by ID desc";
+			$sql=$wpdb->prepare("select ID from ".$wpdb->prefix."posts where ID>%d and post_type='shop_order' and post_status in ('".implode("','",array_map('esc_sql',$statuses_arr))."') order by ID desc",$last_order_id);
 			$results=$wpdb->get_results($sql);
 			if(is_array($results) && count($results)>0)
 			{
@@ -922,7 +932,7 @@ class honeybadgerAPI{
 		$attachments=array();
 		if(is_array($static_attachments) && count($static_attachments)>0)
 		{
-			$sql="select * from ".$wpdb->prefix."honeybadger_static_attachments where id in ('".implode("','",array_map('esc_sql',$static_attachments))."') and enabled=1 order by title";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_static_attachments where id in ('".implode("','",array_map('esc_sql',$static_attachments))."') and enabled=1 order by title");
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
@@ -934,15 +944,21 @@ class honeybadgerAPI{
 						$file_name=$this->removeMd5FromFilename(basename($attachment));
 						$new_path=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$file_name;
 						if($file_name!=$new_path && copy($attachment,$new_path))
-							$attachments[]=$new_path;
+							$attachments[]=honeybadger_sanitize_file_name_from_path($new_path);
 						else
-							$attachments[]=$attachment;
+							$attachments[]=honeybadger_sanitize_file_name_from_path($attachment);
 					}
 				}
 				if(count($attachments)>0)
 				{
 					if(isset($_POST['attachments_to_be_deleted']) && is_array($_POST['attachments_to_be_deleted']))
+					{
+						foreach($_POST['attachments_to_be_deleted'] as $aidx => $attach_to_del)
+						{
+							$_POST['attachments_to_be_deleted'][$aidx]=honeybadger_sanitize_file_name_from_path($_POST['attachments_to_be_deleted'][$aidx]);
+						}
 						$_POST['attachments_to_be_deleted']=array_merge($_POST['attachments_to_be_deleted'],$attachments);
+					}
 					else
 						$_POST['attachments_to_be_deleted']=$attachments;
 				}
@@ -978,7 +994,7 @@ class honeybadgerAPI{
 		}
 		if(!empty($request))
 		{
-			$sql="select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status !='wc-pending' order by id";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_custom_order_statuses where custom_order_status !='wc-pending' order by id");
 			$results=$wpdb->get_results($sql);
 			$all_states=array();
 			$templates=array(
@@ -1012,14 +1028,14 @@ class honeybadgerAPI{
 				'wc-customer-note'=>esc_html__("Customer note","honeyb"),
 				'wc-customer-reset-password'=>esc_html__("Reset password","honeyb"),
 				'wc-email-default'=>'',
-				'wc-email-header'=>esc_html__('Email Header ADVANCED'),
-				'wc-email-footer'=>esc_html__('Email Footer ADVANCED'),
-				'wc-email-styles'=>esc_html__('Email Styles ADVANCED'),
-				'wc-email-addresses'=>esc_html__('Email Addresses ADVANCED'),
-				'wc-email-customer-details'=>esc_html__('Email Customer Details ADVANCED'),
-				'wc-email-downloads'=>esc_html__('Email Downloads ADVANCED'),
-				'wc-email-order-details'=>esc_html__('Email Order Details ADVANCED'),
-				'wc-email-order-items'=>esc_html__('Email Order Items ADVANCED')
+				'wc-email-header'=>esc_html__('Email Header ADVANCED',"honeyb"),
+				'wc-email-footer'=>esc_html__('Email Footer ADVANCED',"honeyb"),
+				'wc-email-styles'=>esc_html__('Email Styles ADVANCED',"honeyb"),
+				'wc-email-addresses'=>esc_html__('Email Addresses ADVANCED',"honeyb"),
+				'wc-email-customer-details'=>esc_html__('Email Customer Details ADVANCED',"honeyb"),
+				'wc-email-downloads'=>esc_html__('Email Downloads ADVANCED',"honeyb"),
+				'wc-email-order-details'=>esc_html__('Email Order Details ADVANCED',"honeyb"),
+				'wc-email-order-items'=>esc_html__('Email Order Items ADVANCED',"honeyb")
 			);
 			$job_done=array();
 			if(count($results))
@@ -1027,14 +1043,14 @@ class honeybadgerAPI{
 				foreach($results as $cs)
 				{
 					$all_states[]=$cs->custom_order_status;
-					$sql="update ".$wpdb->prefix."honeybadger_wc_emails set mdate=".time()." where wc_status='".esc_sql($cs->custom_order_status)."'";
+					$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_wc_emails set mdate=%d where wc_status=%s",array(time(),sanitize_text_field($cs->custom_order_status)));
 					if($wpdb->query($sql)<1)
 					{
 						$tpl=isset($templates[$cs->custom_order_status])?$templates[$cs->custom_order_status]:$templates['wc-email-default'];
-						$sql="insert into ".$wpdb->prefix."honeybadger_wc_emails set wc_status='".esc_sql($cs->custom_order_status)."', 
-						title='".esc_sql($cs->custom_order_status_title)."',
-						template='".esc_sql($tpl)."',
-						mdate='".(time()+1)."'";
+						$sql=$wpdb->prepare("insert into ".$wpdb->prefix."honeybadger_wc_emails set wc_status=%s, 
+						title=%s,
+						template=%s,
+						mdate=%d",array(sanitize_text_field($cs->custom_order_status),sanitize_text_field($cs->custom_order_status_title),sanitize_text_field($tpl),(time()+1)));
 						$wpdb->query($sql);
 					}
 					$job_done[]=$cs->custom_order_status;
@@ -1045,22 +1061,22 @@ class honeybadgerAPI{
 
 				if(in_array($tmpl,$job_done))
 					continue;
-				$all_states[]=$tmpl;
-				$sql="update ".$wpdb->prefix."honeybadger_wc_emails set mdate=".time()." where wc_status='".esc_sql($tmpl)."'";
+				$all_states[]=sanitize_text_field($tmpl);
+				$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_wc_emails set mdate=%d where wc_status=%s",array(time(),$tmpl));
 				if($wpdb->query($sql)<1)
 				{
 					$title=isset($titles[$tmpl])?$titles[$tmpl]:"";
-					$sql="insert into ".$wpdb->prefix."honeybadger_wc_emails set wc_status='".esc_sql($tmpl)."', 
-					title='".esc_sql($title)."',
-					template='".esc_sql($path)."',
-					mdate='".(time()+1)."'";
+					$sql=$wpdb->prepare("insert into ".$wpdb->prefix."honeybadger_wc_emails set wc_status=%s, 
+					title=%s,
+					template=%s,
+					mdate=%d",array(sanitize_text_field($tmpl),sanitize_text_field($title),sanitize_text_field($path),(time()+1)));
 					$wpdb->query($sql);
 				}
 			}
 			
-			$sql="delete from ".$wpdb->prefix."honeybadger_wc_emails where wc_status not in ('".implode("','",array_map('esc_sql',$all_states))."')";
+			$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_wc_emails where wc_status not in ('".implode("','",array_map('esc_sql',$all_states))."')");
 			$wpdb->query($sql);
-			$sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status!='wc-email-default' order by id";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where wc_status!='wc-email-default' order by id");
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
@@ -1119,7 +1135,7 @@ class honeybadgerAPI{
 			$show_images_in_emails="";
 			$email_image_sizes="";
 			$show_sku_in_emails="";
-			$sql="select config_name, config_value from ".$wpdb->prefix."honeybadger_config where config_name in ('show_images_in_emails','show_sku_in_emails','email_image_sizes')";
+			$sql=$wpdb->prepare("select config_name, config_value from ".$wpdb->prefix."honeybadger_config where config_name in ('show_images_in_emails','show_sku_in_emails','email_image_sizes')");
 			$config=$wpdb->get_results($sql);
 			if(is_array($config))
 			{
@@ -1153,7 +1169,7 @@ class honeybadgerAPI{
 			);
 			$return->preview_url=wp_nonce_url( site_url( '?honeybadger_preview_woocommerce_mail=true' ), 'honeybadger_preview-mail' );
 			$return->email_attachments=$this->get_email_attachments();
-			$sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where wc_emails!='' and enabled=1 order by title";
+			$sql=$wpdb->prepare("select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where wc_emails!='' and enabled=1 order by title");
 			$results2=$wpdb->get_results($sql);
 			if(is_array($results2))
 			{
@@ -1181,7 +1197,7 @@ class honeybadgerAPI{
 			$type=isset($parameters['type'])?(int)$parameters['type']:0;
 			if($id>0)
 			{
-				$sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where id='".esc_sql($id)."'";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where id=%d",$id);
 				$row=$wpdb->get_row($sql);
 				if(isset($row->id))
 				{
@@ -1189,7 +1205,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-header')
 					{
 						if($type==0)
-							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-header.php");
+							$result->content=file_get_contents(WC()->plugin_path()."/templates/emails/email-header.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-header.php'))
@@ -1199,7 +1215,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-footer')
 					{
 						if($type==0)
-							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-footer.php");
+							$result->content=file_get_contents(WC()->plugin_path()."/templates/emails/email-footer.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-footer.php'))
@@ -1209,7 +1225,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-styles')
 					{
 						if($type==0)
-							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-styles.php");
+							$result->content=file_get_contents(WC()->plugin_path()."/templates/emails/email-styles.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-styles.php'))
@@ -1219,7 +1235,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-addresses')
 					{
 						if($type==0)
-							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-addresses.php");
+							$result->content=file_get_contents(WC()->plugin_path()."/templates/emails/email-addresses.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-addresses.php'))
@@ -1229,7 +1245,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-customer-details')
 					{
 						if($type==0)
-							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-customer-details.php");
+							$result->content=file_get_contents(WC()->plugin_path()."/templates/emails/email-customer-details.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-customer-details.php'))
@@ -1239,7 +1255,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-downloads')
 					{
 						if($type==0)
-							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-downloads.php");
+							$result->content=file_get_contents(WC()->plugin_path()."/templates/emails/email-downloads.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-downloads.php'))
@@ -1249,7 +1265,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-order-details')
 					{
 						if($type==0)
-							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-order-details.php");
+							$result->content=file_get_contents(WC()->plugin_path()."/templates/emails/email-order-details.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-order-details.php'))
@@ -1259,7 +1275,7 @@ class honeybadgerAPI{
 					if($row->wc_status=='wc-email-order-items')
 					{
 						if($type==0)
-							$result->content=file_get_contents(WP_PLUGIN_DIR."/woocommerce/templates/emails/email-order-items.php");
+							$result->content=file_get_contents(WC()->plugin_path()."/templates/emails/email-order-items.php");
 						else
 						{
 							if(is_file(get_template_directory().'/woocommerce/emails/email-order-items.php'))
@@ -1298,43 +1314,67 @@ class honeybadgerAPI{
 			$enabled=isset($parameters['enabled'])?sanitize_text_field($parameters['enabled']):"";
 			if($enabled=="on")
 				$enabled=1;
-			$sql="update ".$wpdb->prefix."honeybadger_wc_emails set
-			subject='".esc_sql($subject)."',
-			heading='".esc_sql($heading)."',
-			subheading='".esc_sql($subheading)."',
-			content='".esc_sql($content)."',
-			other_subject='".esc_sql($other_subject)."',
-			other_heading='".esc_sql($other_heading)."',
-			other_subheading_1='".esc_sql($other_subheading_1)."',
-			other_subheading_2='".esc_sql($other_subheading_2)."',
-			email_bcc='".esc_sql($email_bcc)."',
-			enabled='".esc_sql($enabled)."',
-			mdate='".(time()+1)."'
-			where id='".esc_sql($id)."'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_wc_emails set
+			subject=%s,
+			heading=%s,
+			subheading=%s,
+			content=%s,
+			other_subject=%s,
+			other_heading=%s,
+			other_subheading_1=%s,
+			other_subheading_2=%s,
+			email_bcc=%s,
+			enabled=%s,
+			mdate=%d
+			where id=%d",
+			array($subject,$heading,$subheading,$content,$other_subject,$other_heading,$other_subheading_1,$other_subheading_2,$email_bcc,$enabled,(time()+1),$id));
 			if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				return $this->returnError();
-			$sql="select * from ".$wpdb->prefix."honeybadger_wc_emails where id='".esc_sql($id)."'";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_wc_emails where id=%d",$id);
 			$result=$wpdb->get_row($sql);
 			if(isset($result->id))
 			{
 				//these are the advanced WC email templates, we cannot sanitize them, but we'll notify admin every time is changed
 				if($result->wc_status=='wc-email-header')
+				{
 					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-header.php",$content_orig);
+					$this->sendAdminAdvWcEmailModifiedNotification($result->wc_status);
+				}
 				if($result->wc_status=='wc-email-footer')
+				{
 					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-footer.php",$content_orig);
+					$this->sendAdminAdvWcEmailModifiedNotification($result->wc_status);
+				}
 				if($result->wc_status=='wc-email-styles')
+				{
 					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-styles.php",$content_orig);
+					$this->sendAdminAdvWcEmailModifiedNotification($result->wc_status);
+				}
 				if($result->wc_status=='wc-email-addresses')
+				{
 					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-addresses.php",$content_orig);
+					$this->sendAdminAdvWcEmailModifiedNotification($result->wc_status);
+				}
 				if($result->wc_status=='wc-email-customer-details')
+				{
 					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-customer-details.php",$content_orig);
+					$this->sendAdminAdvWcEmailModifiedNotification($result->wc_status);
+				}
 				if($result->wc_status=='wc-email-downloads')
+				{
 					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-downloads.php",$content_orig);
+					$this->sendAdminAdvWcEmailModifiedNotification($result->wc_status);
+				}
 				if($result->wc_status=='wc-email-order-details')
+				{
 					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-order-details.php",$content);
+					$this->sendAdminAdvWcEmailModifiedNotification($result->wc_status);
+				}
 				if($result->wc_status=='wc-email-order-items')
+				{
 					file_put_contents(HONEYBADGER_UPLOADS_PATH."emails/email-order-items.php",$content_orig);
-				$this->sendAdminAdvWcEmailModifiedNotification($result->wc_status);
+					$this->sendAdminAdvWcEmailModifiedNotification($result->wc_status);
+				}
 			}
 		}
 		return $this->returnOk();
@@ -1345,7 +1385,7 @@ class honeybadgerAPI{
 		    return;
 		}
 		$admin_email=get_bloginfo('admin_email');
-		wp_mail($admin_email, "WC Advanced Email Template Saved","Email template: ".$email_tpl);
+		wp_mail($admin_email, "WC Advanced Email Template Saved","Email template: ".sanitize_text_field($email_tpl));
 	}
 	function save_other_email_settings($request)
 	{
@@ -1368,16 +1408,21 @@ class honeybadgerAPI{
 			$email_image_sizes=isset($parameters['email_image_sizes'])?sanitize_text_field($parameters['email_image_sizes']):"100x50";
 			$show_sku_in_emails=isset($parameters['show_sku_in_emails'])?sanitize_text_field($parameters['show_sku_in_emails']):"no";
 
-			$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($show_images_in_emails)."' where config_name='show_images_in_emails'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value=%s where config_name='show_images_in_emails'",$show_images_in_emails);
 			$wpdb->query($sql);
-			$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($email_image_sizes)."' where config_name='email_image_sizes'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value=%s where config_name='email_image_sizes'",$email_image_sizes);
 			$wpdb->query($sql);
-			$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($show_sku_in_emails)."' where config_name='show_sku_in_emails'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value=%s where config_name='show_sku_in_emails'",$show_sku_in_emails);
 			$wpdb->query($sql);
-			$options=array('woocommerce_email_from_name','woocommerce_email_from_address','woocommerce_email_header_image','woocommerce_email_footer_text','woocommerce_email_base_color','woocommerce_email_background_color','woocommerce_email_body_background_color','woocommerce_email_text_color');
 
-			foreach($options as $option)
-				update_option($option,$$option);
+			update_option('woocommerce_email_from_name',$woocommerce_email_from_name);
+			update_option('woocommerce_email_from_address',$woocommerce_email_from_address);
+			update_option('woocommerce_email_header_image',$woocommerce_email_header_image);
+			update_option('woocommerce_email_footer_text',$woocommerce_email_footer_text);
+			update_option('woocommerce_email_base_color',$woocommerce_email_base_color);
+			update_option('woocommerce_email_background_color',$woocommerce_email_background_color);
+			update_option('woocommerce_email_body_background_color',$woocommerce_email_body_background_color);
+			update_option('woocommerce_email_text_color',$woocommerce_email_text_color);
 			
 			return $this->returnOk();
 		}
@@ -1425,7 +1470,7 @@ class honeybadgerAPI{
 		}
 		if(!empty($request))
 		{
-			$sql="update ".$wpdb->prefix."honeybadger_wc_emails set enabled=1 where 1";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_wc_emails set enabled=1 where 1");
 			if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				return $this->returnError();
 			else
@@ -1441,7 +1486,7 @@ class honeybadgerAPI{
 		}
 		if(!empty($request))
 		{
-			$sql="update ".$wpdb->prefix."honeybadger_wc_emails set enabled=0 where 1";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_wc_emails set enabled=0 where 1");
 			if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				return $this->returnError();
 			else
@@ -1469,16 +1514,17 @@ class honeybadgerAPI{
 			$placeholder_content=isset($parameters['placeholder_content'])?wp_kses_post($parameters['placeholder_content']):"";
 			if($wc_status!="")
 			{
-				$sql="update ".$wpdb->prefix."honeybadger_wc_emails set 
-				subject='".esc_sql($placeholder_subject)."',
-				heading='".esc_sql($placeholder_heading)."',
-				subheading='".esc_sql($placeholder_subheading)."',
-				content='".esc_sql($placeholder_content)."',
-				other_subject='".esc_sql($placeholder_other_subject)."',
-				other_heading='".esc_sql($placeholder_other_heading)."',
-				other_subheading_1='".esc_sql($placeholder_other_subheading_1)."',
-				other_subheading_2='".esc_sql($placeholder_other_subheading_2)."'
-				where wc_status='".esc_sql($wc_status)."'";
+				$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_wc_emails set 
+				subject=%s,
+				heading=%s,
+				subheading=%s,
+				content=%s,
+				other_subject=%s,
+				other_heading=%s,
+				other_subheading_1=%s,
+				other_subheading_2=%s
+				where wc_status=%s",
+				array($placeholder_subject,$placeholder_heading,$placeholder_subheading,$placeholder_content,$placeholder_other_subject,$placeholder_other_heading,$placeholder_other_subheading_1,$placeholder_other_subheading_2,$wc_status));
 				if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 					return $this->returnError();
 				else
@@ -1502,7 +1548,7 @@ class honeybadgerAPI{
 				$mailer = WC()->mailer();
 				$email_heading = esc_html__( 'HTML email template', 'woocommerce' );
 				ob_start();
-				include WP_PLUGIN_DIR . '/woocommerce/includes/admin/views/html-email-template-preview.php';
+				include  WC()->plugin_path().'/includes/admin/views/html-email-template-preview.php';
 				$message = ob_get_clean();
 				$email = new \WC_Email();
 				$message = apply_filters( 'woocommerce_mail_content', $email->style_inline( $mailer->wrap_message( $email_heading, $message ) ) );
@@ -1586,6 +1632,16 @@ class honeybadgerAPI{
 			$attachment_ids=array();
 			if($attachment_ids_str!="")
 				parse_str($attachment_ids_str,$attachment_ids);
+			if(is_array($attachment_ids))
+			{
+				for($i=0;$i<count($attachment_ids);$i++)
+					$attachment_ids[$i]=(int)$attachment_ids[$i];
+			}
+			if(is_array($static_attachments))
+			{
+				for($i=0;$i<count($static_attachments);$i++)
+					$static_attachments[$i]=(int)$static_attachments[$i];
+			}
 			$supplier_order=array();
 			if($supplier_order_str!="")
 				parse_str($supplier_order_str,$supplier_order);
@@ -1593,18 +1649,18 @@ class honeybadgerAPI{
 			{
 				$all_attachments=array();
 				$remove_files=array();
-				$sql="select * from ".$wpdb->prefix."honeybadger_emails where id='".esc_sql($id)."'";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_emails where id=%d",$id);
 				$email=$wpdb->get_row($sql);
 				if(isset($email->id))
 				{
 					if($oid==0)
 					{
-						$sql="select ID from ".$wpdb->prefix."posts WHERE post_type='shop_order' and post_status='wc-completed' order by post_date desc limit 1";
+						$sql=$wpdb->prepare("select ID from ".$wpdb->prefix."posts WHERE post_type='shop_order' and post_status='wc-completed' order by post_date desc limit 1");
 						$result=$wpdb->get_row($sql);
 						if(isset($result->ID))
 							$oid=$result->ID;
 					}
-					$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')";
+					$sql=$wpdb->prepare("select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')");
 					$attachment_folders=$wpdb->get_results($sql);
 					if(isset($attachments['name']) && is_array($attachments['name']))
 					{
@@ -1709,7 +1765,7 @@ class honeybadgerAPI{
 						if(isset($supplier_order['so_order_items']))
 						{
 							$so_order_items="";
-							$sql="select * from ".$wpdb->prefix."honeybadger_so_emails_tpl where 1";
+							$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_so_emails_tpl where 1");
 							$rows=$wpdb->get_results($sql);
 							if(is_array($rows))
 							{
@@ -1893,7 +1949,7 @@ class honeybadgerAPI{
 				}
 				if(isset($attachments['name']) && is_array($attachments['name']))
 				{
-					$sql="select * from ".$wpdb->prefix."honeybadger_static_attachments where id='".esc_sql($static_att_id)."'";
+					$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_static_attachments where id=%d",$static_att_id);
 					$result=$wpdb->get_row($sql);
 					if(isset($result->id))
 					{
@@ -1924,14 +1980,15 @@ class honeybadgerAPI{
 							copy($movefile['file'],$target_file);
 							unlink($movefile['file']);
 							$target_path=str_ireplace(ABSPATH,"",$target_file);
-							$sql="update ".$wpdb->prefix."honeybadger_static_attachments set
-							title='".esc_sql($title)."',
-							path='".esc_sql($target_path)."',
-							wc_emails='".esc_sql($attach_to_wc_emails_str)."',
-							emails='".esc_sql($attach_to_emails_str)."',
-							enabled='".esc_sql($enabled)."',
-							mdate='".time()."'
-							where id='".esc_sql($static_att_id)."'";
+							$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_static_attachments set
+							title=%s,
+							path=%s,
+							wc_emails=%s,
+							emails=%s,
+							enabled=%s,
+							mdate=%d
+							where id=%d",
+							array($title,$target_path,$attach_to_wc_emails_str,$attach_to_emails_str,$enabled,time(),$static_att_id));
 							if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 								return $this->returnError();
 						}
@@ -1942,12 +1999,13 @@ class honeybadgerAPI{
 				}
 				else
 				{
-					$sql="update ".$wpdb->prefix."honeybadger_static_attachments set
-					title='".esc_sql($title)."',
-					wc_emails='".esc_sql($attach_to_wc_emails_str)."',
-					emails='".esc_sql($attach_to_emails_str)."',
-					enabled='".esc_sql($enabled)."',
-					mdate='".time()."' where id='".esc_sql($static_att_id)."'";
+					$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_static_attachments set
+					title=%s,
+					wc_emails=%s,
+					emails=%s,
+					enabled=%s,
+					mdate=%d where id=%d",
+					array($title,$attach_to_wc_emails_str,$attach_to_emails_str,$enabled,time(),$static_att_id));
 					if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 						return $this->returnError();
 					return $this->returnOk();
@@ -2025,13 +2083,14 @@ class honeybadgerAPI{
 						copy($movefile['file'],$target_file);
 						unlink($movefile['file']);
 						$target_path=str_ireplace(ABSPATH,"",$target_file);
-						$sql="insert into ".$wpdb->prefix."honeybadger_static_attachments set
-						title='".esc_sql($title)."',
-						path='".esc_sql($target_path)."',
-						wc_emails='".esc_sql($attach_to_wc_emails_str)."',
-						emails='".esc_sql($attach_to_emails_str)."',
-						enabled='".esc_sql($enabled)."',
-						mdate='".time()."'";
+						$sql=$wpdb->prepare("insert into ".$wpdb->prefix."honeybadger_static_attachments set
+						title=%s,
+						path=%s,
+						wc_emails=%s,
+						emails=%s,
+						enabled=%s,
+						mdate=%d",
+						array($title,$target_path,$attach_to_wc_emails_str,$attach_to_emails_str,$enabled,time()));
 						if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 							return $this->returnError();
 					}
@@ -2058,7 +2117,7 @@ class honeybadgerAPI{
 		$all_attachments=array();
 		if(is_array($attachments))
 		{
-			$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')";
+			$sql=$wpdb->prepare("select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')");
 			$attachment_folders=$wpdb->get_results($sql);
 			if(isset($attachments['name']) && is_array($attachments['name']))
 			{
@@ -2128,15 +2187,21 @@ class honeybadgerAPI{
 				$file_name=$this->removeMd5FromFilename(basename($attachment));
 				$new_path=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$file_name;
 				if($file_name!=$new_path && copy($attachment,$new_path))
-					$tmp_attachments[]=$new_path;
+					$tmp_attachments[]=honeybadger_sanitize_file_name_from_path($new_path);
 				else
-					$tmp_attachments[]=$attachment;
+					$tmp_attachments[]=honeybadger_sanitize_file_name_from_path($attachment);
 			}
 		}
 		if(count($tmp_attachments)>0)
 		{
 			if(isset($_POST['attachments_to_be_deleted']) && is_array($_POST['attachments_to_be_deleted']))
+			{
+				foreach($_POST['attachments_to_be_deleted'] as $aidx => $attach_to_del)
+				{
+					$_POST['attachments_to_be_deleted'][$aidx]=honeybadger_sanitize_file_name_from_path($_POST['attachments_to_be_deleted'][$aidx]);
+				}
 				$_POST['attachments_to_be_deleted']=array_merge($_POST['attachments_to_be_deleted'],$tmp_attachments);
+			}
 			else
 				$_POST['attachments_to_be_deleted']=$tmp_attachments;
 		}
@@ -2183,7 +2248,7 @@ class honeybadgerAPI{
 				$remove_files=array();
 				if(is_array($attachments))
 				{
-					$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')";
+					$sql=$wpdb->prepare("select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')");
 					$attachment_folders=$wpdb->get_results($sql);
 					if(isset($attachments['name']) && is_array($attachments['name']))
 					{
@@ -2338,7 +2403,7 @@ class honeybadgerAPI{
 			$orig_oid=$oid;
 			if($oid==0 && $is_supplier_order==0)
 			{
-				$sql="select ID from ".$wpdb->prefix."posts WHERE post_type='shop_order' and post_status='wc-completed' order by post_date desc limit 1";
+				$sql=$wpdb->prepare("select ID from ".$wpdb->prefix."posts WHERE post_type='shop_order' and post_status='wc-completed' order by post_date desc limit 1");
 				$result=$wpdb->get_row($sql);
 				if(isset($result->ID))
 					$oid=$result->ID;
@@ -2347,13 +2412,13 @@ class honeybadgerAPI{
 			{
 				$all_attachments=array();
 				$remove_files=array();
-				$sql="select * from ".$wpdb->prefix."honeybadger_emails where id='".esc_sql($id)."' and enabled=1";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_emails where id=%d and enabled=1",$id);
 				$email=$wpdb->get_row($sql);
 				if(isset($email->id))
 				{
 					if(is_array($attachments))
 					{
-						$sql="select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')";
+						$sql=$wpdb->prepare("select id, title, keep_files from ".$wpdb->prefix."honeybadger_attachments where id in ('".implode("','",array_map('esc_sql',$attachment_ids))."')");
 						$attachment_folders=$wpdb->get_results($sql);
 						if(isset($attachments['name']) && is_array($attachments['name']))
 						{
@@ -2453,7 +2518,7 @@ class honeybadgerAPI{
 						if(isset($supplier_order['so_order_items']))
 						{
 							$so_order_items="";
-							$sql="select * from ".$wpdb->prefix."honeybadger_so_emails_tpl where 1";
+							$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_so_emails_tpl where 1");
 							$rows=$wpdb->get_results($sql);
 							if(is_array($rows))
 							{
@@ -2606,7 +2671,7 @@ class honeybadgerAPI{
 		}
 		if(!empty($request))
 		{
-			$sql="select * from ".$wpdb->prefix."honeybadger_emails where 1 order by id limit 20";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_emails where 1 order by id limit 20");
 			$results=$wpdb->get_results($sql);
 			$email_ids=array();
 			if(is_array($results))
@@ -2614,9 +2679,9 @@ class honeybadgerAPI{
 				foreach($results as $r)
 					$email_ids[]=$r->id;
 			}
-			$sql="select * from ".$wpdb->prefix."honeybadger_so_emails_tpl where 1 order by id";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_so_emails_tpl where 1 order by id");
 			$results1=$wpdb->get_results($sql);
-			$sql="select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where emails in ('".implode("','",array_map('esc_sql',$email_ids))."') and enabled=1 order by title";
+			$sql=$wpdb->prepare("select s.*, '' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where emails in ('".implode("','",array_map('esc_sql',$email_ids))."') and enabled=1 order by title");
 			$results2=$wpdb->get_results($sql);
 			if(is_array($results2))
 			{
@@ -2665,16 +2730,17 @@ class honeybadgerAPI{
 			$so_states="";
 			if($so_associate!="")
 				$so_states=implode(",",$so_associate);
-			$sql="insert into ".$wpdb->prefix."honeybadger_emails set
-			title='".esc_sql($title)."',
-			subject='".esc_sql($subject)."',
-			heading='".esc_sql($heading)."',
-			content='".esc_sql($content)."',
-			email_bcc='".esc_sql($email_bcc)."',
-			enabled='".esc_sql($enabled)."',
-			statuses='".esc_sql($statuses)."',
-			so_states='".esc_sql($so_states)."',
-			mdate='".time()."'";
+			$sql=$wpdb->prepare("insert into ".$wpdb->prefix."honeybadger_emails set
+			title=%s,
+			subject=%s,
+			heading=%s,
+			content=%s,
+			email_bcc=%s,
+			enabled=%s,
+			statuses=%s,
+			so_states=%s,
+			mdate=%d",
+			array($title,$subject,$heading,$content,$email_bcc,$enabled,$statuses,$so_states,time()));
 			if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				return $this->returnError();
 			return $this->returnOk();
@@ -2710,17 +2776,18 @@ class honeybadgerAPI{
 			$so_states="";
 			if($so_associate!="")
 				$so_states=implode(",",$so_associate);
-			$sql="update ".$wpdb->prefix."honeybadger_emails set
-			title='".esc_sql($title)."',
-			subject='".esc_sql($subject)."',
-			heading='".esc_sql($heading)."',
-			content='".esc_sql($content)."',
-			email_bcc='".esc_sql($email_bcc)."',
-			statuses='".esc_sql($statuses)."',
-			so_states='".esc_sql($so_states)."',
-			enabled='".esc_sql($enabled)."',
-			mdate='".time()."'
-			where id='".esc_sql($id)."'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_emails set
+			title=%s,
+			subject=%s,
+			heading=%s,
+			content=%s,
+			email_bcc=%s,
+			statuses=%s,
+			so_states=%s,
+			enabled=%s,
+			mdate=%d
+			where id=%d",
+			array($title,$subject,$heading,$content,$email_bcc,$statuses,$so_states,$enabled,time(),$id));
 
 			if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				return $this->returnError();
@@ -2739,7 +2806,7 @@ class honeybadgerAPI{
 			$id=isset($parameters['id'])?(int)$parameters['id']:0;
 			if($id>0)
 			{
-				$sql="delete from ".$wpdb->prefix."honeybadger_emails where id='".esc_sql($id)."'";
+				$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_emails where id=%d",$id);
 				if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 					return $this->returnError();
 				return $this->returnOk();
@@ -2830,7 +2897,7 @@ class honeybadgerAPI{
 		}
 		if(!empty($request))
 		{
-			$sql="select id, title from ".$wpdb->prefix."honeybadger_emails where 1 order by id limit 20";
+			$sql=$wpdb->prepare("select id, title from ".$wpdb->prefix."honeybadger_emails where 1 order by id limit 20");
 			return $wpdb->get_results($sql);
 		}
 	}
@@ -2859,7 +2926,7 @@ class honeybadgerAPI{
 		if(!empty($request))
 		{
 			$sizes=array();
-			$sql="select * from ".$wpdb->prefix."honeybadger_attachments where 1 order by id limit 20";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_attachments where 1 order by id limit 20");
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
@@ -2872,12 +2939,12 @@ class honeybadgerAPI{
 					$sizes[]=$size;
 				}
 			}
-			$sql="select * from ".$wpdb->prefix."honeybadger_attachments_tpl where 1 order by id";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_attachments_tpl where 1 order by id");
 			$results1=$wpdb->get_results($sql);
-			$sql="select s.*, '0' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where 1 order by id";
+			$sql=$wpdb->prepare("select s.*, '0' as filesize from ".$wpdb->prefix."honeybadger_static_attachments s where 1 order by id");
 			$results2=$wpdb->get_results($sql);
 
-			$sql="select * from ".$wpdb->prefix."honeybadger_attachments_so_tpl where 1 order by id";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_attachments_so_tpl where 1 order by id");
 			$results3=$wpdb->get_results($sql);
 			if(is_array($results2))
 			{
@@ -2918,14 +2985,14 @@ class honeybadgerAPI{
 				parse_str($supplier_order_str,$supplier_order);
 			if($oid==0 && $is_supplier_order==0)
 			{
-				$sql="select ID from ".$wpdb->prefix."posts WHERE post_type='shop_order' and post_status='wc-completed' order by post_date desc limit 1";
+				$sql=$wpdb->prepare("select ID from ".$wpdb->prefix."posts WHERE post_type='shop_order' and post_status='wc-completed' order by post_date desc limit 1");
 				$result=$wpdb->get_row($sql);
 				if(isset($result->ID))
 					$oid=$result->ID;
 			}
 			if($id>0)
 			{
-				$sql="select * from ".$wpdb->prefix."honeybadger_attachments where id='".esc_sql($id)."'";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_attachments where id=%d",$id);
 				$result=$wpdb->get_row($sql);
 				if(isset($result->content))
 				{
@@ -2979,7 +3046,7 @@ class honeybadgerAPI{
 					    if ($pos !== false)
 					    {
 					    	$hb_order_products='';
-					    	$sql="select * from ".$wpdb->prefix."honeybadger_attachments_tpl where 1 order by id";
+					    	$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_attachments_tpl where 1 order by id");
 					    	$rows=$wpdb->get_results($sql);
 					    	if(is_array($rows))
 					    	{
@@ -3054,7 +3121,7 @@ class honeybadgerAPI{
 						if(isset($supplier_order['so_order_items']))
 						{
 							$so_order_items="";
-							$sql="select * from ".$wpdb->prefix."honeybadger_attachments_so_tpl where 1";
+							$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_attachments_so_tpl where 1");
 							$rows=$wpdb->get_results($sql);
 							if(is_array($rows))
 							{
@@ -3217,20 +3284,21 @@ class honeybadgerAPI{
 			$attach_to_emails_str='';
 			if($attach_to_emails!="")
 				$attach_to_emails_str=implode(",",$attach_to_emails);
-			$sql="insert into ".$wpdb->prefix."honeybadger_attachments set
-			title='".esc_sql($title)."',
-			content='".esc_sql($content)."',
-			pdf_size='".esc_sql($pdf_size)."',
-			pdf_font='".esc_sql($pdf_font)."',
-			pdf_orientation='".esc_sql($pdf_orientation)."',
-			pdf_margins='".esc_sql($pdf_margins)."',
-			attach_to_wc_emails='".esc_sql($attach_to_wc_emails_str)."',
-			attach_to_emails='".esc_sql($attach_to_emails_str)."',
-			keep_files='".esc_sql($keep_files)."',
-			generable='".esc_sql($generable)."',
-			so_generable='".esc_sql($so_generable)."',
-			enabled='".esc_sql($enabled)."',
-			mdate='".time()."'";
+			$sql=$wpdb->prepare("insert into ".$wpdb->prefix."honeybadger_attachments set
+			title=%s,
+			content=%s,
+			pdf_size=%s,
+			pdf_font=%s,
+			pdf_orientation=%s,
+			pdf_margins=%s,
+			attach_to_wc_emails=%s,
+			attach_to_emails=%s,
+			keep_files=%s,
+			generable=%s,
+			so_generable=%s,
+			enabled=%s,
+			mdate=%d",
+			array($title,$content,$pdf_size,$pdf_font,$pdf_orientation,$pdf_margins,$attach_to_wc_emails_str,$attach_to_emails_str,$keep_files,$generable,$so_generable,$enabled,time()));
 			if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				return $this->returnError();
 			
@@ -3277,7 +3345,7 @@ class honeybadgerAPI{
 				$enabled=0;
 			if(!$id>0 || $title=='' || $content=='')
 				return $this->returnError();
-			$sql="select * from ".$wpdb->prefix."honeybadger_attachments where id='".esc_sql($id)."'";
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_attachments where id=%d",$id);
 			$result=$wpdb->get_row($sql);
 			if(!empty($result))
 			{
@@ -3294,21 +3362,22 @@ class honeybadgerAPI{
 			$attach_to_emails_str='';
 			if($attach_to_emails!="")
 				$attach_to_emails_str=implode(",",$attach_to_emails);
-			$sql="update ".$wpdb->prefix."honeybadger_attachments set
-			title='".esc_sql($title)."',
-			content='".esc_sql($content)."',
-			pdf_size='".esc_sql($pdf_size)."',
-			pdf_font='".esc_sql($pdf_font)."',
-			pdf_orientation='".esc_sql($pdf_orientation)."',
-			pdf_margins='".esc_sql($pdf_margins)."',
-			attach_to_wc_emails='".esc_sql($attach_to_wc_emails_str)."',
-			attach_to_emails='".esc_sql($attach_to_emails_str)."',
-			keep_files='".esc_sql($keep_files)."',
-			generable='".esc_sql($generable)."',
-			so_generable='".esc_sql($so_generable)."',
-			enabled='".esc_sql($enabled)."',
-			mdate='".time()."'
-			where id='".esc_sql($id)."'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_attachments set
+			title=%s,
+			content=%s,
+			pdf_size=%s,
+			pdf_font=%s,
+			pdf_orientation=%s,
+			pdf_margins=%s,
+			attach_to_wc_emails=%s,
+			attach_to_emails=%s,
+			keep_files=%s,
+			generable=%s,
+			so_generable=%s,
+			enabled=%s,
+			mdate=%d
+			where id=%d",
+			array($title,$content,$pdf_size,$pdf_font,$pdf_orientation,$pdf_margins,$attach_to_wc_emails_str,$attach_to_emails_str,$keep_files,$generable,$so_generable,$enabled,time(),$id));
 
 			if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				return $this->returnError();
@@ -3329,10 +3398,10 @@ class honeybadgerAPI{
 
 			if(!$id>0 || $content=='')
 				return $this->returnError();
-			$sql="update ".$wpdb->prefix."honeybadger_attachments_tpl set
-			content='".esc_sql($content)."',
-			mdate='".time()."'
-			where id='".esc_sql($id)."'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_attachments_tpl set
+			content=%s,
+			mdate=%d
+			where id=%d",array($content,time(),$id));
 
 			if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				return $this->returnError();
@@ -3353,10 +3422,10 @@ class honeybadgerAPI{
 
 			if(!$id>0 || $content=='')
 				return $this->returnError();
-			$sql="update ".$wpdb->prefix."honeybadger_attachments_so_tpl set
-			content='".esc_sql($content)."',
-			mdate='".time()."'
-			where id='".esc_sql($id)."'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_attachments_so_tpl set
+			content=%s,
+			mdate=%d
+			where id=%d",array($content,time(),$id));
 
 			if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				return $this->returnError();
@@ -3377,10 +3446,10 @@ class honeybadgerAPI{
 
 			if(!$id>0 || $content=='')
 				return $this->returnError();
-			$sql="update ".$wpdb->prefix."honeybadger_so_emails_tpl set
-			content='".esc_sql($content)."',
-			mdate='".time()."'
-			where id='".esc_sql($id)."'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_so_emails_tpl set
+			content=%s,
+			mdate=%d
+			where id=%d",array($content,time(),$id));
 
 			if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				return $this->returnError();
@@ -3400,7 +3469,7 @@ class honeybadgerAPI{
 
 			if($id>0)
 			{
-				$sql="select * from ".$wpdb->prefix."honeybadger_emails where id='".esc_sql($id)."' and enabled=1";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_emails where id=%d and enabled=1",$id);
 				$result=new stdClass;
 				$result->id=0;
 				$result->content=$wpdb->get_row($sql);
@@ -3422,7 +3491,7 @@ class honeybadgerAPI{
 			if($id>0)
 			{
 				$folder_path="";
-				$sql="select * from ".$wpdb->prefix."honeybadger_static_attachments where id='".esc_sql($id)."'";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_static_attachments where id=%d",$id);
 				$result=$wpdb->get_row($sql);
 				if(!empty($result))
 				{
@@ -3431,7 +3500,7 @@ class honeybadgerAPI{
 						unlink($path);
 				}
 				
-				$sql="delete from ".$wpdb->prefix."honeybadger_static_attachments where id='".esc_sql($id)."'";
+				$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_static_attachments where id=%d",$id);
 				if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 					return $this->returnError();
 				return $this->returnOk();
@@ -3451,7 +3520,7 @@ class honeybadgerAPI{
 			if($id>0)
 			{
 				$folder_path="";
-				$sql="select * from ".$wpdb->prefix."honeybadger_attachments where id='".esc_sql($id)."'";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_attachments where id=%d",$id);
 				$result=$wpdb->get_row($sql);
 				if(!empty($result))
 				{
@@ -3459,7 +3528,7 @@ class honeybadgerAPI{
 					$folder_path = HONEYBADGER_UPLOADS_PATH."attachments/".$folder_name;
 				}
 				
-				$sql="delete from ".$wpdb->prefix."honeybadger_attachments where id='".esc_sql($id)."'";
+				$sql=$wpdb->prepare("delete from ".$wpdb->prefix."honeybadger_attachments where id=%d",$id);
 				if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 					return $this->returnError();
 				if($folder_path!="")
@@ -3489,7 +3558,7 @@ class honeybadgerAPI{
 			$attachments=isset($_FILES['file'])?$_FILES['file']:array();
 			if($id>0 && $send_to!="" && is_email($send_to) && is_array($attachments))
 			{
-				$sql="select * from ".$wpdb->prefix."honeybadger_attachments where id='".esc_sql($id)."'";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_attachments where id=%d",$id);
 				$attachment=$wpdb->get_row($sql);
 				if(isset($attachment->id))
 				{
@@ -3652,7 +3721,7 @@ class honeybadgerAPI{
 			update_option("woocommerce_stock_email_recipient",$woocommerce_stock_email_recipient);
 			update_option("woocommerce_notify_low_stock_amount",$woocommerce_notify_low_stock_amount);
 			update_option("woocommerce_notify_no_stock_amount",$woocommerce_notify_no_stock_amount);
-			$sql="update ".$wpdb->prefix."honeybadger_config set config_value='".esc_sql($enable_product_variation_extra_images)."' where config_name='enable_product_variation_extra_images'";
+			$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value=%s where config_name='enable_product_variation_extra_images'",$enable_product_variation_extra_images);
 			$wpdb->query($sql);
 		}
 		return $this->returnOk();
@@ -3673,7 +3742,7 @@ class honeybadgerAPI{
 			if($order_id>0)
 			{
 				$this->split_refunds_if_multiple($order_id);
-				$sql="select * from ".$wpdb->prefix."posts where ID='".esc_sql($order_id)."'";
+				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."posts where ID=%d",$order_id);
 				$order=$wpdb->get_row($sql);
 				$order_items=$this->getOrderItems($order_id);
 				$order_items_orig=unserialize(serialize($order_items));
@@ -3717,7 +3786,7 @@ class honeybadgerAPI{
 					);
 					if($id>0)
 					{
-						$sql="select * from ".$wpdb->prefix."postmeta where post_id='".esc_sql($order_id)."'";
+						$sql=$wpdb->prepare("select * from ".$wpdb->prefix."postmeta where post_id=%d",$order_id);
 						$post_metas=$wpdb->get_results($sql);
 						if(is_array($post_metas))
 						{
@@ -3727,10 +3796,11 @@ class honeybadgerAPI{
 									continue;
 								if(in_array($post_meta->meta_key,array('_order_shipping','_order_shipping_tax')))
 									$post_meta->meta_value=0;
-								$sql="insert into ".$wpdb->prefix."postmeta set
-								post_id='".esc_sql($id)."',
-								meta_key='".esc_sql($post_meta->meta_key)."',
-								meta_value='".esc_sql($post_meta->meta_value)."'";
+								$sql=$wpdb->prepare("insert into ".$wpdb->prefix."postmeta set
+								post_id=%d,
+								meta_key=%s,
+								meta_value=%s",
+								array($id,$post_meta->meta_key,$post_meta->meta_value));
 								$wpdb->query($sql);
 							}
 						}
@@ -3787,10 +3857,11 @@ class honeybadgerAPI{
 										$prod->metas->_line_tax_data=serialize(array('total'=>array('1'=>(string)$prod->metas->_line_tax),'subtotal'=>array('1'=>(string)$prod->metas->_line_subtotal_tax)));
 									}
 								}
-								$sql="insert into ".$wpdb->prefix."woocommerce_order_items set
-								order_item_name='".esc_sql($prod->order_item_name)."',
-								order_item_type='".esc_sql($prod->order_item_type)."',
-								order_id='".esc_sql($id)."'";
+								$sql=$wpdb->prepare("insert into ".$wpdb->prefix."woocommerce_order_items set
+								order_item_name=%s,
+								order_item_type=%s,
+								order_id=%d",
+								array($prod->order_item_name,$prod->order_item_type,$id));
 								if($wpdb->query($sql))
 								{
 									$order_item_id = $wpdb->insert_id;
@@ -3798,10 +3869,11 @@ class honeybadgerAPI{
 									{
 										foreach($prod->metas as $meta_key => $meta_value)
 										{
-											$sql="insert into ".$wpdb->prefix."woocommerce_order_itemmeta set
-											order_item_id='".esc_sql($order_item_id)."',
-											meta_key='".esc_sql($meta_key)."',
-											meta_value='".esc_sql($meta_value)."'";
+											$sql=$wpdb->prepare("insert into ".$wpdb->prefix."woocommerce_order_itemmeta set
+											order_item_id=%s,
+											meta_key=%s,
+											meta_value=%s",
+											array($order_item_id,$meta_key,$meta_value));
 											$wpdb->query($sql);
 										}
 									}
@@ -3810,9 +3882,9 @@ class honeybadgerAPI{
 									$other_refund_order_item_id=$other_refund[1];
 									if($other_refund>0 && $other_refund_order_item_id>0)
 									{
-										$sql="update ".$wpdb->prefix."posts set post_parent='".esc_sql($id)."' where ID='".esc_sql($other_refund_id)."'";
+										$sql=$wpdb->prepare("update ".$wpdb->prefix."posts set post_parent=%d where ID=%d",array($id,$other_refund_id));
 										$wpdb->query($sql);
-										$sql="update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value='".esc_sql($order_item_id)."' where order_item_id='".esc_sql($other_refund_order_item_id)."' and meta_key='_refunded_item_id'";
+										$sql=$wpdb->prepare("update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value=%d where order_item_id=%d and meta_key='_refunded_item_id'",array($order_item_id,$other_refund_order_item_id));
 										$wpdb->query($sql);
 									}
 								}
@@ -3836,9 +3908,9 @@ class honeybadgerAPI{
 										$order_item->metas->_qty=$order_item->metas->_qty-$prod->metas->_qty;
 										if($order_item->metas->_qty<=0)
 										{
-											$sql="delete from ".$wpdb->prefix."woocommerce_order_items where order_item_id='".esc_sql($order_item->order_item_id)."'";
+											$sql=$wpdb->prepare("delete from ".$wpdb->prefix."woocommerce_order_items where order_item_id=%d",$order_item->order_item_id);
 											$wpdb->query($sql);
-											$sql="delete from ".$wpdb->prefix."woocommerce_order_itemmeta where order_item_id='".esc_sql($order_item->order_item_id)."'";
+											$sql=$wpdb->prepare("delete from ".$wpdb->prefix."woocommerce_order_itemmeta where order_item_id=%d",$order_item->order_item_id);
 											$wpdb->query($sql);
 										}
 										else
@@ -3876,7 +3948,7 @@ class honeybadgerAPI{
 											$order_item->metas->_line_tax_data=serialize(array('total'=>array('1'=>(string)$order_item->metas->_line_tax),'subtotal'=>array('1'=>(string)$order_item->metas->_line_subtotal_tax)));
 											foreach($order_item->metas as $meta_key => $meta_value)
 											{
-												$sql="update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value='".esc_sql($meta_value)."' where order_item_id='".esc_sql($order_item->order_item_id)."' and meta_key='".esc_sql($meta_key)."'";
+												$sql=$wpdb->prepare("update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value=%s where order_item_id=%d and meta_key=%s",array($meta_value,$order_item->order_item_id,$meta_key));
 												$wpdb->query($sql);
 											}
 										}
@@ -3908,7 +3980,8 @@ class honeybadgerAPI{
 								foreach($product_names as $prod_name => $prod_qty)
 									$tmp[]=$prod_name.' &times; '.$prod_qty;
 								$prod->metas->Items=implode(', ',$tmp);
-								$sql="update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value='".esc_sql($prod->metas->Items)."' where order_item_id='".esc_sql($prod->order_item_id)."' and meta_key='Items'";
+								$sql=$wpdb->prepare("update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value=%s where order_item_id=%s and meta_key='Items'",
+									array($prod->metas->Items,$prod->order_item_id));
 								$wpdb->query($sql);
 							}
 						}
@@ -3928,13 +4001,13 @@ class honeybadgerAPI{
 		if($order_id>0)
 		{
 			$main_order_obj=wc_get_order($order_id);
-			$sql="select ID from ".$wpdb->prefix."posts where post_type='shop_order_refund' and post_parent='".esc_sql($order_id)."'";
+			$sql=$wpdb->prepare("select ID from ".$wpdb->prefix."posts where post_type='shop_order_refund' and post_parent=%d",$order_id);
 			$refunds=$wpdb->get_results($sql);
 			if(is_array($refunds))
 			{
 				foreach($refunds as $refund)
 				{
-					$sql="select * from ".$wpdb->prefix."woocommerce_order_items where order_id='".esc_sql($refund->ID)."'";
+					$sql=$wpdb->prepare("select * from ".$wpdb->prefix."woocommerce_order_items where order_id=%d",$refund->ID);
 					$refund_items=$wpdb->get_results($sql);
 					if(is_array($refund_items))
 					{
@@ -3964,7 +4037,7 @@ class honeybadgerAPI{
 							}
 							if(count($create_orders_for)>0)
 							{
-								$sql="select * from ".$wpdb->prefix."posts where ID='".esc_sql($refund->ID)."'";
+								$sql=$wpdb->prepare("select * from ".$wpdb->prefix."posts where ID=%d",$refund->ID);
 								$order=$wpdb->get_row($sql);
 								$order_obj=wc_get_order($refund->ID);
 								$order_details=$main_order_obj->get_data();
@@ -3974,7 +4047,7 @@ class honeybadgerAPI{
 				                    'postcode' => $order_details['billing']['postcode'],
 				                    'city'     => $order_details['billing']['city'],
 				                );
-								$sql="select * from ".$wpdb->prefix."postmeta where post_id='".esc_sql($refund->ID)."'";
+								$sql=$wpdb->prepare("select * from ".$wpdb->prefix."postmeta where post_id=%d",$refund->ID);
 								$post_metas=$wpdb->get_results($sql);
 								foreach($create_orders_for as $create_for_item_id)
 								{
@@ -4007,14 +4080,16 @@ class honeybadgerAPI{
 													continue;
 												if(in_array($post_meta->meta_key,array('_order_shipping','_order_shipping_tax')))
 													$post_meta->meta_value=0;
-												$sql="insert into ".$wpdb->prefix."postmeta set
-												post_id='".esc_sql($id)."',
-												meta_key='".esc_sql($post_meta->meta_key)."',
-												meta_value='".esc_sql($post_meta->meta_value)."'";
+												$sql=$wpdb->prepare("insert into ".$wpdb->prefix."postmeta set
+												post_id=%d,
+												meta_key=%s,
+												meta_value=%s",
+												array($id,$post_meta->meta_key,$post_meta->meta_value));
 												$wpdb->query($sql);
 											}
 										}
-										$sql="update ".$wpdb->prefix."woocommerce_order_items set order_id='".esc_sql($id)."' where order_item_id='".esc_sql($create_for_item_id)."'";
+										$sql=$wpdb->prepare("update ".$wpdb->prefix."woocommerce_order_items set order_id=%d where order_item_id=%d",
+											array($id,$create_for_item_id));
 										$wpdb->query($sql);
 										$this->recalculate_refund_order_totals($id);
 									}
@@ -4053,7 +4128,7 @@ class honeybadgerAPI{
 		    $refund_order->calculate_totals(false);
 		    $refund_order->save();
 		    $order_total=abs($refund_order->get_total());
-		    $sql="update ".$wpdb->prefix."postmeta set meta_value='".esc_sql($order_total)."' where post_id='".esc_sql($order_id)."' and meta_key='_refund_amount'";
+		    $sql=$wpdb->prepare("update ".$wpdb->prefix."postmeta set meta_value=%s where post_id=%d and meta_key='_refund_amount'",array($order_total,$order_id));
 		    $wpdb->query($sql);
 		}
 	}
@@ -4066,10 +4141,10 @@ class honeybadgerAPI{
 		$refunded_qty=0;
 		if($order_id>0 && ($item_id>0 || $product_id>0))
 		{
-			$sql="select mm.* from ".$wpdb->prefix."posts p 
+			$sql=$wpdb->prepare("select mm.* from ".$wpdb->prefix."posts p 
 			inner join ".$wpdb->prefix."woocommerce_order_items m on m.order_id=p.ID
 			inner join ".$wpdb->prefix."woocommerce_order_itemmeta mm on mm.order_item_id=m.order_item_id
-			where p.post_type='shop_order_refund' and p.post_parent='".esc_sql($order_id)."'";
+			where p.post_type='shop_order_refund' and p.post_parent=%d",$order_id);
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
@@ -4115,10 +4190,10 @@ class honeybadgerAPI{
 		$order_item_id=0;
 		if($order_id>0 && $item_id>0)
 		{
-			$sql="select p.ID, mm.* from ".$wpdb->prefix."posts p 
+			$sql=$wpdb->prepare("select p.ID, mm.* from ".$wpdb->prefix."posts p 
 			inner join ".$wpdb->prefix."woocommerce_order_items m on m.order_id=p.ID
 			inner join ".$wpdb->prefix."woocommerce_order_itemmeta mm on mm.order_item_id=m.order_item_id
-			where p.post_type='shop_order_refund' and p.post_parent='".esc_sql($order_id)."'";
+			where p.post_type='shop_order_refund' and p.post_parent=%d",$order_id);
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
@@ -4142,7 +4217,7 @@ class honeybadgerAPI{
 						{
 							$refunded_value=abs($result->meta_value);
 							$order_item_id=$find_key;
-							$sql="select order_id from ".$wpdb->prefix."woocommerce_order_items where order_item_id='".esc_sql($order_item_id)."'";
+							$sql=$wpdb->prepare("select order_id from ".$wpdb->prefix."woocommerce_order_items where order_item_id=%d",$order_item_id);
 							$result=$wpdb->get_row($sql);
 							if(isset($result->order_id))
 								$post_id=$result->order_id;
@@ -4164,7 +4239,7 @@ class honeybadgerAPI{
 		}
 		if($order_item_id>0 && $meta_key!='')
 		{
-			$sql="select meta_value from ".$wpdb->prefix."woocommerce_order_itemmeta where order_item_id='".esc_sql($order_item_id)."' and meta_key='".esc_sql($meta_key)."'";
+			$sql=$wpdb->prepare("select meta_value from ".$wpdb->prefix."woocommerce_order_itemmeta where order_item_id=%d and meta_key=%s",array($order_item_id,$meta_key));
 			$result=$wpdb->get_row($sql);
 			if(isset($result->meta_value))
 				return $result->meta_value;
@@ -4288,7 +4363,7 @@ class honeybadgerAPI{
 						continue;
 					$siblings[]=$stmp;
 				}
-				$sql="select ID, post_status from ".$wpdb->prefix."posts where ID in ('".implode("','",array_map('esc_sql',$siblings))."')";
+				$sql=$wpdb->prepare("select ID, post_status from ".$wpdb->prefix."posts where ID in ('".implode("','",array_map('esc_sql',$siblings))."')");
 				$results=$wpdb->get_results($sql);
 				if(is_array($results))
 				{
@@ -4401,7 +4476,7 @@ class honeybadgerAPI{
 				}
 				foreach($order_ids as $id)
 				{
-					$sql="select meta_id, meta_key, meta_value from ".$wpdb->prefix."postmeta where post_id='".esc_sql($id)."'";
+					$sql=$wpdb->prepare("select meta_id, meta_key, meta_value from ".$wpdb->prefix."postmeta where post_id=%d",$id);
 					$results=$wpdb->get_results($sql);
 					if(is_array($results))
 					{
@@ -4409,44 +4484,44 @@ class honeybadgerAPI{
 						{
 							if($result->meta_key=='_honeybadger_split_from' || $result->meta_key=='_honeybadger_split_in' || get_post_meta($order_id,$result->meta_key,true)!='' || $result->meta_value=='')
 								continue;
-							$sql="update ".$wpdb->prefix."postmeta set post_id='".esc_sql($order_id)."' where meta_id='".esc_sql($result->meta_id)."'";
+							$sql=$wpdb->prepare("update ".$wpdb->prefix."postmeta set post_id=%d where meta_id=%d",array($order_id,$result->meta_id));
 							$wpdb->query($sql);
 						}
 					}
-					$sql="delete from ".$wpdb->prefix."postmeta where post_id='".esc_sql($id)."'";
+					$sql=$wpdb->prepare("delete from ".$wpdb->prefix."postmeta where post_id=%d",$id);
 					$wpdb->query($sql);
-					$sql="delete from ".$wpdb->prefix."posts where ID='".esc_sql($id)."'";
+					$sql=$wpdb->prepare("delete from ".$wpdb->prefix."posts where ID=%d",$id);
 					$wpdb->query($sql);
 					$deleted_order_ids[]=$id;
-					$sql="select comment_ID from ".$wpdb->prefix."comments where comment_post_ID='".esc_sql($id)."'";
+					$sql=$wpdb->prepare("select comment_ID from ".$wpdb->prefix."comments where comment_post_ID=%d",$id);
 					$results=$wpdb->get_results($sql);
 					if(is_array($results))
 					{
 						foreach($results as $result)
 						{
-							$sql="update ".$wpdb->prefix."comments set comment_post_ID='".esc_sql($order_id)."' where comment_ID='".esc_sql($result->comment_ID)."'";
+							$sql=$wpdb->prepare("update ".$wpdb->prefix."comments set comment_post_ID=%d where comment_ID=%d",array($order_id,$result->comment_ID));
 							$wpdb->query($sql);
 						}
 					}
 					$child_order_item_ids=array();
-					$sql="select order_item_id from ".$wpdb->prefix."woocommerce_order_items where order_id='".esc_sql($id)."'";
+					$sql=$wpdb->prepare("select order_item_id from ".$wpdb->prefix."woocommerce_order_items where order_id=%d",$id);
 					$results=$wpdb->get_results($sql);
 					if(is_array($results))
 					{
 						foreach($results as $result)
 						{
-							$sql="update ".$wpdb->prefix."woocommerce_order_items set order_id='".esc_sql($order_id)."' where order_item_id='".esc_sql($result->order_item_id)."'";
+							$sql=$wpdb->prepare("update ".$wpdb->prefix."woocommerce_order_items set order_id=%d where order_item_id=%d",array($order_id,$result->order_item_id));
 							$wpdb->query($sql);
 							$child_order_item_ids[]=$result->order_item_id;
 						}
 					}
-					$sql="select ID from ".$wpdb->prefix."posts where post_parent='".esc_sql($id)."'";
+					$sql=$wpdb->prepare("select ID from ".$wpdb->prefix."posts where post_parent=%d",$id);
 					$results=$wpdb->get_results($sql);
 					if(is_array($results))
 					{
 						foreach($results as $result)
 						{
-							$sql="update ".$wpdb->prefix."posts set post_parent='".esc_sql($order_id)."' where ID='".esc_sql($result->ID)."'";
+							$sql=$wpdb->prepare("update ".$wpdb->prefix."posts set post_parent=%d where ID=%d",array($order_id,$result->ID));
 							$wpdb->query($sql);
 						}
 					}
@@ -4484,7 +4559,7 @@ class honeybadgerAPI{
 				$order->calculate_taxes();
 			    $order->calculate_totals();
 			    $order->save();
-			    $sql="select * from ".$wpdb->prefix."posts where ID='".esc_sql($order_id)."'";
+			    $sql=$wpdb->prepare("select * from ".$wpdb->prefix."posts where ID=%d",$order_id);
 				$order=$wpdb->get_row($sql);
 				$order_items=$this->getOrderItems($order_id);
 				if(is_array($order_items))
@@ -4493,9 +4568,9 @@ class honeybadgerAPI{
 					{
 						if($item->order_item_type=='shipping' && isset($item->metas->cost) && $item->metas->cost==0)
 						{
-							$sql="delete from ".$wpdb->prefix."woocommerce_order_itemmeta where order_item_id='".esc_sql($item->order_item_id)."'";
+							$sql=$wpdb->prepare("delete from ".$wpdb->prefix."woocommerce_order_itemmeta where order_item_id=%d",$item->order_item_id);
 							$wpdb->query($sql);
-							$sql="delete from ".$wpdb->prefix."woocommerce_order_items where order_item_id='".esc_sql($item->order_item_id)."'";
+							$sql=$wpdb->prepare("delete from ".$wpdb->prefix."woocommerce_order_items where order_item_id=%d",$item->order_item_id);
 							$wpdb->query($sql);
 						}
 					}
@@ -4515,7 +4590,8 @@ class honeybadgerAPI{
 						foreach($product_names as $prod_name => $prod_qty)
 							$tmp[]=$prod_name.' &times; '.$prod_qty;
 						$prod->metas->Items=implode(', ',$tmp);
-						$sql="update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value='".esc_sql($prod->metas->Items)."' where order_item_id='".esc_sql($prod->order_item_id)."' and meta_key='Items'";
+						$sql=$wpdb->prepare("update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value=%s where order_item_id=%d and meta_key='Items'",
+							array($prod->metas->Items,$prod->order_item_id));
 						$wpdb->query($sql);
 					}
 				}
@@ -4541,9 +4617,9 @@ class honeybadgerAPI{
 		}
 		if($order_id>0)
 		{
-			$sql="select * from ".$wpdb->prefix."woocommerce_order_items i 
+			$sql=$wpdb->prepare("select * from ".$wpdb->prefix."woocommerce_order_items i 
 			left join ".$wpdb->prefix."woocommerce_order_itemmeta m on m.order_item_id=i.order_item_id
-			where i.order_id='".esc_sql($order_id)."'";
+			where i.order_id=%d",$order_id);
 			$order_items=$this->get_formatted_items($wpdb->get_results($sql));
 			return $order_items;
 		}
@@ -4646,7 +4722,8 @@ class honeybadgerAPI{
 					{
 						foreach($other_item_ids as $other_item_id)
 						{
-							$sql="update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value='".esc_sql($item_id)."' where meta_value='".esc_sql($other_item_id)."' and meta_key='_refunded_item_id'";
+							$sql=$wpdb->prepare("update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value=%s where meta_value=%s and meta_key='_refunded_item_id'",
+								array($item_id,$other_item_id));
 							$wpdb->query($sql);
 						}
 					}
@@ -4662,7 +4739,7 @@ class honeybadgerAPI{
 						{
 							foreach($item->metas as $meta_key => $meta_value)
 							{
-								$sql="update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value='".esc_sql($meta_value)."' where order_item_id='".esc_sql($order_item_id)."' and meta_key='".esc_sql($meta_key)."'";
+								$sql=$wpdb->prepare("update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value=%s where order_item_id=%s and meta_key='".esc_sql($meta_key)."'",array($meta_value,$order_item_id));
 								$wpdb->query($sql);
 							}
 						}
@@ -4674,11 +4751,10 @@ class honeybadgerAPI{
 					{
 						foreach($other_products as $other_product)
 						{
-							$sql="delete from ".$wpdb->prefix."woocommerce_order_itemmeta where order_item_id='".esc_sql($other_product->order_item_id)."'";
+							$sql=$wpdb->prepare("delete from ".$wpdb->prefix."woocommerce_order_itemmeta where order_item_id=%d",$other_product->order_item_id);
 							$wpdb->query($sql);
-							$sql="delete from ".$wpdb->prefix."woocommerce_order_items where order_item_id='".esc_sql($other_product->order_item_id)."'";
+							$sql=$wpdb->prepare("delete from ".$wpdb->prefix."woocommerce_order_items where order_item_id=%d",$other_product->order_item_id);
 							$wpdb->query($sql);
-							$sql="update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value=";
 						}
 					}
 				}
@@ -4702,7 +4778,8 @@ class honeybadgerAPI{
 					foreach($product_names as $prod_name => $prod_qty)
 						$tmp[]=$prod_name.' &times; '.$prod_qty;
 					$prod->metas->Items=implode(', ',$tmp);
-					$sql="update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value='".esc_sql($prod->metas->Items)."' where order_item_id='".esc_sql($prod->order_item_id)."' and meta_key='Items'";
+					$sql=$wpdb->prepare("update ".$wpdb->prefix."woocommerce_order_itemmeta set meta_value=%s where order_item_id=%d and meta_key='Items'",
+						array($prod->metas->Items,$prod->order_item_id));
 					$wpdb->query($sql);
 				}
 			}
@@ -4711,8 +4788,8 @@ class honeybadgerAPI{
 	function set_setup_step()
 	{
 		global $wpdb;
-		$sql="update ".$wpdb->prefix."honeybadger_config set config_value='0' where config_name='setup_step'";
-		$wpdb->query($sql);echo $sql;
+		$sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value='0' where config_name='setup_step'");
+		$wpdb->query($sql);
 	}
 	function unlinkAttachmentFileDuplicate($path="")
 	{
