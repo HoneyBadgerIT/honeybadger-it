@@ -936,6 +936,7 @@ class honeybadgerAPI{
 			$results=$wpdb->get_results($sql);
 			if(is_array($results))
 			{
+				$_POST['attachments_to_be_deleted']=array();
 				foreach($results as $result)
 				{
 					if(is_file(ABSPATH.$result->path))
@@ -944,23 +945,16 @@ class honeybadgerAPI{
 						$file_name=$this->removeMd5FromFilename(basename($attachment));
 						$new_path=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$file_name;
 						if($file_name!=$new_path && copy($attachment,$new_path))
-							$attachments[]=honeybadger_sanitize_file_name_from_path($new_path);
-						else
-							$attachments[]=honeybadger_sanitize_file_name_from_path($attachment);
-					}
-				}
-				if(count($attachments)>0)
-				{
-					if(isset($_POST['attachments_to_be_deleted']) && is_array($_POST['attachments_to_be_deleted']))
-					{
-						foreach($_POST['attachments_to_be_deleted'] as $aidx => $attach_to_del)
 						{
-							$_POST['attachments_to_be_deleted'][$aidx]=honeybadger_sanitize_file_name_from_path($_POST['attachments_to_be_deleted'][$aidx]);
+							$attachments[]=honeybadger_sanitize_file_name_from_path($new_path);
+							$_POST['attachments_to_be_deleted'][]=honeybadger_sanitize_file_name_from_path($new_path);
 						}
-						$_POST['attachments_to_be_deleted']=array_merge($_POST['attachments_to_be_deleted'],$attachments);
+						else
+						{
+							$attachments[]=honeybadger_sanitize_file_name_from_path($attachment);
+							$_POST['attachments_to_be_deleted'][]=honeybadger_sanitize_file_name_from_path($attachment);
+						}
 					}
-					else
-						$_POST['attachments_to_be_deleted']=$attachments;
 				}
 				return $attachments;
 			}
@@ -2182,28 +2176,22 @@ class honeybadgerAPI{
 		$tmp_attachments=array();
 		if(count($all_attachments)>0)
 		{
+			$_POST['attachments_to_be_deleted']=array();
 			foreach($all_attachments as $attachment)
 			{
 				$file_name=$this->removeMd5FromFilename(basename($attachment));
 				$new_path=HONEYBADGER_UPLOADS_PATH."attachments/tmp/".$file_name;
 				if($file_name!=$new_path && copy($attachment,$new_path))
-					$tmp_attachments[]=honeybadger_sanitize_file_name_from_path($new_path);
-				else
-					$tmp_attachments[]=honeybadger_sanitize_file_name_from_path($attachment);
-			}
-		}
-		if(count($tmp_attachments)>0)
-		{
-			if(isset($_POST['attachments_to_be_deleted']) && is_array($_POST['attachments_to_be_deleted']))
-			{
-				foreach($_POST['attachments_to_be_deleted'] as $aidx => $attach_to_del)
 				{
-					$_POST['attachments_to_be_deleted'][$aidx]=honeybadger_sanitize_file_name_from_path($_POST['attachments_to_be_deleted'][$aidx]);
+					$tmp_attachments[]=honeybadger_sanitize_file_name_from_path($new_path);
+					$_POST['attachments_to_be_deleted'][]=honeybadger_sanitize_file_name_from_path($new_path);
 				}
-				$_POST['attachments_to_be_deleted']=array_merge($_POST['attachments_to_be_deleted'],$tmp_attachments);
+				else
+				{
+					$tmp_attachments[]=honeybadger_sanitize_file_name_from_path($attachment);
+					$_POST['attachments_to_be_deleted'][]=honeybadger_sanitize_file_name_from_path($attachment);
+				}
 			}
-			else
-				$_POST['attachments_to_be_deleted']=$tmp_attachments;
 		}
 		return $tmp_attachments;
 	}
