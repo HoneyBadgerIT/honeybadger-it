@@ -2814,7 +2814,7 @@ class honeybadgerAPI{
 			if($id>0)
 			{
 				require_once __DIR__ . '/class-honeybadger-it-activator.php';
-				$activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
+				$activator=new \HoneyBadgerIT\Honeybadger_IT_Activator;
 				if(is_array($activator->sql2) && isset($activator->sql2[$id-1]))
 				{
 					$sql=$activator->sql2[$id-1];
@@ -2839,7 +2839,7 @@ class honeybadgerAPI{
 			if($id>0)
 			{
 				require_once __DIR__ . '/class-honeybadger-it-activator.php';
-				$activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
+				$activator=new \HoneyBadgerIT\Honeybadger_IT_Activator;
 				if($type=="extended")
 					$id=$id+3;
 				if(is_array($activator->sql2) && isset($activator->sql2[$id-1]))
@@ -2866,7 +2866,7 @@ class honeybadgerAPI{
 			if($id>0)
 			{
 				require_once __DIR__ . '/class-honeybadger-it-activator.php';
-				$activator=new HoneyBadgerIT\Honeybadger_IT_Activator;
+				$activator=new \HoneyBadgerIT\Honeybadger_IT_Activator;
 				if(is_array($activator->sql2) && isset($activator->sql2[$id-1]))
 				{
 					$sql=$activator->sql2[$id-1];
