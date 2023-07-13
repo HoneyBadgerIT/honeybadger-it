@@ -219,7 +219,7 @@ class Honeybadger_IT_Activator {
       `show_front` tinyint(1) NOT NULL,
       `mdate` int(11) NOT NULL, 
       PRIMARY KEY (`id`),
-      UNIQUE KEY (`config_name`)
+      UNIQUE KEY config_name (`config_name`)
     );
     ");
     dbDelta( $sql );
@@ -243,7 +243,7 @@ class Honeybadger_IT_Activator {
       `email_bcc` VARCHAR(255) NOT NULL DEFAULT '',
       `mdate` INT(11) NOT NULL DEFAULT '0',
       PRIMARY KEY (`id`),
-      UNIQUE KEY (`wc_status`)
+      UNIQUE KEY wc_status (`wc_status`)
     );
     ");
     dbDelta( $sql );
@@ -349,7 +349,7 @@ class Honeybadger_IT_Activator {
       `restored_stock` INT(11) NOT NULL DEFAULT '0' ,
       `done` TINYINT(1) NOT NULL DEFAULT '0',
       `mdate` INT(11) NOT NULL DEFAULT '0',
-      UNIQUE KEY (`order_id`, `product_id`)
+      UNIQUE KEY order_id (`order_id`, `product_id`)
     );
     ");
     dbDelta( $sql );
