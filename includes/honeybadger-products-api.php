@@ -77,7 +77,7 @@ class honeybadgerProductsAPI{
 				}
 				if ( empty( $ids ) )
 				{
-					$data_store = WC_Data_Store::load( 'customer' );
+					$data_store = \WC_Data_Store::load( 'customer' );
 					if ( 3 > strlen( $term ) )
 					{
 						$limit = 20;
