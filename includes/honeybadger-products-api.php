@@ -708,7 +708,7 @@ class honeybadgerProductsAPI{
 				$sql=$wpdb->prepare("select p.ID from ".$wpdb->prefix."posts p where (p.post_type='product' or p.post_type='product_variation') and 
 				p.post_status='publish' and
 				(p.ID like %s or
-				p.post_title like %s
+				p.post_title like %s)
 				order by ".implode(",",$order_by)."
 				limit ".esc_sql($start).",".esc_sql($limit),array("%".$search."%","%".$search."%"));
 			}
