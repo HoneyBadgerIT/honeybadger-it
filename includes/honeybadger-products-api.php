@@ -1379,7 +1379,7 @@ class honeybadgerProductsAPI{
 			{
 				$sql="delete from ".$wpdb->prefix."honeybadger_product_stock_log where product_id not in (".implode(', ', array_fill(0, count($product_ids), '%s')).")";
 				$query = call_user_func_array(array($wpdb, 'prepare'), array_merge(array($sql), $product_ids));
-				$wpdb->query($sql);
+				$wpdb->query($query);
 
 				$sql=$wpdb->prepare("select * from ".$wpdb->prefix."honeybadger_product_stock_log where done=0 order by mdate");
 				$results=$wpdb->get_results($sql);
