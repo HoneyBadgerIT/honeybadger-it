@@ -1277,7 +1277,7 @@ class honeybadgerProductsAPI{
 					{
 						$sql=$wpdb->prepare("select a.id from ".$wpdb->prefix."honeybadger_attachments a where 
 						a.enabled=1 and
-						(a.attach_to_emails=%s
+						(a.attach_to_emails=%s or
 						a.attach_to_emails like %s or
 						a.attach_to_emails like %s or
 						a.attach_to_emails like %s)",

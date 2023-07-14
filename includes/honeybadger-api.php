@@ -1616,7 +1616,7 @@ class honeybadgerAPI{
 			$oid=isset($parameters['oid'])?(int)$parameters['oid']:0;
 			$supplier_order_id=isset($parameters['supplier_order_id'])?(int)$parameters['supplier_order_id']:0;
 			$send_to=isset($parameters['send_to'])?sanitize_email($parameters['send_to']):"";
-			$supplier_order_str=isset($parameters['supplier_order'])?sanitize_text_field($parameters['supplier_order']):"";
+			$supplier_order_str=isset($parameters['supplier_order'])?wp_strip_all_tags($parameters['supplier_order']):"";
 			$attachment_ids_str=isset($parameters['attachment_ids'])?sanitize_text_field($parameters['attachment_ids']):"";
 			$attachments=isset($_FILES['file'])?$_FILES['file']:array();
 			$static_attachments_str=isset($_POST['static_attachments'])?sanitize_text_field($_POST['static_attachments']):"";
@@ -2375,7 +2375,7 @@ class honeybadgerAPI{
 			$oid=isset($parameters['oid'])?(int)$parameters['oid']:0;
 			$is_supplier_order=isset($parameters['is_supplier_order'])?(int)$parameters['is_supplier_order']:0;
 			$supplier_order_id=isset($parameters['supplier_order_id'])?(int)$parameters['supplier_order_id']:0;
-			$supplier_order_str=isset($parameters['supplier_order'])?sanitize_text_field($parameters['supplier_order']):"";
+			$supplier_order_str=isset($parameters['supplier_order'])?wp_strip_all_tags($parameters['supplier_order']):"";
 			$attachment_ids_str=isset($parameters['attachment_ids'])?sanitize_text_field($parameters['attachment_ids']):"";
 			$attachments=isset($_FILES['file'])?$_FILES['file']:array();
 			$static_attachments_str=isset($_POST['static_attachments'])?sanitize_text_field($_POST['static_attachments']):"";
@@ -2967,7 +2967,7 @@ class honeybadgerAPI{
 			$oid=isset($parameters['oid'])?(int)$parameters['oid']:0;
 			$is_supplier_order=isset($parameters['is_supplier_order'])?(int)$parameters['is_supplier_order']:0;
 			$date_format=isset($parameters['date_format'])?sanitize_text_field($parameters['date_format']):"Y-m-d H:i:s";
-			$supplier_order_str=isset($parameters['supplier_order'])?sanitize_text_field($parameters['supplier_order']):"";
+			$supplier_order_str=isset($parameters['supplier_order'])?wp_strip_all_tags($parameters['supplier_order']):"";
 			$supplier_order=array();
 			if($supplier_order_str!="")
 				parse_str($supplier_order_str,$supplier_order);
