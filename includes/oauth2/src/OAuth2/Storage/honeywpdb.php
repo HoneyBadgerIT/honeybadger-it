@@ -414,6 +414,7 @@ class honeywpdb implements
      */
     public function unsetRefreshToken($refresh_token)
     {
+        return true;//we remove it from another place
     	$sql=$this->db->prepare("delete from ".$this->config['refresh_token_table']." where refresh_token=%s",$refresh_token);
     	if(!$this->db->query($sql) && $this->db->last_error !== '')
         	return false;
