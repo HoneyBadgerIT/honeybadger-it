@@ -23,7 +23,7 @@ if($hb_msg!="")
 {
     ?>
     <div class="hb-notice-<?php echo esc_attr($hb_msg['status']);?>">
-        <p><?php echo esc_html__($hb_msg['msg'],"honeyb").": ".esc_html($hb_msg['time']);?></p>
+        <p><?php echo esc_html($hb_msg['msg']).": ".esc_html($hb_msg['time']);?></p>
     </div>
     <?php
 }

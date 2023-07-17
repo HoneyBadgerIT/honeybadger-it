@@ -23,7 +23,7 @@ if($hb_msg!="")
 {
     ?>
     <div class="<?php echo esc_attr($hb_msg['status']);?> notice is-dismissible">
-        <p><?php echo esc_html($hb_msg['cnt'])." ".esc_html__($hb_msg['msg'],"honeyb");?></p>
+        <p><?php echo esc_html($hb_msg['cnt'])." ".esc_html($hb_msg['msg']);?></p>
     </div>
     <?php
 }
@@ -45,7 +45,7 @@ $nonce = wp_create_nonce( 'honeybadger_it_settings_page_form' );
         {
             ?>
             <tr>
-                <td><?php echo esc_html__($config_name);?></td>
+                <td><?php echo esc_html($config_name);?></td>
                 <td>
                     <?php
                     if($config_name=='curl_ssl_verify')

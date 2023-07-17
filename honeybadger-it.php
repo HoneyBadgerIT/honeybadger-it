@@ -377,7 +377,7 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
         $result=$wpdb->get_row($sql);
         if(isset($result->id))
         {
-            $subject=__($result->subject,"honeyb");
+            $subject=$result->subject;
             $subject=str_ireplace("{site_title}", get_bloginfo( 'name', 'display' ) ,$subject);
             $subject=str_ireplace("{customer}", $order->get_billing_first_name() ,$subject);
             $subject=str_ireplace("{customer_full_name}", $order->get_formatted_billing_full_name() ,$subject);
@@ -387,7 +387,7 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
 
             if(($status=='wc-refunded' && $emailer->partial_refund) || ($status=='wc-customer-invoice' && $order->needs_payment())) 
             {
-                $other_subject=__($result->other_subject,"honeyb");
+                $other_subject=$result->other_subject;
                 $other_subject=str_ireplace("{site_title}", get_bloginfo( 'name', 'display' ) ,$other_subject);
                 $other_subject=str_ireplace("{customer}", $order->get_billing_first_name() ,$other_subject);
                 $other_subject=str_ireplace("{customer_full_name}", $order->get_formatted_billing_full_name() ,$other_subject);

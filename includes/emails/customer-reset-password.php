@@ -15,10 +15,10 @@ $result=$wpdb->get_row($sql);
 $email_subheading="";
 if(isset($result->id))
 {
-    $email_heading=__($result->heading,"honeyb");
-    $email_subheading=__($result->subheading,"honeyb");
-    $additional_content=__($result->content,"honeyb");
-    $other_subheading_1=__($result->other_subheading_1,"honeyb");
+    $email_heading=$result->heading;
+    $email_subheading=$result->subheading;
+    $additional_content=$result->content;
+    $other_subheading_1=$result->other_subheading_1;
 
     $reset_link='<a class="link" href="'.esc_url( add_query_arg( array( 'key' => $reset_key, 'id' => $user_id ), wc_get_endpoint_url( 'lost-password', '', wc_get_page_permalink( 'myaccount' ) ) ) ).'">'.$other_subheading_1.'</a>';
 

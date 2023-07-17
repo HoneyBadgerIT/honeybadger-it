@@ -20,9 +20,9 @@ $result=$wpdb->get_row($sql);
 $email_subheading="";
 if(isset($result->id))
 {
-    $email_heading=__($result->heading,"honeyb");
-    $email_subheading=__($result->subheading,"honeyb");
-    $additional_content=__($result->content,"honeyb");
+    $email_heading=$result->heading;
+    $email_subheading=$result->subheading;
+    $additional_content=$result->content;
 
     $email_heading=str_ireplace("{site_title}",esc_html( get_bloginfo( 'name', 'display' ) ),$email_heading);
     $email_heading=str_ireplace("{customer}",esc_html( $order->get_billing_first_name() ),$email_heading);

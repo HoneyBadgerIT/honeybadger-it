@@ -20,12 +20,12 @@ $result=$wpdb->get_row($sql);
 $email_subheading="";
 if(isset($result->id))
 {
-    $email_heading=__($result->heading,"honeyb");
-    $email_subheading=__($result->subheading,"honeyb");
-    $additional_content=__($result->content,"honeyb");
-    $other_heading=__($result->other_heading,"honeyb");
-    $other_subheading_1=__($result->other_subheading_1,"honeyb");
-    $other_subheading_2=__($result->other_subheading_2,"honeyb");
+    $email_heading=$result->heading;
+    $email_subheading=$result->subheading;
+    $additional_content=$result->content;
+    $other_heading=$result->other_heading;
+    $other_subheading_1=$result->other_subheading_1;
+    $other_subheading_2=$result->other_subheading_2;
 
     $email_heading=str_ireplace("{site_title}",esc_html( get_bloginfo( 'name', 'display' ) ),$email_heading);
     $email_heading=str_ireplace("{customer}",esc_html( $order->get_billing_first_name() ),$email_heading);

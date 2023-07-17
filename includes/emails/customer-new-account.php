@@ -13,10 +13,10 @@ $result=$wpdb->get_row($sql);
 $email_subheading="";
 if(isset($result->id))
 {
-    $email_heading=__($result->heading,"honeyb");
-    $email_subheading=__($result->subheading,"honeyb");
-    $additional_content=__($result->content,"honeyb");
-    $other_subheading_1=__($result->other_subheading_1,"honeyb");
+    $email_heading=$result->heading;
+    $email_subheading=$result->subheading;
+    $additional_content=$result->content;
+    $other_subheading_1=$result->other_subheading_1;
 
     $email_heading=str_ireplace("{site_title}",esc_html( get_bloginfo( 'name', 'display' ) ),$email_heading);
     $email_heading=str_ireplace("{site_url}",esc_html( get_bloginfo( 'url', 'display' ) ),$email_heading);

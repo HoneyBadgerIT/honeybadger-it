@@ -499,7 +499,7 @@ class honeybadger{
 				if(isset($decoded->msg))
 					$reason=$decoded->msg;
 				echo '<div class="notice notice-error is-dismissible">
-		        	<p>'.esc_html__($reason,"honeyb").'</p>
+		        	<p>'.esc_html($reason).'</p>
 		     	</div>';
 			}
 		}

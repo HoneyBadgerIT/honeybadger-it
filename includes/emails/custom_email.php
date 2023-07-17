@@ -15,7 +15,7 @@ if($tpl_id>0)
 	$email_tpl=$wpdb->get_row($sql);
 	if(isset($email_tpl->content))
 	{
-		$content=__($email_tpl->content,"honeyb");
+		$content=$email_tpl->content;
 
 		$supplier_order=array();
 		if(isset($other_details) && is_array($other_details) && isset($other_details['supplier_order']))
@@ -31,7 +31,7 @@ if($tpl_id>0)
 		}
 		else if($order)
 		{
-			$email_heading=__($email_tpl->heading,"honeyb");
+			$email_heading=$email_tpl->heading;
 			$email_heading=str_ireplace("{customer}",esc_html( $order->get_billing_first_name() ),$email_heading);
 	    	$email_heading=str_ireplace("{customer_full_name}",esc_html( $order->get_formatted_billing_full_name() ),$email_heading);
 			$email_heading=str_ireplace("{site_title}", get_bloginfo( 'name', 'display' ) ,$email_heading);
