@@ -163,7 +163,7 @@ class honeybadger{
 		if(!$GLOBALS['wp_roles']->is_role("honeybadger"))
 		{
 			wp_send_json(array("status"=>"error", "msg"=>'<div class="hb-notice-error">
-			        <p>'.esc_html__("Cannot create Honeybadger user role","honeyb").'</p>
+			        <p>'.esc_html__("Cannot create Honeybadger user role",'honeybadger-it').'</p>
 			     </div>', 'nonce'=>wp_create_nonce( 'honeybadger_it_ajax_nonce' )));
 		}
 		$user=array(
@@ -171,7 +171,7 @@ class honeybadger{
 			"user_login"=>"honeybadger".get_current_blog_id(),
 			"user_nicename"=>"HoneyBadger",
 			"user_email"=>bin2hex(random_bytes(8))."@honeybadger.it",
-			"description"=>esc_html__('This user is used for the HoneyBadger IT communications through the REST API','honeyb'),
+			"description"=>esc_html__('This user is used for the HoneyBadger IT communications through the REST API','honeybadger-it'),
 			"role"=>"honeybadger",
 		);
 		if(!username_exists("honeybadger".get_current_blog_id()))
@@ -180,19 +180,19 @@ class honeybadger{
 			if(is_int($user_id))
 			{
 				wp_send_json(array("status"=>"ok", "msg"=>'<div class="hb-notice-updated">
-				        <p>'.esc_html__("Honeybadger user created with success","honeyb").'</p>
+				        <p>'.esc_html__("Honeybadger user created with success",'honeybadger-it').'</p>
 				     </div>', 'nonce'=>wp_create_nonce( 'honeybadger_it_ajax_nonce' )));
 			}
 			else
 			{
 				wp_send_json(array("status"=>"error", "msg"=>'<div class="hb-notice-error">
-				        <p>'.esc_html__("Cannot create Honeybadger user","honeyb").'</p>
+				        <p>'.esc_html__("Cannot create Honeybadger user",'honeybadger-it').'</p>
 				     </div>', 'nonce'=>wp_create_nonce( 'honeybadger_it_ajax_nonce' )));
 			}
 		}
 		if(username_exists("honeybadger".get_current_blog_id()))
 			wp_send_json(array("status"=>"ok", "msg"=>'<div class="hb-notice-updated">
-			        <p>'.esc_html__("Honeybadger user already exists from previous setup","honeyb").'</p>
+			        <p>'.esc_html__("Honeybadger user already exists from previous setup",'honeybadger-it').'</p>
 			     </div>', 'nonce'=>wp_create_nonce( 'honeybadger_it_ajax_nonce' )));
 	}
 	function createHoneybadgerConnection()
@@ -227,7 +227,7 @@ class honeybadger{
 				if(!$wpdb->query($sql) && $wpdb->last_error !== '')
 				{
 					wp_send_json(array("status"=>"error", "msg"=>'<div class="hb-notice-error">
-					        <p>'.esc_html__("Cannot create Honeybadger client","honeyb").'</p>
+					        <p>'.esc_html__("Cannot create Honeybadger client",'honeybadger-it').'</p>
 					     </div>', 'nonce'=>wp_create_nonce( 'honeybadger_it_ajax_nonce' )));
 				}
 			}
@@ -243,7 +243,7 @@ class honeybadger{
 			wp_send_json(array("status"=>"ok", "msg"=>$result['response'], 'nonce'=>wp_create_nonce( 'honeybadger_it_oauth_nonce' )));
 		}
 		else
-			esc_html_e("missing user id","honeyb");
+			esc_html_e("missing user id",'honeybadger-it');
 	}
 	function refreshHoneybadgerConnection()
 	{
@@ -379,7 +379,7 @@ class honeybadger{
 						else
 						{
 							echo '<div class="hb-notice-updated">
-						        <p>'.esc_html__("Honeybadger Oauth setup with success","honeyb").'</p>
+						        <p>'.esc_html__("Honeybadger Oauth setup with success",'honeybadger-it').'</p>
 						     </div>';
 						     return true;
 					 	}
@@ -388,7 +388,7 @@ class honeybadger{
 			}
 		}
 		echo '<div class="hb-notice-error">
-		        <p>'.esc_html__("Error in Oauth REST API communication between your site and HoneyBadger IT","honeyb").'</p>
+		        <p>'.esc_html__("Error in Oauth REST API communication between your site and HoneyBadger IT",'honeybadger-it').'</p>
 		     </div>';
 	}
 	function restartTheSetup()
@@ -461,14 +461,14 @@ class honeybadger{
 			if(!$this->validateEmail($email))
 			{
 				echo '<div class="notice notice-error is-dismissible">
-			        <p>'.esc_html__("Please input a valid email address","honeyb").'</p>
+			        <p>'.esc_html__("Please input a valid email address",'honeybadger-it').'</p>
 			     </div>';
 			     return;
 			}
 			if(!preg_match('/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/', $password))
 			{
 				echo '<div class="notice notice-error is-dismissible">
-			        <p>'.esc_html__("Please input a Password [6 to 20 characters which contain at least one numeric digit, one uppercase and one lowercase letter]","honeyb").'</p>
+			        <p>'.esc_html__("Please input a Password [6 to 20 characters which contain at least one numeric digit, one uppercase and one lowercase letter]",'honeybadger-it').'</p>
 			     </div>';
 			     return;
 			}
@@ -484,7 +484,7 @@ class honeybadger{
 			if(isset($decoded->status) && $decoded->status=="ok")
 			{
 				echo '<div class="notice notice updated is-dismissible">
-			        <p>'.esc_html__("Your HoneyBadger IT account created with success! Please check your email and verify your email address in order for the account to be activated.","honeyb").'</p>
+			        <p>'.esc_html__("Your HoneyBadger IT account created with success! Please check your email and verify your email address in order for the account to be activated.",'honeybadger-it').'</p>
 			     </div>';
 			    $sql=$wpdb->prepare("update ".$wpdb->prefix."honeybadger_config set config_value='3' where config_name='setup_step'");
 				$wpdb->query($sql);
@@ -506,7 +506,7 @@ class honeybadger{
 		else
 		{
 			echo '<div class="notice notice-error is-dismissible">
-		        <p>'.esc_html__("Something is wrong, please reinstall the plugin and restart the setup process","honeyb").'</p>
+		        <p>'.esc_html__("Something is wrong, please reinstall the plugin and restart the setup process",'honeybadger-it').'</p>
 		     </div>';
 		}
 	}
@@ -554,7 +554,7 @@ class honeybadger{
 			}
 		}
 		else
-			return array('status'=>'error','msg'=>'Something is wrong, please try again','honeyb');
+			return array('status'=>'error','msg'=>'Something is wrong, please try again','honeybadger-it');
 	}
 	function revokeHbAccess()
 	{

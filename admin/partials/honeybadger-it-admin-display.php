@@ -25,10 +25,10 @@ $tab = isset($_GET['page']) ? sanitize_text_field($_GET['page']) : $default_tab;
     </a></h1>
 <!-- Here are our tabs -->
 <nav class="nav-tab-wrapper">
-  <a href="<?php echo esc_url(admin_url()."admin.php?page=honeybadger-it");?>" class="nav-tab <?php if($tab==='honeybadger-it'):?>nav-tab-active<?php endif; ?>"><?php esc_html_e('Status','honeyb');?></a>
-  <a href="<?php echo esc_url(admin_url()."admin.php?page=honeybadger-settings");?>" class="nav-tab <?php if($tab==='honeybadger-settings'):?>nav-tab-active<?php endif; ?>"><?php esc_html_e('Settings','honeyb');?></a>
-  <a href="<?php echo esc_url(admin_url()."admin.php?page=honeybadger-rest-api");?>" class="nav-tab <?php if($tab==='honeybadger-rest-api'):?>nav-tab-active<?php endif; ?>"><?php esc_html_e('REST API','honeyb');?></a>
-  <a href="<?php echo esc_url(admin_url()."admin.php?page=honeybadger-tools");?>" class="nav-tab <?php if($tab==='honeybadger-tools'):?>nav-tab-active<?php endif; ?>"><?php esc_html_e('Tools','honeyb');?></a>
+  <a href="<?php echo esc_url(admin_url()."admin.php?page=honeybadger-it");?>" class="nav-tab <?php if($tab==='honeybadger-it'):?>nav-tab-active<?php endif; ?>"><?php esc_html_e('Status','honeybadger-it');?></a>
+  <a href="<?php echo esc_url(admin_url()."admin.php?page=honeybadger-settings");?>" class="nav-tab <?php if($tab==='honeybadger-settings'):?>nav-tab-active<?php endif; ?>"><?php esc_html_e('Settings','honeybadger-it');?></a>
+  <a href="<?php echo esc_url(admin_url()."admin.php?page=honeybadger-rest-api");?>" class="nav-tab <?php if($tab==='honeybadger-rest-api'):?>nav-tab-active<?php endif; ?>"><?php esc_html_e('REST API','honeybadger-it');?></a>
+  <a href="<?php echo esc_url(admin_url()."admin.php?page=honeybadger-tools");?>" class="nav-tab <?php if($tab==='honeybadger-tools'):?>nav-tab-active<?php endif; ?>"><?php esc_html_e('Tools','honeybadger-it');?></a>
 </nav>
 
 <div class="tab-content">

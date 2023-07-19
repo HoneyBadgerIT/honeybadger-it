@@ -89,7 +89,7 @@ class honeybadgerProductsAPI{
 				{
 					$customer = new \WC_Customer( $id );
 					$found_customers[ $id ] = sprintf(
-						esc_html__( '%1$s (#%2$s &ndash; %3$s)', 'woocommerce' ),
+						esc_html__( '%1$s (#%2$s &ndash; %3$s)', 'honeybadger-it' ),
 						$customer->get_first_name() . ' ' . $customer->get_last_name(),
 						$customer->get_id(),
 						$customer->get_email()
@@ -98,7 +98,7 @@ class honeybadgerProductsAPI{
 				return $this->returnOk($found_customers);
 			}
 		}
-		return $this->returnError(array(__("no records","honeyb")));
+		return $this->returnError(array(__("no records",'honeybadger-it')));
 	}
 	function get_products_by_ids($request)
 	{
@@ -213,7 +213,7 @@ class honeybadgerProductsAPI{
 				}
 			}
 		}
-		return $this->returnError(array(__("no records","honeyb")));
+		return $this->returnError(array(__("no records",'honeybadger-it')));
 	}
 	function set_customer_to_new_order($request)
 	{
@@ -237,7 +237,7 @@ class honeybadgerProductsAPI{
 				}
 			}
 		}
-		return $this->returnError(array(__("no records","honeyb")));
+		return $this->returnError(array(__("no records",'honeybadger-it')));
 	}
 	function get_available_payment_shippment_methods($request)
 	{

@@ -51,7 +51,7 @@ if($email_subheading!="")
 else
 {
 ?>
-<p><?php printf( esc_html__( 'You’ve received the following order from %s:', 'woocommerce' ), $order->get_formatted_billing_full_name() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
+<p><?php printf( esc_html__( 'You’ve received the following order from %s:', 'honeybadger-it' ), $order->get_formatted_billing_full_name() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
 <?php
 }
 /*

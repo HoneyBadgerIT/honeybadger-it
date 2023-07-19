@@ -417,7 +417,7 @@ class honeybadgerAPI{
 					{
 						$result=new stdClass;
 						$result->id=0;
-						$result->content=array('status'=>'error','msg'=>esc_html__("Something went wrong, please try again [1].","honeyb"));
+						$result->content=array('status'=>'error','msg'=>esc_html__("Something went wrong, please try again [1].",'honeybadger-it'));
 						return array($result);
 					}
 				}
@@ -429,19 +429,19 @@ class honeybadgerAPI{
 				{
 					$result=new stdClass;
 					$result->id=0;
-					$result->content=array('status'=>'error','msg'=>esc_html__("Something went wrong, please try again [2].","honeyb"));
+					$result->content=array('status'=>'error','msg'=>esc_html__("Something went wrong, please try again [2].",'honeybadger-it'));
 					return array($result);
 				}
 				$result=new stdClass;
 				$result->id=0;
-				$result->content=array('status'=>'ok','msg'=>esc_html__("Order statuses updated with success","honeyb"));
+				$result->content=array('status'=>'ok','msg'=>esc_html__("Order statuses updated with success",'honeybadger-it'));
 				return array($result);
 			}
 			
 		}
 		$result=new stdClass;
 		$result->id=0;
-		$result->content=array('status'=>'error','msg'=>esc_html__("Something went wrong, please try again [3].","honeyb"));
+		$result->content=array('status'=>'error','msg'=>esc_html__("Something went wrong, please try again [3].",'honeybadger-it'));
 		return array($result);
 	}
 	function delete_custom_order_status($request)
@@ -537,7 +537,7 @@ class honeybadgerAPI{
 					foreach($line_items_fee as $fee_id => $fee)
 					{
 						$tmp=new stdClass;
-						$tmp->fee=$fee->get_name() ? $fee->get_name() : esc_html__( 'Fee', 'honeyb' );
+						$tmp->fee=$fee->get_name() ? $fee->get_name() : esc_html__( 'Fee', 'honeybadger-it' );
 						$tmp->value=$fee->get_total();
 						$tmp->refunded=$order_data->get_total_refunded_for_item( $fee_id, 'fee' );
 						$tmp->tax=0;
@@ -1014,22 +1014,22 @@ class honeybadgerAPI{
 				'wc-email-order-items'=>'email-order-items.php'
 			);
 			$titles=array(
-				'wc-cancelled'=>esc_html__("Cancelled order","honeyb"),
-				'wc-failed'=>esc_html__("Failed order","honeyb"),
-				'wc-admin-new-order'=>esc_html__("New order","honeyb"),
-				'wc-customer-invoice'=>esc_html__("Customer invoice / Order details","honeyb"),
-				'wc-customer-new-account'=>esc_html__("New account","honeyb"),
-				'wc-customer-note'=>esc_html__("Customer note","honeyb"),
-				'wc-customer-reset-password'=>esc_html__("Reset password","honeyb"),
+				'wc-cancelled'=>esc_html__("Cancelled order",'honeybadger-it'),
+				'wc-failed'=>esc_html__("Failed order",'honeybadger-it'),
+				'wc-admin-new-order'=>esc_html__("New order",'honeybadger-it'),
+				'wc-customer-invoice'=>esc_html__("Customer invoice / Order details",'honeybadger-it'),
+				'wc-customer-new-account'=>esc_html__("New account",'honeybadger-it'),
+				'wc-customer-note'=>esc_html__("Customer note",'honeybadger-it'),
+				'wc-customer-reset-password'=>esc_html__("Reset password",'honeybadger-it'),
 				'wc-email-default'=>'',
-				'wc-email-header'=>esc_html__('Email Header ADVANCED',"honeyb"),
-				'wc-email-footer'=>esc_html__('Email Footer ADVANCED',"honeyb"),
-				'wc-email-styles'=>esc_html__('Email Styles ADVANCED',"honeyb"),
-				'wc-email-addresses'=>esc_html__('Email Addresses ADVANCED',"honeyb"),
-				'wc-email-customer-details'=>esc_html__('Email Customer Details ADVANCED',"honeyb"),
-				'wc-email-downloads'=>esc_html__('Email Downloads ADVANCED',"honeyb"),
-				'wc-email-order-details'=>esc_html__('Email Order Details ADVANCED',"honeyb"),
-				'wc-email-order-items'=>esc_html__('Email Order Items ADVANCED',"honeyb")
+				'wc-email-header'=>esc_html__('Email Header ADVANCED','honeybadger-it'),
+				'wc-email-footer'=>esc_html__('Email Footer ADVANCED','honeybadger-it'),
+				'wc-email-styles'=>esc_html__('Email Styles ADVANCED','honeybadger-it'),
+				'wc-email-addresses'=>esc_html__('Email Addresses ADVANCED','honeybadger-it'),
+				'wc-email-customer-details'=>esc_html__('Email Customer Details ADVANCED','honeybadger-it'),
+				'wc-email-downloads'=>esc_html__('Email Downloads ADVANCED','honeybadger-it'),
+				'wc-email-order-details'=>esc_html__('Email Order Details ADVANCED','honeybadger-it'),
+				'wc-email-order-items'=>esc_html__('Email Order Items ADVANCED','honeybadger-it')
 			);
 			$job_done=array();
 			if(count($results))
@@ -1540,7 +1540,7 @@ class honeybadgerAPI{
 				die( 'Security check' );
 				}
 				$mailer = WC()->mailer();
-				$email_heading = esc_html__( 'HTML email template', 'woocommerce' );
+				$email_heading = esc_html__( 'HTML email template', 'honeybadger-it' );
 				ob_start();
 				include  WC()->plugin_path().'/includes/admin/views/html-email-template-preview.php';
 				$message = ob_get_clean();
@@ -3570,8 +3570,8 @@ class honeybadgerAPI{
 						$file_size=filesize($target_file);
 						$file_size=round($file_size / 1024);
 						$mailer = WC()->mailer();
-						$subject=esc_html__("Test attachment","honeyb").": ".$attachment->title." (".$file_size."Kb)";
-						$heading=esc_html__("Attached","honeyb")." (".$file_size."Kb)";
+						$subject=esc_html__("Test attachment",'honeybadger-it').": ".$attachment->title." (".$file_size."Kb)";
+						$heading=esc_html__("Attached",'honeybadger-it')." (".$file_size."Kb)";
 						$content = $this->get_custom_attachment_html( $heading, $mailer );
 						$headers = "Content-Type: text/html\r\n";
 						$all_attachments=array($target_file);
@@ -3879,7 +3879,7 @@ class honeybadgerAPI{
 							}
 						}
 						$order=wc_get_order($id);
-						$order->add_order_note(esc_html__("Order split by HoneyBadger IT, split from","honeyb")." ".$order_id);
+						$order->add_order_note(esc_html__("Order split by HoneyBadger IT, split from",'honeybadger-it')." ".$order_id);
 						update_post_meta($id,'_cart_hash',$new_cart_hash);
 						update_post_meta($id,'_honeybadger_split_from',$order_id);
 						$order->calculate_taxes();
@@ -3944,7 +3944,7 @@ class honeybadgerAPI{
 								}
 							}
 						}
-						$order_obj->add_order_note(esc_html__("Order was split by HoneyBadger IT, split in","honeyb")." ".$id);
+						$order_obj->add_order_note(esc_html__("Order was split by HoneyBadger IT, split in",'honeybadger-it')." ".$id);
 						$old_value=get_post_meta($order_id,'_honeybadger_split_in',true);
 						$new_split_ids=array();
 						if($old_value!="")
@@ -4541,7 +4541,7 @@ class honeybadgerAPI{
 				if(in_array($split_from,$order_ids))
 					$split_from='';
 				$order=wc_get_order($order_id);
-				$order->add_order_note(esc_html__("Order combined by HoneyBadger IT, combined from","honeyb")." ".$order_id." ".implode(" ",$order_ids));
+				$order->add_order_note(esc_html__("Order combined by HoneyBadger IT, combined from",'honeybadger-it')." ".$order_id." ".implode(" ",$order_ids));
 				update_post_meta($order_id,'_honeybadger_split_from',$split_from);
 				update_post_meta($order_id,'_honeybadger_split_in',implode(",",$new_split_ids));
 				$order->calculate_taxes();

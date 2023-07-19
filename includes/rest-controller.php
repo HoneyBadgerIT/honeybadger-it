@@ -106,13 +106,13 @@ class HoneyBadger_REST_Controller {
             // In JSON Schema you can specify object properties in the properties attribute.
             'properties'           => array(
                 'id' => array(
-                    'description'  => esc_html__( 'Unique identifier for the object.', 'honeyb' ),
+                    'description'  => esc_html__( 'Unique identifier for the object.', 'honeybadger-it' ),
                     'type'         => 'integer',
                     'context'      => array( 'view', 'edit', 'embed' ),
                     'readonly'     => true,
                 ),
                 'content' => array(
-                    'description'  => esc_html__( 'The content for the object.', 'honeyb' ),
+                    'description'  => esc_html__( 'The content for the object.', 'honeybadger-it' ),
                     'type'         => 'string',
                 ),
             ),

@@ -21,7 +21,7 @@ if(isset($result->id))
 {
     $email_heading=$result->heading;
     $email_subheading=$result->subheading;
-    $additional_content=$result->content,"honeyb";
+    $additional_content=$result->content;
 
     $email_heading=str_ireplace("{site_title}",esc_html( get_bloginfo( 'name', 'display' ) ),$email_heading);
     $email_heading=str_ireplace("{customer}",esc_html( $order->get_billing_first_name() ),$email_heading);
@@ -56,12 +56,12 @@ else
 {
 ?>
 <?php /* translators: %s: Customer first name */ ?>
-<p><?php printf( esc_html__( 'Hi %s,', 'woocommerce' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
-<p><?php esc_html_e( 'The following note has been added to your order:', 'woocommerce' ); ?></p>
+<p><?php printf( esc_html__( 'Hi %s,', 'honeybadger-it' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
+<p><?php esc_html_e( 'The following note has been added to your order:', 'honeybadger-it' ); ?></p>
 
 <blockquote><?php echo wpautop( wptexturize( make_clickable( $customer_note ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></blockquote>
 
-<p><?php esc_html_e( 'As a reminder, here are your order details:', 'woocommerce' ); ?></p>
+<p><?php esc_html_e( 'As a reminder, here are your order details:', 'honeybadger-it' ); ?></p>
 
 <?php
 }

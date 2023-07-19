@@ -88,7 +88,7 @@ else
 {
     ?>
     <?php /* translators: %s: Customer first name */ ?>
-    <p><?php printf( esc_html__( 'Hi %s,', 'woocommerce' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
+    <p><?php printf( esc_html__( 'Hi %s,', 'honeybadger-it' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
 
     <?php if ( $order->needs_payment() ) { ?>
     	<p>
@@ -96,7 +96,7 @@ else
     	printf(
     		wp_kses(
     			/* translators: %1$s Site title, %2$s Order pay link */
-    			__( 'An order has been created for you on %1$s. Your invoice is below, with a link to make payment when you’re ready: %2$s', 'woocommerce' ),
+    			__( 'An order has been created for you on %1$s. Your invoice is below, with a link to make payment when you’re ready: %2$s', 'honeybadger-it' ),
     			array(
     				'a' => array(
     					'href' => array(),
@@ -104,7 +104,7 @@ else
     			)
     		),
     		esc_html( get_bloginfo( 'name', 'display' ) ),
-    		'<a href="' . esc_url( $order->get_checkout_payment_url() ) . '">' . esc_html__( 'Pay for this order', 'woocommerce' ) . '</a>'
+    		'<a href="' . esc_url( $order->get_checkout_payment_url() ) . '">' . esc_html__( 'Pay for this order', 'honeybadger-it' ) . '</a>'
     	);
     	?>
     	</p>
@@ -113,7 +113,7 @@ else
     	<p>
     	<?php
     	/* translators: %s Order date */
-    	printf( esc_html__( 'Here are the details of your order placed on %s:', 'woocommerce' ), esc_html( wc_format_datetime( $order->get_date_created() ) ) );
+    	printf( esc_html__( 'Here are the details of your order placed on %s:', 'honeybadger-it' ), esc_html( wc_format_datetime( $order->get_date_created() ) ) );
     	?>
     	</p>
     	<?php

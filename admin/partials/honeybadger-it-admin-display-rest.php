@@ -17,7 +17,7 @@ if($action=="test_rest_api")
 }
 
 ?>
-<h2><?php esc_html_e('REST API','honeyb');?></h2>
+<h2><?php esc_html_e('REST API','honeybadger-it');?></h2>
 <?php
 if($hb_msg!="")
 {
@@ -29,11 +29,11 @@ if($hb_msg!="")
 }
 $nonce = wp_create_nonce( 'honeybadger_it_testing_rest_api' );
 ?>
-<h2><?php esc_html_e("Test the REST API","honeyb");?></h2>
-<p><?php esc_html_e("Here you can test the communication between your shop and HoneyBadger IT by clicking the below button","honeyb");?></p>
+<h2><?php esc_html_e("Test the REST API",'honeybadger-it');?></h2>
+<p><?php esc_html_e("Here you can test the communication between your shop and HoneyBadger IT by clicking the below button",'honeybadger-it');?></p>
 
 <form action="" method="post">
     <input type="hidden" name="action" value="test_rest_api" />
     <input type="hidden" id="_wpnonce" name="_wpnonce" value="<?php echo esc_attr($nonce);?>" />
-    <input class="button-primary" type="submit" value="<?php echo esc_attr(__('Test the REST API','honeyb'));?>" />
+    <input class="button-primary" type="submit" value="<?php echo esc_attr(__('Test the REST API','honeybadger-it'));?>" />
 </form>

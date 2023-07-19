@@ -73,15 +73,15 @@ if($email_subheading!="")
 else
 {
 ?>
-<p><?php printf( esc_html__( 'Hi %s,', 'woocommerce' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
+<p><?php printf( esc_html__( 'Hi %s,', 'honeybadger-it' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
 <p>
 <?php
 if ( $partial_refund ) {
 	/* translators: %s: Site title */
-	printf( esc_html__( 'Your order on %s has been partially refunded. There are more details below for your reference:', 'woocommerce' ), wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES ) ); // phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped
+	printf( esc_html__( 'Your order on %s has been partially refunded. There are more details below for your reference:', 'honeybadger-it' ), wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES ) ); // phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped
 } else {
 	/* translators: %s: Site title */
-	printf( esc_html__( 'Your order on %s has been refunded. There are more details below for your reference:', 'woocommerce' ), wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES ) ); // phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped
+	printf( esc_html__( 'Your order on %s has been refunded. There are more details below for your reference:', 'honeybadger-it' ), wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES ) ); // phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped
 }
 ?>
 </p>

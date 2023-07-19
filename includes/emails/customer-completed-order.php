@@ -52,8 +52,8 @@ if($email_subheading!="")
 else
 {
 ?>
-<p><?php printf( esc_html__( 'Hi %s,', 'woocommerce' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
-<p><?php esc_html_e( 'We have finished processing your order.', 'woocommerce' ); ?></p>
+<p><?php printf( esc_html__( 'Hi %s,', 'honeybadger-it' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
+<p><?php esc_html_e( 'We have finished processing your order.', 'honeybadger-it' ); ?></p>
 <?php
 }
 ?>

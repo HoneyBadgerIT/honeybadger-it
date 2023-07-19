@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 do_action( 'woocommerce_email_header', $email_heading, $email );
 
-$content=__('Attached',"honeyb");
+$content=__('Attached','honeybadger-it');
 
 echo esc_html($content);
 

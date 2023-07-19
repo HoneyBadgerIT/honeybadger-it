@@ -29,8 +29,8 @@ if ( ! class_exists( 'WC_Email_Default_HoneyBadger' ) && class_exists('\WC_Email
 		public function __construct() {
 			$this->id             = 'wc_custom_order_status_honeybadger';
 			$this->customer_email = true;
-			$this->title          = __( 'Default email', 'woocommerce' );
-			$this->description    = __( 'Used for custom order statuses', 'woocommerce' );
+			$this->title          = __( 'Default email', 'honeybadger-it' );
+			$this->description    = __( 'Used for custom order statuses', 'honeybadger-it' );
 			$this->template_html  = 'emails/email-default.php';
 			$this->template_plain = '';
 			$this->placeholders   = array(
@@ -98,7 +98,7 @@ if ( ! class_exists( 'WC_Email_Default_HoneyBadger' ) && class_exists('\WC_Email
 			        return $subject;
 		    	}
 	    	}
-			return __( 'Something went wrong', 'woocommerce' );
+			return __( 'Something went wrong', 'honeybadger-it' );
 		}
 
 		/**
@@ -108,7 +108,7 @@ if ( ! class_exists( 'WC_Email_Default_HoneyBadger' ) && class_exists('\WC_Email
 		 * @return string
 		 */
 		public function get_default_heading() {
-			return __( 'You should not see this', 'woocommerce' );
+			return __( 'You should not see this', 'honeybadger-it' );
 		}
 
 		/**
@@ -156,7 +156,7 @@ if ( ! class_exists( 'WC_Email_Default_HoneyBadger' ) && class_exists('\WC_Email
 		 * @return string
 		 */
 		public function get_default_additional_content() {
-			return __( 'Thanks for shopping with us.', 'woocommerce' );
+			return __( 'Thanks for shopping with us.', 'honeybadger-it' );
 		}
 	}
 

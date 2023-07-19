@@ -123,10 +123,10 @@ function honeybadger_admin_menu_honeybadger_it_plugin_menu_items()
 {
     require_once dirname( __FILE__ )  . '/admin/partials/honeybadger_svg.php';
     add_menu_page( "HoneyBadger.IT", "HoneyBadger.IT", "administrator", "honeybadger-it", "honeybadger_run_honeybadger_it_plugin_admin_main_page", $honeybadger_icon, 54.9);
-    add_submenu_page( "honeybadger-it", __('Status','honeyb'), __('Status','honeyb'), "administrator", "honeybadger-it","honeybadger_run_honeybadger_it_plugin_admin_main_page",1);
-    add_submenu_page( "honeybadger-it", __('Settings','honeyb'), __('Settings','honeyb'), "administrator", "honeybadger-settings","honeybadger_run_honeybadger_it_plugin_admin_main_page",2);
-    add_submenu_page( "honeybadger-it", __('REST API','honeyb'), __('REST API','honeyb'), "administrator", "honeybadger-rest-api","honeybadger_run_honeybadger_it_plugin_admin_main_page",3);
-    add_submenu_page( "honeybadger-it", __('Tools','honeyb'), __('Tools','honeyb'), "administrator", "honeybadger-tools","honeybadger_run_honeybadger_it_plugin_admin_main_page",4);
+    add_submenu_page( "honeybadger-it", __('Status','honeybadger-it'), __('Status','honeybadger-it'), "administrator", "honeybadger-it","honeybadger_run_honeybadger_it_plugin_admin_main_page",1);
+    add_submenu_page( "honeybadger-it", __('Settings','honeybadger-it'), __('Settings','honeybadger-it'), "administrator", "honeybadger-settings","honeybadger_run_honeybadger_it_plugin_admin_main_page",2);
+    add_submenu_page( "honeybadger-it", __('REST API','honeybadger-it'), __('REST API','honeybadger-it'), "administrator", "honeybadger-rest-api","honeybadger_run_honeybadger_it_plugin_admin_main_page",3);
+    add_submenu_page( "honeybadger-it", __('Tools','honeybadger-it'), __('Tools','honeybadger-it'), "administrator", "honeybadger-tools","honeybadger_run_honeybadger_it_plugin_admin_main_page",4);
 }
 
 honeybadger_run_honeybadger_it_plugin_start();
@@ -142,7 +142,7 @@ function honeybadger_show_plugin_admin_settings_link( $links, $file )
 {
     if ( $file == plugin_basename(dirname(__FILE__) . '/honeybadger-it.php') ) 
     {
-        $links = array_merge(array('<a href="'.esc_url(admin_url().'admin.php?page=honeybadger-it').'">'.__('Settings','honeyb').'</a>'),$links);
+        $links = array_merge(array('<a href="'.esc_url(admin_url().'admin.php?page=honeybadger-it').'">'.__('Settings','honeybadger-it').'</a>'),$links);
     }
     return $links;
 }
@@ -272,12 +272,12 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
             foreach($results as $r)
             {
                 register_post_status( $r->custom_order_status, array(
-                    'label'                     => _x( $r->custom_order_status_title, 'Order status', 'woocommerce' ),
+                    'label'                     => $r->custom_order_status_title,
                     'public'                    => true,
                     'exclude_from_search'       => false,
                     'show_in_admin_all_list'    => true,
                     'show_in_admin_status_list' => true,
-                    'label_count'               => _n_noop( $r->custom_order_status_title.' <span class="count">(%s)</span>', $r->custom_order_status_title.'<span class="count">(%s)</span>', 'woocommerce' )
+                    'label_count'               => _n_noop( $r->custom_order_status_title.' <span class="count">(%s)</span>', $r->custom_order_status_title.'<span class="count">(%s)</span>', 'honeybadger-it' )
                 ) );
             }
         }
@@ -294,7 +294,7 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
         {
             foreach($results as $r)
             {
-                $order_statuses[$r->custom_order_status] = _x( $r->custom_order_status_title, 'Order status', 'woocommerce' );
+                $order_statuses[$r->custom_order_status] = $r->custom_order_status_title;
             }
         }
         return $order_statuses;
@@ -329,8 +329,8 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
                 {
                     if(!in_array($r->custom_order_status,$default_order_statuses))
                     {
-                        $data_js.="jQuery('<option>').val('mark_".esc_attr(str_replace("wc-","",$r->custom_order_status))."').text('".esc_attr(__( 'Change status to '.str_replace("wc-","",$r->custom_order_status), 'woocommerce' ))."').appendTo(\"select[name='action']\");";
-                        $data_js.="jQuery('<option>').val('mark_".esc_attr(str_replace("wc-","",$r->custom_order_status))."').text('".esc_attr(__( 'Change status to '.str_replace("wc-","",$r->custom_order_status), 'woocommerce' ))."').appendTo(\"select[name='action2']\");";
+                        $data_js.="jQuery('<option>').val('mark_".esc_attr(str_replace("wc-","",$r->custom_order_status))."').text('".esc_attr(__('Change status to','honeybadger-it').' '.str_replace("wc-","",$r->custom_order_status))."').appendTo(\"select[name='action']\");";
+                        $data_js.="jQuery('<option>').val('mark_".esc_attr(str_replace("wc-","",$r->custom_order_status))."').text('".esc_attr(__('Change status to','honeybadger-it').' '.str_replace("wc-","",$r->custom_order_status))."').appendTo(\"select[name='action2']\");";
                     }
                 }
                 $data_js.='});';
@@ -671,7 +671,7 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
                 $imgs_html.= wc_get_gallery_image_html( $post_thumbnail_id, true );
             } else {
                 $imgs_html.= '<div class="woocommerce-product-gallery__image--placeholder">';
-                $imgs_html.= sprintf( '<img src="%s" alt="%s" class="wp-post-image" />', esc_url( wc_placeholder_img_src( 'woocommerce_single' ) ), esc_html__( 'Awaiting product image', 'woocommerce' ) );
+                $imgs_html.= sprintf( '<img src="%s" alt="%s" class="wp-post-image" />', esc_url( wc_placeholder_img_src( 'woocommerce_single' ) ), esc_html__( 'Awaiting product image', 'honeybadger-it' ) );
                 $imgs_html .= '</div>';
             }
             if(count($product_images)>0)
@@ -788,8 +788,8 @@ function honeybadger_it_plugin_settings_update( $hook ) {
         array(
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'honeybadger_it_ajax_nonce' ),
-            'hb_setup_no_us_msg_1'=>esc_attr(__('Seems that something is wrong, please check the below statuses','honeyb')),
-            'hb_setup_no_us_msg_2'=>esc_attr(__('Seems that something is wrong below','honeyb'))
+            'hb_setup_no_us_msg_1'=>esc_attr(__('Seems that something is wrong, please check the below statuses','honeybadger-it')),
+            'hb_setup_no_us_msg_2'=>esc_attr(__('Seems that something is wrong below','honeybadger-it'))
         ),
     );
 }
