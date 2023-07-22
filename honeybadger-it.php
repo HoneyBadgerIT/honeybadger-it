@@ -277,7 +277,7 @@ if(isset($honeybadger_it_plugin_admin_config->setup_step) && in_array($honeybadg
                     'exclude_from_search'       => false,
                     'show_in_admin_all_list'    => true,
                     'show_in_admin_status_list' => true,
-                    'label_count'               => _n_noop( $r->custom_order_status_title.' <span class="count">(%s)</span>', $r->custom_order_status_title.'<span class="count">(%s)</span>', 'honeybadger-it' )
+                    'label_count'               => ' <span class="count">('.$r->custom_order_status_title.')</span><span class="count">('.$r->custom_order_status_title.')</span>'
                 ) );
             }
         }
@@ -852,7 +852,7 @@ function honeybadger_it_plugin_get_oauth_response(WP_REST_Request $request)
         }
         if($action=='get_oauth2_token')
         {
-            wp_verify_nonce( 'get_oauth2_token' );
+            wp_verify_nonce( 'honeybadger_it_oauth_nonce' );
             require_once HONEYBADGER_PLUGIN_PATH . 'includes/oauth2/token.php';
         }
         if($action=='get_oauth2_resource')

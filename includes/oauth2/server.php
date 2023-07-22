@@ -13,7 +13,8 @@ $storage = new OAuth2\Storage\honeywpdb();
 $config     = array(
 	'access_lifetime'                   => $honeybadger->config->access_lifetime,//access token 1 day
 	'refresh_token_lifetime'            => $honeybadger->config->refresh_token_lifetime,//refresh token 4 weeks
-	'always_issue_new_refresh_token'    => true
+	'always_issue_new_refresh_token'    => true,
+	'unset_refresh_token_after_use'		=> true,
 );
 $server = new OAuth2\Server($storage,$config);
 
@@ -23,5 +24,8 @@ $server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage),$config);
 // Add the "Authorization Code" grant type (this is where the oauth magic happens)
 $server->addGrantType(new OAuth2\GrantType\AuthorizationCode($storage),$config);
 
-$server->addGrantType(new OAuth2\GrantType\RefreshToken($storage),$config);
+$server->addGrantType(new OAuth2\GrantType\RefreshToken($storage, [
+    'always_issue_new_refresh_token' => true,
+    'unset_refresh_token_after_use'  => true
+]));
 ?>
